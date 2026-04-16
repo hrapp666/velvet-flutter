@@ -1,0 +1,166 @@
+{
+  "@@locale": "en",
+
+  "appName": "Velvet",
+  "@appName": {
+    "description": "Display name of the app, used in launcher and splash."
+  },
+
+  "tabAll": "ALL",
+  "@tabAll": {
+    "description": "Feed tab · all moments."
+  },
+  "tabFollow": "FOLLOW",
+  "@tabFollow": {
+    "description": "Feed tab · followed users' moments."
+  },
+  "tabNearby": "NEARBY",
+  "@tabNearby": {
+    "description": "Feed tab · same-city / nearby moments."
+  },
+  "tabRecommend": "FOR YOU",
+  "@tabRecommend": {
+    "description": "Feed tab · personalized recommendations."
+  },
+
+  "retryButton": "RETRY",
+  "@retryButton": {
+    "description": "Retry CTA on error / empty states (RetryChip default label)."
+  },
+  "loadingLabel": "LOADING",
+  "@loadingLabel": {
+    "description": "Generic loading indicator label."
+  },
+
+  "emptyFeedTitle": "— NO STORIES YET —",
+  "@emptyFeedTitle": {
+    "description": "Empty state title on the main feed when zero moments exist."
+  },
+  "emptyFeedSubtitle": "Tap + below to hang your first",
+  "@emptyFeedSubtitle": {
+    "description": "Empty state subtitle inviting user to publish their first moment."
+  },
+
+  "emptyRecommendTitle": "— NO TASTE MATCH YET —",
+  "@emptyRecommendTitle": {
+    "description": "Empty state title on the recommend tab when no personalized results are available."
+  },
+  "emptyRecommendSubtitle": "Tap more hearts, let time find your match",
+  "@emptyRecommendSubtitle": {
+    "description": "Empty state subtitle on recommend tab encouraging interaction."
+  },
+
+  "emptyChatTitle": "— NO WHISPERS YET —",
+  "@emptyChatTitle": {
+    "description": "Empty state title on chat list when there are zero conversations."
+  },
+  "emptyChatSubtitle": "The right ones will find you",
+  "@emptyChatSubtitle": {
+    "description": "Empty state subtitle on chat list · editorial reassurance."
+  },
+
+  "emptySearchInitialTitle": "What are you looking for",
+  "@emptySearchInitialTitle": {
+    "description": "Search screen initial empty state title (before any query is entered)."
+  },
+  "emptySearchInitialSubtitle": "Try silk  vintage  night ...",
+  "@emptySearchInitialSubtitle": {
+    "description": "Search screen initial empty state subtitle suggesting sample queries."
+  },
+
+  "emptySearchNoResultTitle": "— NOT HERE YET —",
+  "@emptySearchNoResultTitle": {
+    "description": "Search screen no-result empty state title."
+  },
+  "emptySearchNoResultSubtitle": "Try another word",
+  "@emptySearchNoResultSubtitle": {
+    "description": "Search screen no-result subtitle inviting user to rephrase."
+  },
+
+  "emptyOrderBuyerTitle": "— NO ORDERS —",
+  "@emptyOrderBuyerTitle": {
+    "description": "Orders screen empty state title (buyer / seller tab)."
+  },
+  "emptyOrderBuyerSubtitle": "Browse around, find something that moves you",
+  "@emptyOrderBuyerSubtitle": {
+    "description": "Orders screen buyer-side empty subtitle inviting discovery."
+  },
+  "emptyOrderSellerSubtitle": "No trades yet, good things find their people",
+  "@emptyOrderSellerSubtitle": {
+    "description": "Orders screen seller-side empty subtitle."
+  },
+
+  "emptyFavoritesTitle": "— NO SAVES YET —",
+  "@emptyFavoritesTitle": {
+    "description": "Favorites screen empty state title."
+  },
+  "emptyFavoritesSubtitle": "tap heart to keep what moves you",
+  "@emptyFavoritesSubtitle": {
+    "description": "Favorites screen empty state subtitle."
+  },
+
+  "errorGenericTitle": "— NOT FOUND —",
+  "@errorGenericTitle": {
+    "description": "Generic error / not-found title."
+  },
+  "errorNetworkMessage": "Network error, please try again",
+  "@errorNetworkMessage": {
+    "description": "Generic network failure message."
+  },
+
+  "onboardingSkip": "SKIP",
+  "@onboardingSkip": {
+    "description": "Onboarding skip CTA (J2 owned file · declared here so locale is complete)."
+  },
+  "onboardingBegin": "BEGIN",
+  "@onboardingBegin": {
+    "description": "Onboarding final CTA."
+  },
+  "onboardingNext": "NEXT",
+  "@onboardingNext": {
+    "description": "Onboarding next-page CTA."
+  },
+
+  "themeLight": "LIGHT",
+  "@themeLight": {
+    "description": "Appearance mode · light."
+  },
+  "themeDark": "DARK",
+  "@themeDark": {
+    "description": "Appearance mode · dark."
+  },
+  "themeSystem": "SYSTEM",
+  "@themeSystem": {
+    "description": "Appearance mode · follow system."
+  },
+  "themeSectionTitle": "APPEARANCE",
+  "@themeSectionTitle": {
+    "description": "Profile screen appearance section header."
+  },
+
+  "languageSectionTitle": "LANGUAGE",
+  "@languageSectionTitle": {
+    "description": "Profile screen language section header."
+  },
+  "languageSystem": "SYSTEM",
+  "@languageSystem": {
+    "description": "Language selection · follow device locale."
+  },
+  "languageEnglish": "ENGLISH",
+  "@languageEnglish": {
+    "description": "Language selection · English label (always shown in English)."
+  },
+  "languageChinese": "中 文",
+  "@languageChinese": {
+    "description": "Language selection · Chinese label (always shown in Chinese, intentionally untranslated)."
+  },
+
+  "contentViolation": "Content contains inappropriate information",
+  "@contentViolation": {
+    "description": "Moderation rejection message shown on publish."
+  },
+  "moderationForbidden": "Forbidden content",
+  "@moderationForbidden": {
+    "description": "Moderation forbidden state."
+  }
+}

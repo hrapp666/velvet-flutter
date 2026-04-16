@@ -1,0 +1,24 @@
+# ============================================================================
+# Velvet · flutter gen-l10n 配置 (v25 · I1)
+# ----------------------------------------------------------------------------
+# 运行 `flutter gen-l10n` 时读取 ARB 文件生成 AppLocalizations。
+#
+# synthetic-package: false + output-dir: lib/l10n
+#   → 生成物直接落到 lib/l10n/app_localizations.dart 而不是隐藏的
+#     .dart_tool/flutter_gen/gen_l10n 包，主人可以直接 git diff 审阅。
+#
+# 首次注意：当前 worktree 已经手写了同路径的 app_localizations.dart 作为
+# 临时实现（flutter CLI 不在这台机器上）。一旦主人在 velvet-flutter/ 根目录
+# 跑 `flutter gen-l10n`，生成物会覆盖这份手写文件且保持 API 完全兼容。
+# ============================================================================
+
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+output-dir: lib/l10n
+synthetic-package: false
+# nullable-getter: true  → AppLocalizations.of(context) 返回 AppLocalizations?
+# 调用方使用 null-safe 访问 (l10n?.tabAll ?? fallback),避免 delegate 未挂载或
+# 某些 isolate 内渲染时崩溃。手写版本也返回 nullable · 二者 API 一致。
+nullable-getter: true

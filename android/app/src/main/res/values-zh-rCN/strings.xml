@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Velvet · 权限文案 (中文) -->
+    <string name="permission_location_rationale">让你和懂的人 · 在同一个夜里相遇</string>
+    <string name="permission_camera_rationale">此刻的温度 · 留给懂的人</string>
+    <string name="permission_storage_rationale">把柜底的秘密 · 拿出来流转</string>
+    <string name="permission_microphone_rationale">夜里 · 说一句给一个人听</string>
+</resources>

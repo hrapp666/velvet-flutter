@@ -1,0 +1,70 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    invalid_annotation_target: ignore
+    todo: ignore
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/generated_plugin_registrant.dart"
+    - "build/**"
+
+linter:
+  rules:
+    # ---- 关键纪律（flutter-dart-code-review skill 共识）----
+    avoid_print: true                           # 禁止 print()，用 dart:developer log()
+    prefer_const_constructors: true             # 强制 const 减少 rebuild
+    prefer_const_constructors_in_immutables: true
+    prefer_const_declarations: true
+    prefer_const_literals_to_create_immutables: true
+    prefer_final_fields: true
+    prefer_final_locals: true
+    prefer_final_in_for_each: true
+    unnecessary_const: true
+    unnecessary_new: true
+    unnecessary_this: true
+
+    # ---- 空安全纪律 ----
+    avoid_init_to_null: true
+    avoid_null_checks_in_equality_operators: true
+    null_check_on_nullable_type_parameter: true
+    prefer_null_aware_operators: true
+
+    # ---- 异常处理纪律 ----
+    avoid_catches_without_on_clauses: true      # 强制 on-clause 类型化 catch
+    avoid_catching_errors: true                 # Error 子类不该被 catch
+    use_rethrow_when_possible: true
+    only_throw_errors: true
+
+    # ---- 性能 ----
+    avoid_function_literals_in_foreach_calls: true
+    avoid_slow_async_io: true
+    prefer_foreach: true
+    unnecessary_lambdas: true
+
+    # ---- 代码风格 ----
+    always_declare_return_types: true
+    avoid_empty_else: true
+    avoid_unused_constructor_parameters: true
+    cancel_subscriptions: true
+    close_sinks: true
+    directives_ordering: true
+    package_api_docs: false                     # 内部项目无需包级 API docs
+    prefer_single_quotes: true
+    sort_child_properties_last: true
+    unawaited_futures: true                     # 必须 await 或 unawaited()
+    use_build_context_synchronously: true       # context.mounted 检查
+
+    # ---- 模式匹配 & 现代 Dart ----
+    use_super_parameters: true
+    sized_box_for_whitespace: true
+
+    # ---- 禁止的反模式 ----
+    avoid_dynamic_calls: true
+    avoid_types_as_parameter_names: true
+    no_leading_underscores_for_local_identifiers: false  # _ 占位常见
