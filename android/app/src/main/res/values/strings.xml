@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Velvet · 权限文案 (默认 · English fallback)
+         必须存在所有 zh-rCN 的 keys, 否则 lintVitalRelease 报 ExtraTranslation
+         APK build 失败. 文案翻译保留 editorial 风格. -->
+    <string name="permission_location_rationale">Find someone who knows · in the same night</string>
+    <string name="permission_camera_rationale">Save the warmth · for the one who understands</string>
+    <string name="permission_storage_rationale">Bring secrets from the drawer · into circulation</string>
+    <string name="permission_microphone_rationale">A whisper · for one ear in the night</string>
+</resources>

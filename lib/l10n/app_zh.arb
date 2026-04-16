@@ -1,0 +1,55 @@
+{
+  "@@locale": "zh",
+
+  "appName": "Velvet",
+
+  "tabAll": "全 部",
+  "tabFollow": "关 注",
+  "tabNearby": "同 城",
+  "tabRecommend": "推 荐",
+
+  "retryButton": "重 试",
+  "loadingLabel": "加 载 中",
+
+  "emptyFeedTitle": "— 还 没 有 故 事 —",
+  "emptyFeedSubtitle": "点底部 + 来挂第一件",
+
+  "emptyRecommendTitle": "— 还 没 懂 你 的 品 味 —",
+  "emptyRecommendSubtitle": "多点几个心动，让时间帮你找知己",
+
+  "emptyChatTitle": "— 还 没 有 私 语 —",
+  "emptyChatSubtitle": "懂的人 · 自然会来找你",
+
+  "emptySearchInitialTitle": "懂 的 人 · 自 然 知 道 找 什 么",
+  "emptySearchInitialSubtitle": "试试  真丝  古董  夜里  ……",
+
+  "emptySearchNoResultTitle": "— 此 物 尚 未 出 现 —",
+  "emptySearchNoResultSubtitle": "换一个词 · 再试",
+
+  "emptyOrderBuyerTitle": "— 暂 无 订 单 —",
+  "emptyOrderBuyerSubtitle": "逛 逛 看 · 或 许 有 心 动 的",
+  "emptyOrderSellerSubtitle": "还 没 有 成 交 · 好 物 自 会 遇 见 人",
+
+  "emptyFavoritesTitle": "— 还 没 有 收 藏 —",
+  "emptyFavoritesSubtitle": "心动的 · 按一下 ♡ 留下来",
+
+  "errorGenericTitle": "— 暂 时 找 不 到 —",
+  "errorNetworkMessage": "网络开小差 · 稍等再试",
+
+  "onboardingSkip": "跳 过",
+  "onboardingBegin": "开 始",
+  "onboardingNext": "下 一 页",
+
+  "themeLight": "明 亮",
+  "themeDark": "暗 黑",
+  "themeSystem": "跟 随",
+  "themeSectionTitle": "外 观",
+
+  "languageSectionTitle": "语 言",
+  "languageSystem": "跟 随",
+  "languageEnglish": "ENGLISH",
+  "languageChinese": "中 文",
+
+  "contentViolation": "内容包含不恰当的信息",
+  "moderationForbidden": "内容无法发布"
+}
