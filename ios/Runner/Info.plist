@@ -53,18 +53,15 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<!-- 仅支持竖屏 · Velvet 是约会类 app · 横屏破版风险大 -->
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 
 	<!-- Deep Link: Custom scheme velvet:// -->
@@ -83,6 +80,10 @@
 	</array>
 	<!-- Universal Link: 等主人买 velvet.app 后，到 Xcode project -> Signing & Capabilities
 	     加 Associated Domains: applinks:velvet.app -->
+
+	<!-- 出口加密合规声明: 仅使用 HTTPS + bcrypt 标准加密,豁免上报 -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>让你和懂的人 · 在同一个夜里相遇</string>

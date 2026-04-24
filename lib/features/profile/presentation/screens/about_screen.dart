@@ -55,7 +55,6 @@ class AboutScreen extends StatelessWidget {
                     'VELVET',
                     style: Vt.displayHero.copyWith(
                       color: Colors.white,
-                      fontSize: 64,
                       letterSpacing: 8,
                       shadows: const [
                         Shadow(color: Color(0x80C9A961), blurRadius: 40),
@@ -128,7 +127,7 @@ class AboutScreen extends StatelessWidget {
                     Text('v22 · 2026',
                         style: Vt.label.copyWith(
                           color: Vt.textTertiary,
-                          fontSize: 10,
+                          fontSize: Vt.t2xs,
                           fontStyle: FontStyle.italic,
                         )),
                     const SizedBox(height: Vt.s8),

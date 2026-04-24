@@ -139,7 +139,7 @@ class _MomentCardState extends State<MomentCard> {
                               const SizedBox(width: 3),
                               Text(
                                 widget.location,
-                                style: Vt.label.copyWith(fontSize: 9),
+                                style: Vt.label.copyWith(fontSize: Vt.t2xs),
                               ),
                             ],
                           ),
@@ -181,7 +181,7 @@ class _MomentCardState extends State<MomentCard> {
                                 widget.distanceLabel!,
                                 style: Vt.label.copyWith(
                                   color: Vt.gold,
-                                  fontSize: 9,
+                                  fontSize: Vt.t2xs,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -214,7 +214,7 @@ class _MomentCardState extends State<MomentCard> {
                       // 价格（Marcellus SC + 金色）
                       Text(
                         '¥ ${(widget.priceCents / 100).toStringAsFixed(0)}',
-                        style: Vt.price.copyWith(fontSize: 22),
+                        style: Vt.price.copyWith(fontSize: Vt.tlg),
                       ),
 
                       const SizedBox(height: Vt.s12),

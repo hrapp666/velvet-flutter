@@ -153,7 +153,7 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                   Expanded(
                     child: Text(
                       '最 低 ¥10 · 可提现 ¥${w.balanceYuan.toStringAsFixed(2)}',
-                      style: Vt.cnLabel.copyWith(color: Vt.textTertiary, fontSize: 10),
+                      style: Vt.cnLabel.copyWith(color: Vt.textTertiary, fontSize: Vt.t2xs),
                     ),
                   ),
                   TextButton(
@@ -161,7 +161,7 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
                       _amountCtrl.text = w.balanceYuan.toStringAsFixed(2);
                     },
                     child: Text('全 部 提 现',
-                        style: Vt.cnLabel.copyWith(color: Vt.gold, fontSize: 10)),
+                        style: Vt.cnLabel.copyWith(color: Vt.gold, fontSize: Vt.t2xs)),
                   ),
                 ],
               ),
@@ -205,7 +205,7 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
         const SizedBox(width: Vt.s8),
         Text(en,
             style: Vt.label.copyWith(
-              color: Vt.textTertiary, fontSize: 10,
+              color: Vt.textTertiary, fontSize: Vt.t2xs,
               fontStyle: FontStyle.italic, letterSpacing: 2,
             )),
       ],

@@ -179,8 +179,7 @@ class NotificationScreen extends ConsumerWidget {
                         const SizedBox(width: 8),
                         Text(
                           '通  知',
-                          style: Vt.cnHeading.copyWith(
-                            fontSize: 20,
+                          style: Vt.cnDisplay.copyWith(
                             letterSpacing: 8,
                             color: Vt.gold,
                           ),
@@ -322,8 +321,7 @@ class _NotifTile extends StatelessWidget {
             ),
             child: Text(
               icon,
-              style: GoogleFonts.cormorantGaramond(
-                fontSize: 20,
+              style: Vt.headingMd.copyWith(
                 fontWeight: FontWeight.w500,
                 color: Vt.gold,
               ),
@@ -337,8 +335,9 @@ class _NotifTile extends StatelessWidget {
               children: [
                 Text(
                   notif.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: Vt.cnBody.copyWith(
-                    fontSize: 15,
                     color: Vt.textGoldSoft,
                     height: 1.4,
                     letterSpacing: 0.5,
@@ -349,7 +348,6 @@ class _NotifTile extends StatelessWidget {
                   Text(
                     notif.content!,
                     style: Vt.cnBody.copyWith(
-                      fontSize: 13,
                       color: Vt.textSecondary,
                       height: 1.4,
                       fontStyle: FontStyle.italic,

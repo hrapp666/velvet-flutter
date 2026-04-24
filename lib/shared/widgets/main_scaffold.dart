@@ -154,12 +154,18 @@ class _NavItem extends StatelessWidget {
             AnimatedDefaultTextStyle(
               duration: Vt.fast,
               style: Vt.label.copyWith(
-                fontSize: 9,
+                fontSize: Vt.t2xs,
                 color: selected ? Vt.textPrimary : Vt.textTertiary,
                 fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
                 letterSpacing: 0.4,
               ),
-              child: Text(config.label),
+              textAlign: TextAlign.center,
+              child: Text(
+                config.label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),

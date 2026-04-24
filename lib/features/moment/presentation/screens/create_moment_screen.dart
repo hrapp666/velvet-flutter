@@ -299,7 +299,7 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                             '发布',
                             style: Vt.button.copyWith(
                               color: Colors.white,
-                              fontSize: 13,
+                              fontSize: Vt.tsm,
                               letterSpacing: 0.6,
                             ),
                           ),
@@ -385,7 +385,7 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text('¥', style: Vt.price.copyWith(fontSize: 22)),
+                        Text('¥', style: Vt.price.copyWith(fontSize: Vt.tlg)),
                         const SizedBox(width: Vt.s8),
                         Expanded(
                           child: TextField(

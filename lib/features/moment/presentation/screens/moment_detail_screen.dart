@@ -23,6 +23,7 @@ import '../../../../shared/services/share_service.dart';
 import '../../../../shared/theme/design_tokens.dart';
 import '../../../../shared/widgets/ambient/grain_overlay.dart';
 import '../../../../shared/widgets/micro/spring_tap.dart';
+import '../../../safety/safety_dialogs.dart';
 import '../../data/models/moment_model.dart';
 import '../../data/repositories/comment_repository.dart';
 import '../providers/moment_provider.dart';
@@ -106,11 +107,10 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
               Vt.goldDark,
             ],
           ).createShader(rect),
-          child: const Text(
+          child: Text(
             'V',
-            style: TextStyle(
-              fontFamily: 'Cormorant Garamond',
-              fontSize: 120,
+            style: Vt.displayHero.copyWith(
+              fontSize: Vt.t5xl,
               fontWeight: FontWeight.w500,
               color: Colors.white,
               letterSpacing: 8,
@@ -285,7 +285,11 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
                       const SizedBox(width: 8),
                       _GlassIconBtn(
                         icon: Icons.more_horiz_rounded,
-                        onTap: () {},
+                        onTap: () {
+                          final m = momentAsync.valueOrNull;
+                          if (m == null) return;
+                          _showSafetyMenu(context, ref, m);
+                        },
                       ),
                     ],
                   ),
@@ -316,6 +320,137 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
           // UI12 · editorial 胶片纹理 · detail 页更轻 (封面自带材质)
           const GrainOverlay(intensity: 0.018, seed: 23),
         ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// 安全菜单（举报动态 / 拉黑作者）· Apple 1.2 合规
+// ============================================================================
+Future<void> _showSafetyMenu(
+  BuildContext context,
+  WidgetRef ref,
+  MomentModel m,
+) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withValues(alpha: 0.65),
+    builder: (sheetCtx) => _SafetySheet(
+      options: [
+        _SafetyOption(
+          icon: Icons.flag_outlined,
+          label: '举  报  此  动  态',
+          onTap: () async {
+            Navigator.of(sheetCtx).pop();
+            await showReportDialog(
+              context,
+              ref,
+              targetType: ReportTargetType.moment,
+              targetId: m.id,
+            );
+          },
+        ),
+        _SafetyOption(
+          icon: Icons.block_outlined,
+          label: '拉  黑  作  者',
+          onTap: () async {
+            Navigator.of(sheetCtx).pop();
+            await showBlockDialog(context, ref, userId: m.userId);
+          },
+        ),
+      ],
+    ),
+  );
+}
+
+class _SafetyOption {
+  final IconData icon;
+  final String label;
+  final Future<void> Function() onTap;
+  const _SafetyOption({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+}
+
+class _SafetySheet extends StatelessWidget {
+  final List<_SafetyOption> options;
+  const _SafetySheet({required this.options});
+
+  @override
+  Widget build(BuildContext context) {
+    final padding = MediaQuery.paddingOf(context);
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(Vt.rLg)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        child: Container(
+          color: Vt.bgElevated.withValues(alpha: 0.92),
+          padding: EdgeInsets.only(
+            top: Vt.s16,
+            bottom: padding.bottom + Vt.s16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final opt in options)
+                InkWell(
+                  onTap: opt.onTap,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Vt.s24,
+                      vertical: Vt.s16,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(opt.icon, color: Vt.gold, size: 20),
+                        const SizedBox(width: Vt.s16),
+                        Expanded(
+                          child: Text(
+                            opt.label,
+                            style: Vt.cnBody.copyWith(
+                              color: Vt.textPrimary,
+                              letterSpacing: 2,
+                              fontSize: Vt.tmd,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              InkWell(
+                onTap: () => Navigator.of(context).pop(),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Vt.s24,
+                    vertical: Vt.s16,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.close,
+                          color: Vt.textTertiary, size: 20),
+                      const SizedBox(width: Vt.s16),
+                      Expanded(
+                        child: Text(
+                          '取  消',
+                          style: Vt.cnBody.copyWith(
+                            color: Vt.textTertiary,
+                            letterSpacing: 2,
+                            fontSize: Vt.tmd,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -370,10 +505,12 @@ class _DetailContent extends StatelessWidget {
           Text(
             m.title?.isNotEmpty == true ? m.title! : '无 题',
             textAlign: TextAlign.center,
-            style: GoogleFontsLocal.cormorant(
-              fontSize: 44,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: Vt.displayMd.copyWith(
+              fontSize: Vt.t2xl,
               fontWeight: FontWeight.w500,
-              letterSpacing: 1.5,
+              letterSpacing: -0.3,
               height: 1.1,
               color: Vt.textGoldSoft,
               shadows: [
@@ -427,22 +564,20 @@ class _DetailContent extends StatelessWidget {
               ).createShader(rect),
               child: Text.rich(
                 TextSpan(children: [
-                  const TextSpan(
+                  TextSpan(
                     text: '¥ ',
-                    style: TextStyle(
-                      fontFamily: 'Cormorant Garamond',
-                      fontSize: 22,
+                    style: Vt.priceLg.copyWith(
+                      fontSize: Vt.tlg,
                       fontWeight: FontWeight.w400,
                       color: Colors.white,
                     ),
                   ),
                   TextSpan(
                     text: price.toStringAsFixed(0),
-                    style: const TextStyle(
-                      fontFamily: 'Cormorant Garamond',
-                      fontSize: 56,
+                    style: Vt.priceLg.copyWith(
+                      fontSize: Vt.t3xl,
                       fontWeight: FontWeight.w500,
-                      letterSpacing: 4,
+                      letterSpacing: 2,
                       color: Colors.white,
                       height: 1,
                     ),
@@ -521,8 +656,9 @@ class _DetailContent extends StatelessWidget {
                 const SizedBox(height: Vt.s8),
                 Text(
                   m.userNickname,
-                  style: GoogleFontsLocal.cormorant(
-                    fontSize: 26,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Vt.headingLg.copyWith(
                     fontWeight: FontWeight.w500,
                     letterSpacing: 1.5,
                     color: Vt.textGoldSoft,
@@ -562,8 +698,7 @@ class _MetaItem extends StatelessWidget {
       children: [
         Text(
           num,
-          style: GoogleFontsLocal.cormorant(
-            fontSize: 22,
+          style: Vt.headingLg.copyWith(
             fontWeight: FontWeight.w500,
             color: Vt.gold,
             height: 1,
@@ -572,11 +707,11 @@ class _MetaItem extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: Vt.label.copyWith(
             color: Vt.textSecondary,
             letterSpacing: 2,
-            fontSize: 9,
-            fontStyle: FontStyle.italic,
           ),
         ),
       ],

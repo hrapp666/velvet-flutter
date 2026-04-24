@@ -165,17 +165,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           colors: Vt.gradientGoldLogo,
                           stops: Vt.gradientGoldLogoStops,
                         ).createShader(rect),
-                        child: const Text(
+                        child: Text(
                           'VELVET',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Cormorant Garamond',
-                            fontSize: 64,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 10,
+                          style: Vt.displayHero.copyWith(
                             color: Colors.white,
-                            height: 1,
-                            shadows: [
+                            letterSpacing: 10,
+                            shadows: const [
                               Shadow(
                                 color: Color(0x6BC9A961),
                                 blurRadius: 56,
@@ -191,8 +187,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     Center(
                       child: Text(
                         '天   鹅   绒',
-                        style: Vt.cnDisplay.copyWith(
-                          fontSize: 15,
+                        style: Vt.cnCaption.copyWith(
                           letterSpacing: 8,
                           color: Vt.gold.withValues(alpha: 0.75),
                         ),
@@ -244,7 +239,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       child: Text(
                         '余 温 · 未 散',
                         style: Vt.cnHeading.copyWith(
-                          fontSize: 18,
+                          fontSize: Vt.tmd,
                           color: Vt.gold,
                           shadows: [
                             Shadow(
@@ -475,7 +470,7 @@ class _ModeBtn extends StatelessWidget {
             child: Text(
               label,
               style: Vt.cnButton.copyWith(
-                fontSize: 19,
+                fontSize: Vt.tmd,
                 letterSpacing: ls,
                 color: active ? Vt.gold : Vt.textTertiary,
                 shadows: active
@@ -509,7 +504,7 @@ class _LuxCenter extends StatelessWidget {
         child: Text(
           text,
           style: Vt.cnButton.copyWith(
-            fontSize: 18,
+            fontSize: Vt.tmd,
             letterSpacing: letterSpacing,
             color: Vt.gold,
           ),

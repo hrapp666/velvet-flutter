@@ -82,7 +82,7 @@ class _PaymentSheetBodyState extends ConsumerState<_PaymentSheetBody> {
             ),
             const Divider(color: Vt.borderMedium, height: Vt.s24),
             Text('商 品',
-                style: Vt.cnLabel.copyWith(color: Vt.textTertiary, fontSize: 10)),
+                style: Vt.cnLabel.copyWith(color: Vt.textTertiary, fontSize: Vt.t2xs)),
             const SizedBox(height: Vt.s8),
             Text(
               o.titleSnapshot ?? '此件',
@@ -120,7 +120,7 @@ class _PaymentSheetBodyState extends ConsumerState<_PaymentSheetBody> {
             ),
             const SizedBox(height: Vt.s24),
             Text('支 付 方 式',
-                style: Vt.cnLabel.copyWith(color: Vt.textTertiary, fontSize: 10)),
+                style: Vt.cnLabel.copyWith(color: Vt.textTertiary, fontSize: Vt.t2xs)),
             const SizedBox(height: Vt.s12),
             ...PaymentProvider.values.map((p) => _methodTile(p)),
             const SizedBox(height: Vt.s24),
@@ -187,13 +187,13 @@ class _PaymentSheetBodyState extends ConsumerState<_PaymentSheetBody> {
             if (p == PaymentProvider.wechat)
               Text('推 荐',
                   style: Vt.label.copyWith(
-                    color: Vt.gold, fontSize: 10,
+                    color: Vt.gold, fontSize: Vt.t2xs,
                     fontStyle: FontStyle.italic,
                   )),
             if (p == PaymentProvider.mock)
               Text('沙 盒',
                   style: Vt.label.copyWith(
-                    color: Vt.gold, fontSize: 10,
+                    color: Vt.gold, fontSize: Vt.t2xs,
                     fontStyle: FontStyle.italic,
                   )),
           ],

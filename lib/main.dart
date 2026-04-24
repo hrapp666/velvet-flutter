@@ -26,6 +26,11 @@ Future<void> main() async {
     systemNavigationBarIconBrightness: Brightness.light,
   ));
 
+  // 锁竖屏 · Velvet 是约会类 app · 横屏破版
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+
   runApp(
     ProviderScope(
       overrides: [
@@ -56,6 +61,19 @@ class VelvetApp extends ConsumerWidget {
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
+      // Dynamic Type: 响应系统字号 · 但 clamp 到 [0.9, 1.3] 避免极端
+      // 缩放破版 editorial 排版 · 满足 Apple 辅助功能要求
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        final clampedScaler = mediaQuery.textScaler.clamp(
+          minScaleFactor: 0.9,
+          maxScaleFactor: 1.3,
+        );
+        return MediaQuery(
+          data: mediaQuery.copyWith(textScaler: clampedScaler),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }

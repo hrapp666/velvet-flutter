@@ -17,6 +17,7 @@ import '../../../../shared/theme/design_tokens.dart';
 import '../../../../shared/widgets/micro/spring_tap.dart';
 import '../../../../shared/widgets/motion/scroll_reveal.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../safety/safety_dialogs.dart';
 import '../../data/models/chat_models.dart';
 import '../../data/services/chat_socket.dart';
 import '../providers/chat_provider.dart';
@@ -64,6 +65,109 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _inputCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
+  }
+
+  /// 举报对方 / 拉黑对方（Apple UGC 1.2 合规）
+  Future<void> _showSafetySheet(int otherUserId, String? nickname) async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.65),
+      builder: (sheetCtx) {
+        final padding = MediaQuery.paddingOf(sheetCtx);
+        return ClipRRect(
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(Vt.rLg)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: Container(
+              color: Vt.bgElevated.withValues(alpha: 0.92),
+              padding: EdgeInsets.only(
+                top: Vt.s16,
+                bottom: padding.bottom + Vt.s16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildSheetTile(
+                    sheetCtx,
+                    icon: Icons.flag_outlined,
+                    label: '举  报  对  方',
+                    value: 'report',
+                  ),
+                  _buildSheetTile(
+                    sheetCtx,
+                    icon: Icons.block_outlined,
+                    label: '拉  黑  对  方',
+                    value: 'block',
+                  ),
+                  _buildSheetTile(
+                    sheetCtx,
+                    icon: Icons.close,
+                    label: '取  消',
+                    value: null,
+                    muted: true,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    if (!mounted || choice == null) return;
+    switch (choice) {
+      case 'report':
+        await showReportDialog(
+          context,
+          ref,
+          targetType: ReportTargetType.chat,
+          targetId: widget.conversationId,
+        );
+      case 'block':
+        final blocked = await showBlockDialog(
+          context,
+          ref,
+          userId: otherUserId,
+          nickname: nickname,
+        );
+        if (blocked && mounted) {
+          context.pop();
+        }
+    }
+  }
+
+  Widget _buildSheetTile(
+    BuildContext sheetCtx, {
+    required IconData icon,
+    required String label,
+    required String? value,
+    bool muted = false,
+  }) {
+    return InkWell(
+      onTap: () => Navigator.of(sheetCtx).pop(value),
+      child: Padding(
+        padding:
+            const EdgeInsets.symmetric(horizontal: Vt.s24, vertical: Vt.s16),
+        child: Row(
+          children: [
+            Icon(icon,
+                color: muted ? Vt.textTertiary : Vt.gold, size: 20),
+            const SizedBox(width: Vt.s16),
+            Expanded(
+              child: Text(
+                label,
+                style: Vt.cnBody.copyWith(
+                  color: muted ? Vt.textTertiary : Vt.textPrimary,
+                  letterSpacing: 2,
+                  fontSize: Vt.tmd,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _send() async {
@@ -114,6 +218,17 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             _HeaderBar(
               padding: padding,
               nickname: widget.prefilledConv?.otherUserNickname ?? '私 语',
+              onMoreTap: () {
+                final otherId = widget.prefilledConv?.otherUserId;
+                if (otherId == null) {
+                  VelvetToast.show(context, '缺少对方信息', isError: true);
+                  return;
+                }
+                _showSafetySheet(
+                  otherId,
+                  widget.prefilledConv?.otherUserNickname,
+                );
+              },
             ),
 
             // ─── 消息列表 ───
@@ -218,7 +333,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 class _HeaderBar extends StatelessWidget {
   final EdgeInsets padding;
   final String nickname;
-  const _HeaderBar({required this.padding, required this.nickname});
+  final VoidCallback onMoreTap;
+  const _HeaderBar({
+    required this.padding,
+    required this.nickname,
+    required this.onMoreTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -262,8 +382,7 @@ class _HeaderBar extends StatelessWidget {
                 child: Text(
                   nickname,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.cormorantGaramond(
-                    fontSize: 22,
+                  style: Vt.headingLg.copyWith(
                     fontWeight: FontWeight.w500,
                     letterSpacing: 2,
                     color: Vt.textGoldSoft,
@@ -278,7 +397,20 @@ class _HeaderBar extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 40),
+              GestureDetector(
+                onTap: onMoreTap,
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.more_horiz_rounded,
+                    color: Vt.gold,
+                    size: 22,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -449,7 +581,6 @@ class _InputBar extends StatelessWidget {
               child: TextField(
                 controller: controller,
                 style: Vt.cnBody.copyWith(
-                  fontSize: 15,
                   color: Vt.textGoldSoft,
                 ),
                 cursorColor: Vt.gold,
@@ -459,7 +590,6 @@ class _InputBar extends StatelessWidget {
                 decoration: InputDecoration(
                   hintText: '说一句…',
                   hintStyle: Vt.cnBody.copyWith(
-                    fontSize: 15,
                     color: Vt.gold.withValues(alpha: 0.35),
                     fontStyle: FontStyle.italic,
                   ),

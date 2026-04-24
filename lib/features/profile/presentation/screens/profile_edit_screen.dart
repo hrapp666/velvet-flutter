@@ -216,7 +216,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                             '编  辑  资  料',
                             textAlign: TextAlign.center,
                             style: Vt.cnHeading.copyWith(
-                              fontSize: 17,
                               letterSpacing: 6,
                               color: Vt.gold,
                             ),
@@ -244,7 +243,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                                 : Text(
                                     '保 存',
                                     style: Vt.cnLabel.copyWith(
-                                      fontSize: 13,
+                                      fontSize: Vt.tsm,
                                       letterSpacing: 3,
                                       color: Vt.gold,
                                     ),
@@ -300,8 +299,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                                   ? Center(
                                       child: Text(
                                         'V',
-                                        style: GoogleFonts.cormorantGaramond(
-                                          fontSize: 48,
+                                        style: Vt.displayMd.copyWith(
+                                          fontSize: Vt.t2xl,
                                           fontWeight: FontWeight.w500,
                                           color: Vt.gold
                                               .withValues(alpha: 0.6),
@@ -394,7 +393,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                     TextField(
                       controller: _bioCtrl,
                       style: Vt.cnBody.copyWith(
-                        fontSize: 15,
                         color: Vt.textGoldSoft,
                         letterSpacing: 1,
                       ),
@@ -411,7 +409,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                         ),
                         counterStyle: Vt.label.copyWith(
                           color: Vt.textTertiary,
-                          fontSize: 10,
+                          fontSize: Vt.t2xs,
                         ),
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(

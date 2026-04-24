@@ -184,7 +184,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
             children: [
               Text('NO. ${o.id}',
                   style: Vt.label.copyWith(
-                    color: Vt.textTertiary, fontSize: 10,
+                    color: Vt.textTertiary, fontSize: Vt.t2xs,
                     letterSpacing: 2, fontStyle: FontStyle.italic,
                   )),
               status,
@@ -273,7 +273,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: Vt.s12, vertical: Vt.s4),
       decoration: BoxDecoration(border: Border.all(color: c)),
-      child: Text(o.status.label, style: Vt.cnLabel.copyWith(color: c, fontSize: 10)),
+      child: Text(o.status.label, style: Vt.cnLabel.copyWith(color: c, fontSize: Vt.t2xs)),
     );
   }
 

@@ -158,10 +158,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         cursorColor: Vt.gold,
                         decoration: InputDecoration(
                           hintText: '寻 找 一 件 好 物…',
-                          hintStyle: GoogleFonts.cormorantGaramond(
-                            fontSize: Vt.tmd,
+                          hintStyle: Vt.inputPlaceholder.copyWith(
                             color: Vt.gold.withValues(alpha: 0.4),
-                            fontStyle: FontStyle.italic,
                             letterSpacing: 4,
                           ),
                           border: InputBorder.none,
@@ -300,10 +298,7 @@ class _ResultTile extends StatelessWidget {
                     moment.title?.isNotEmpty == true
                         ? moment.title!
                         : '无 题',
-                    style: GoogleFonts.cormorantGaramond(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.5,
+                    style: Vt.headingSm.copyWith(
                       color: Vt.textGoldSoft,
                     ),
                     maxLines: 1,
@@ -312,10 +307,11 @@ class _ResultTile extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     moment.userNickname,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: Vt.label.copyWith(
                       color: Vt.gold.withValues(alpha: 0.7),
                       letterSpacing: 1.5,
-                      fontStyle: FontStyle.italic,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -324,15 +320,15 @@ class _ResultTile extends StatelessWidget {
                       TextSpan(children: [
                         TextSpan(
                           text: '¥ ',
-                          style: GoogleFonts.cormorantGaramond(
+                          style: Vt.price.copyWith(
                             fontSize: Vt.tsm,
                             color: Vt.gold,
                           ),
                         ),
                         TextSpan(
                           text: price.toStringAsFixed(0),
-                          style: GoogleFonts.cormorantGaramond(
-                            fontSize: 22,
+                          style: Vt.price.copyWith(
+                            fontSize: Vt.tlg,
                             fontWeight: FontWeight.w500,
                             color: Vt.gold,
                             letterSpacing: 1,
@@ -353,8 +349,8 @@ class _ResultTile extends StatelessWidget {
     return Center(
       child: Text(
         'V',
-        style: GoogleFonts.cormorantGaramond(
-          fontSize: 32,
+        style: Vt.displayMd.copyWith(
+          fontSize: Vt.t2xl,
           fontWeight: FontWeight.w500,
           color: Vt.gold.withValues(alpha: 0.5),
         ),

@@ -16,6 +16,7 @@ import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../moment/data/models/moment_model.dart';
 import '../../../moment/presentation/providers/moment_provider.dart';
+import '../../../safety/safety_dialogs.dart';
 
 class UserPublicScreen extends ConsumerStatefulWidget {
   final int userId;
@@ -82,6 +83,109 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
       if (!mounted) return;
       VelvetToast.show(context, '失败：$e', isError: true);
     }
+  }
+
+  /// 举报 / 拉黑 菜单（Apple UGC 1.2 合规）
+  Future<void> _showSafetyMenu(UserProfile user) async {
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.65),
+      builder: (sheetCtx) {
+        final padding = MediaQuery.paddingOf(sheetCtx);
+        return ClipRRect(
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(Vt.rLg)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: Container(
+              color: Vt.bgElevated.withValues(alpha: 0.92),
+              padding: EdgeInsets.only(
+                top: Vt.s16,
+                bottom: padding.bottom + Vt.s16,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _sheetTile(
+                    sheetCtx,
+                    icon: Icons.flag_outlined,
+                    label: '举  报  此  用  户',
+                    value: 'report',
+                  ),
+                  _sheetTile(
+                    sheetCtx,
+                    icon: Icons.block_outlined,
+                    label: '拉  黑  此  用  户',
+                    value: 'block',
+                  ),
+                  _sheetTile(
+                    sheetCtx,
+                    icon: Icons.close,
+                    label: '取  消',
+                    value: null,
+                    muted: true,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    if (!mounted || choice == null) return;
+    switch (choice) {
+      case 'report':
+        await showReportDialog(
+          context,
+          ref,
+          targetType: ReportTargetType.user,
+          targetId: user.id,
+        );
+      case 'block':
+        final blocked = await showBlockDialog(
+          context,
+          ref,
+          userId: user.id,
+          nickname: user.nickname,
+        );
+        if (blocked && mounted) {
+          context.pop();
+        }
+    }
+  }
+
+  Widget _sheetTile(
+    BuildContext sheetCtx, {
+    required IconData icon,
+    required String label,
+    required String? value,
+    bool muted = false,
+  }) {
+    return InkWell(
+      onTap: () => Navigator.of(sheetCtx).pop(value),
+      child: Padding(
+        padding:
+            const EdgeInsets.symmetric(horizontal: Vt.s24, vertical: Vt.s16),
+        child: Row(
+          children: [
+            Icon(icon,
+                color: muted ? Vt.textTertiary : Vt.gold, size: 20),
+            const SizedBox(width: Vt.s16),
+            Expanded(
+              child: Text(
+                label,
+                style: Vt.cnBody.copyWith(
+                  color: muted ? Vt.textTertiary : Vt.textPrimary,
+                  letterSpacing: 2,
+                  fontSize: Vt.tmd,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -196,10 +300,12 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
                         child: Text(
                           user.nickname,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.cormorantGaramond(
-                            fontSize: 44,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: Vt.displayMd.copyWith(
+                            fontSize: Vt.t2xl,
                             fontWeight: FontWeight.w500,
-                            letterSpacing: 3,
+                            letterSpacing: -0.5,
                             color: Colors.white,
                             height: 1,
                             shadows: const [
@@ -215,11 +321,11 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
                     const SizedBox(height: 8),
                     Text(
                       '@${user.username}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Vt.label.copyWith(
                         color: Vt.textSecondary,
-                        fontSize: 13,
                         letterSpacing: 2,
-                        fontStyle: FontStyle.italic,
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -264,8 +370,9 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
                           _ => '— 尚 未 留 言 —',
                         },
                         textAlign: TextAlign.center,
+                        maxLines: 6,
+                        overflow: TextOverflow.ellipsis,
                         style: Vt.cnBody.copyWith(
-                          fontSize: Vt.tsm,
                           color: Vt.textSecondary,
                           letterSpacing: 1.5,
                           fontStyle: FontStyle.italic,
@@ -332,7 +439,6 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
                                   child: Text(
                                     _following ? '已  关  注' : '关  注',
                                     style: Vt.cnButton.copyWith(
-                                      fontSize: 15,
                                       letterSpacing: 6,
                                       color: Vt.gold,
                                     ),
@@ -359,7 +465,7 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
                                   child: Text(
                                     '私  下  聊',
                                     style: Vt.cnButton.copyWith(
-                                      fontSize: 15,
+                                      fontSize: Vt.tsm,
                                       letterSpacing: 6,
                                       color: Vt.textSecondary,
                                     ),
@@ -381,7 +487,6 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
                           Text(
                             '她 的 发 布',
                             style: Vt.cnHeading.copyWith(
-                              fontSize: 15,
                               letterSpacing: 5,
                               color: Vt.gold,
                             ),
@@ -464,6 +569,22 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
                             ),
                           ),
                         ),
+                        const Spacer(),
+                        if (_user != null)
+                          GestureDetector(
+                            onTap: () => _showSafetyMenu(_user!),
+                            behavior: HitTestBehavior.opaque,
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.more_horiz_rounded,
+                                color: Vt.gold,
+                                size: 22,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -489,8 +610,7 @@ class _Stat extends StatelessWidget {
       children: [
         Text(
           num,
-          style: GoogleFonts.cormorantGaramond(
-            fontSize: Vt.txl,
+          style: Vt.headingLg.copyWith(
             fontWeight: FontWeight.w500,
             color: Vt.gold,
             height: 1,
@@ -499,11 +619,11 @@ class _Stat extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: Vt.label.copyWith(
             color: Vt.textSecondary,
-            fontSize: 9,
             letterSpacing: 2,
-            fontStyle: FontStyle.italic,
           ),
         ),
       ],
@@ -547,9 +667,7 @@ class _MomentRow extends StatelessWidget {
                     moment.title?.isNotEmpty == true
                         ? moment.title!
                         : '无 题',
-                    style: GoogleFonts.cormorantGaramond(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w500,
+                    style: Vt.headingSm.copyWith(
                       color: Vt.textGoldSoft,
                     ),
                     maxLines: 1,
@@ -559,10 +677,8 @@ class _MomentRow extends StatelessWidget {
                   if (moment.hasItem && moment.itemPriceCents != null)
                     Text(
                       '¥ ${(moment.itemPriceCents! / 100).toStringAsFixed(0)}',
-                      style: GoogleFonts.cormorantGaramond(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: Vt.gold,
+                      style: Vt.price.copyWith(
+                        fontSize: Vt.tlg,
                         letterSpacing: 1,
                       ),
                     ),
@@ -579,8 +695,7 @@ class _MomentRow extends StatelessWidget {
     return Center(
       child: Text(
         'V',
-        style: GoogleFonts.cormorantGaramond(
-          fontSize: Vt.txl,
+        style: Vt.headingLg.copyWith(
           fontWeight: FontWeight.w500,
           color: Vt.gold.withValues(alpha: 0.5),
         ),

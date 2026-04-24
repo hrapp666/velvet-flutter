@@ -167,13 +167,13 @@ class _State extends ConsumerState<MerchantApplyScreen> {
                   children: [
                     Text('BECOME A SELLER',
                         style: Vt.label.copyWith(
-                          color: Vt.gold, fontSize: 10, letterSpacing: 3,
+                          color: Vt.gold, fontSize: Vt.t2xs, letterSpacing: 3,
                           fontStyle: FontStyle.italic,
                         )),
                     const SizedBox(height: Vt.s12),
                     Text('成 为 卖 家',
                         style: Vt.cnDisplay.copyWith(
-                          color: Vt.gold, fontSize: 32, letterSpacing: 8,
+                          color: Vt.gold, fontSize: Vt.t2xl, letterSpacing: 8,
                           shadows: const [Shadow(color: Color(0x80C9A961), blurRadius: 30)],
                         )),
                     const SizedBox(height: Vt.s12),
@@ -304,7 +304,7 @@ class _State extends ConsumerState<MerchantApplyScreen> {
           const SizedBox(width: Vt.s12),
           Text(en,
               style: Vt.label.copyWith(
-                color: Vt.textTertiary, fontSize: 10,
+                color: Vt.textTertiary, fontSize: Vt.t2xs,
                 fontStyle: FontStyle.italic, letterSpacing: 2,
               )),
           const Expanded(

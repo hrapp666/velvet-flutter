@@ -152,7 +152,7 @@ class FavoritesScreen extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Vt.cnBody.copyWith(
-                    color: Vt.textPrimary, fontSize: 13,
+                    color: Vt.textPrimary, fontSize: Vt.tsm,
                   ),
                 ),
                 if (m.hasItem == true && m.itemPriceCents != null) ...[
@@ -160,7 +160,7 @@ class FavoritesScreen extends ConsumerWidget {
                   Text(
                     '¥ ${(m.itemPriceCents! / 100).toStringAsFixed(0)}',
                     style: Vt.price.copyWith(
-                      color: Vt.gold, fontSize: 15,
+                      color: Vt.gold, fontSize: Vt.tsm,
                     ),
                   ),
                 ],
