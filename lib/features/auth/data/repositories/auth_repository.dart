@@ -15,6 +15,8 @@ abstract class AuthRepository {
     required String username,
     required String password,
     required String nickname,
+    required DateTime birthday,
+    required bool agreedTerms,
   });
 
   Future<AuthResult> login({
@@ -36,12 +38,20 @@ class AuthRepositoryImpl implements AuthRepository {
     required String username,
     required String password,
     required String nickname,
+    required DateTime birthday,
+    required bool agreedTerms,
   }) async {
     try {
+      final birthdayStr =
+          '${birthday.year.toString().padLeft(4, '0')}-'
+          '${birthday.month.toString().padLeft(2, '0')}-'
+          '${birthday.day.toString().padLeft(2, '0')}';
       final res = await _api.dio.post('/api/v1/auth/register', data: {
         'username': username,
         'password': password,
         'nickname': nickname,
+        'birthday': birthdayStr,
+        'agreedTerms': agreedTerms,
       });
       return _parseAuthResponse(res.data as Map<String, dynamic>);
     } on DioException catch (e) {

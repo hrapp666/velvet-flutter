@@ -119,7 +119,7 @@ class WalletScreen extends ConsumerWidget {
               Container(width: 36, height: 1, color: Vt.gold.withValues(alpha: 0.5)),
               const SizedBox(width: Vt.s12),
               Text('MY VELVET WALLET',
-                  style: Vt.label.copyWith(color: Vt.gold, fontSize: 10, letterSpacing: 3.5)),
+                  style: Vt.label.copyWith(color: Vt.gold, fontSize: Vt.t2xs, letterSpacing: 3.5)),
               const SizedBox(width: Vt.s12),
               Container(width: 36, height: 1, color: Vt.gold.withValues(alpha: 0.5)),
             ],
@@ -191,7 +191,7 @@ class WalletScreen extends ConsumerWidget {
       children: [
         Text(value, style: Vt.bodyLg.copyWith(color: Vt.textPrimary)),
         const SizedBox(height: Vt.s4),
-        Text(label, style: Vt.cnLabel.copyWith(color: Vt.textTertiary, fontSize: 10)),
+        Text(label, style: Vt.cnLabel.copyWith(color: Vt.textTertiary, fontSize: Vt.t2xs)),
       ],
     );
   }
@@ -206,7 +206,7 @@ class WalletScreen extends ConsumerWidget {
           const SizedBox(width: Vt.s12),
           Text('History',
               style: Vt.label.copyWith(
-                color: Vt.textTertiary, fontSize: 10, letterSpacing: 2,
+                color: Vt.textTertiary, fontSize: Vt.t2xs, letterSpacing: 2,
                 fontStyle: FontStyle.italic,
               )),
         ],
@@ -243,7 +243,7 @@ class WalletScreen extends ConsumerWidget {
                   const SizedBox(height: Vt.s4),
                   Text(
                     '${wd.method.label} · ${_maskAccount(wd.account)} · ${_fmtDate(wd.createdAt)}',
-                    style: Vt.cnLabel.copyWith(color: Vt.textTertiary, fontSize: 10),
+                    style: Vt.cnLabel.copyWith(color: Vt.textTertiary, fontSize: Vt.t2xs),
                   ),
                 ],
               ),
@@ -255,7 +255,7 @@ class WalletScreen extends ConsumerWidget {
               ),
               child: Text(
                 wd.status.label,
-                style: Vt.label.copyWith(color: statusColor, fontSize: 10),
+                style: Vt.label.copyWith(color: statusColor, fontSize: Vt.t2xs),
               ),
             ),
           ],
@@ -270,7 +270,7 @@ class WalletScreen extends ConsumerWidget {
       child: Column(
         children: [
           Text('❦', style: Vt.displayLg.copyWith(
-            color: Vt.gold.withValues(alpha: 0.4), fontSize: 32,
+            color: Vt.gold.withValues(alpha: 0.4), fontSize: Vt.t2xl,
           )),
           const SizedBox(height: Vt.s12),
           Text('— 还 没 有 提 现 —',
@@ -278,7 +278,7 @@ class WalletScreen extends ConsumerWidget {
           const SizedBox(height: Vt.s4),
           Text('NO WITHDRAWAL YET',
               style: Vt.label.copyWith(
-                color: Vt.textDisabled, fontSize: 10,
+                color: Vt.textDisabled, fontSize: Vt.t2xs,
                 fontStyle: FontStyle.italic,
               )),
         ],

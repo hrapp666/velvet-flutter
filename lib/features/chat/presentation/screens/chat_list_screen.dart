@@ -147,8 +147,7 @@ class ChatListScreen extends ConsumerWidget {
                     children: [
                       Text(
                         '私  语',
-                        style: Vt.cnHeading.copyWith(
-                          fontSize: 20,
+                        style: Vt.cnDisplay.copyWith(
                           letterSpacing: 8,
                           color: Vt.gold,
                         ),
@@ -261,8 +260,7 @@ class _ConvTile extends StatelessWidget {
                   conv.otherUserNickname.isNotEmpty
                       ? conv.otherUserNickname.substring(0, 1)
                       : '·',
-                  style: GoogleFonts.cormorantGaramond(
-                    fontSize: 22,
+                  style: Vt.headingLg.copyWith(
                     fontWeight: FontWeight.w500,
                     color: Vt.gold,
                   ),
@@ -281,10 +279,7 @@ class _ConvTile extends StatelessWidget {
                       Expanded(
                         child: Text(
                           conv.otherUserNickname,
-                          style: GoogleFonts.cormorantGaramond(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.5,
+                          style: Vt.headingSm.copyWith(
                             color: Vt.textGoldSoft,
                           ),
                           maxLines: 1,
@@ -305,7 +300,6 @@ class _ConvTile extends StatelessWidget {
                   Text(
                     conv.lastMessageContent ?? '— 暂无消息 —',
                     style: Vt.cnBody.copyWith(
-                      fontSize: 13,
                       color: Vt.textSecondary,
                       letterSpacing: 0.5,
                       height: 1.4,

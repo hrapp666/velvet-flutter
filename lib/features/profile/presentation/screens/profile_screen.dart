@@ -17,6 +17,7 @@ import '../../../../shared/theme/theme_provider.dart';
 import '../../../../shared/widgets/micro/spring_tap.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../safety/safety_dialogs.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -145,10 +146,12 @@ class _ProfileBody extends ConsumerWidget {
             child: Text(
               user.nickname,
               textAlign: TextAlign.center,
-              style: GoogleFonts.cormorantGaramond(
-                fontSize: 48,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Vt.displayMd.copyWith(
+                fontSize: Vt.t2xl,
                 fontWeight: FontWeight.w500,
-                letterSpacing: 4,
+                letterSpacing: -0.5,
                 color: Colors.white,
                 height: 1,
                 shadows: const [
@@ -165,11 +168,11 @@ class _ProfileBody extends ConsumerWidget {
           // @username
           Text(
             '@${user.username}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: Vt.label.copyWith(
               color: Vt.textSecondary,
-              fontSize: 13,
               letterSpacing: 2,
-              fontStyle: FontStyle.italic,
             ),
           ),
           if (user.isMerchant) ...[
@@ -183,7 +186,8 @@ class _ProfileBody extends ConsumerWidget {
               child: Text(
                 '✦ 认 证 商 家',
                 style: Vt.label.copyWith(
-                  color: Vt.gold, fontSize: 10,
+                  color: Vt.gold,
+                  fontSize: Vt.t2xs,
                   letterSpacing: 2,
                 ),
               ),
@@ -198,7 +202,8 @@ class _ProfileBody extends ConsumerWidget {
               child: Text(
                 '认 证 审 核 中',
                 style: Vt.label.copyWith(
-                  color: Vt.gold.withValues(alpha: 0.7), fontSize: 10,
+                  color: Vt.gold.withValues(alpha: 0.7),
+                  fontSize: Vt.t2xs,
                   letterSpacing: 2,
                 ),
               ),
@@ -245,8 +250,9 @@ class _ProfileBody extends ConsumerWidget {
                   ? user.bio!
                   : '私 藏 · 流 转 · 懂 的 人 来',
               textAlign: TextAlign.center,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
               style: Vt.cnBody.copyWith(
-                fontSize: 15,
                 color: Vt.textSecondary,
                 letterSpacing: 2,
                 fontStyle: FontStyle.italic,
@@ -351,6 +357,19 @@ class _ProfileBody extends ConsumerWidget {
           _LanguageSection(ref: ref),
           const SizedBox(height: 16),
 
+          // 注销账号（Apple 5.1.1(v) 合规）
+          _GhostBtn(
+            label: '注  销  账  号',
+            onTap: () async {
+              final ok = await showDeleteAccountDialog(context, ref);
+              if (!ok) return;
+              await ref.read(authNotifierProvider.notifier).logout();
+              if (!context.mounted) return;
+              context.go('/login');
+            },
+          ),
+          const SizedBox(height: 16),
+
           // 退出登录
           _GhostBtn(
             label: '退  出  登  录',
@@ -378,22 +397,22 @@ class _StatItem extends StatelessWidget {
       children: [
         Text(
           num,
-          style: GoogleFonts.cormorantGaramond(
-            fontSize: 32,
+          style: Vt.displayMd.copyWith(
+            fontSize: Vt.t2xl,
             fontWeight: FontWeight.w500,
             color: Vt.gold,
-            letterSpacing: 1,
+            letterSpacing: -0.3,
             height: 1,
           ),
         ),
         const SizedBox(height: 6),
         Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: Vt.label.copyWith(
             color: Vt.textSecondary,
-            fontSize: 9,
             letterSpacing: 2,
-            fontStyle: FontStyle.italic,
           ),
         ),
       ],

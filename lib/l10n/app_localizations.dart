@@ -1,337 +1,355 @@
-// ============================================================================
-// Velvet · AppLocalizations (v25 · I1)
-// ----------------------------------------------------------------------------
-// 手写版本 · API 与 `flutter gen-l10n` 生成物完全兼容
-//
-// 为什么手写？
-//   本次 I1 在 worktree 里交付,这台 machine 暂时没有 flutter CLI,跑不了
-//   `flutter gen-l10n`。为了让 i18n 立刻生效（ARB 接入 / locale provider /
-//   widget 可以 import 就用）,先手写一份等价的委托 + 类实现。
-//
-// 主人在 velvet-flutter/ 根目录跑一次 `flutter gen-l10n` 之后,flutter_tools
-// 会读取 l10n.yaml + lib/l10n/app_en.arb / app_zh.arb 重新生成这个文件,
-// 覆盖这份手写版本。生成后的文件 API 与本文件一致,调用方无需改动。
-//
-// 非 null getter API 与 `nullable-getter: false` 一致:
-//   AppLocalizations.of(context)  //  → AppLocalizations?  (Flutter 标准)
-//   使用方式：AppLocalizations.of(context)!.tabAll  或 .of(context) 判空
-// ============================================================================
+import 'dart:async';
 
-import 'package:flutter/foundation.dart' show SynchronousFuture;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
 
-/// 应用级本地化入口 · 对齐 `flutter gen-l10n` 生成的 AppLocalizations 结构。
+import 'app_localizations_en.dart';
+import 'app_localizations_zh.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'l10n/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale) : localeName = locale;
+  AppLocalizations(String locale)
+      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
-  /// Delegate 入口 · 与 gen-l10n 生成物同名。
-  static const LocalizationsDelegate<AppLocalizations> delegate =
-      _AppLocalizationsDelegate();
-
-  /// 必须同时挂上这 4 个 delegate,才能让 Material / Widgets / Cupertino
-  /// 的内置 widget（例如 DatePicker / TextField 菜单）跟随 locale。
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
-      <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-  ];
-
-  /// 支持语言 · App 目前只声明 zh + en。扩展时同时加 ARB 与 _lookup。
-  static const List<Locale> supportedLocales = <Locale>[
-    Locale('en'),
-    Locale('zh'),
-  ];
-
-  /// 从 context 拿 AppLocalizations · null 表示 delegate 还未挂上。
   static AppLocalizations? of(BuildContext context) {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  // ── Keys (mirror ARB files) ─────────────────────────────────────────
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+    delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+  ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('en'),
+    Locale('zh')
+  ];
+
+  /// Display name of the app, used in launcher and splash.
+  ///
+  /// In en, this message translates to:
+  /// **'Velvet'**
   String get appName;
 
+  /// Feed tab · all moments.
+  ///
+  /// In en, this message translates to:
+  /// **'ALL'**
   String get tabAll;
+
+  /// Feed tab · followed users' moments.
+  ///
+  /// In en, this message translates to:
+  /// **'FOLLOW'**
   String get tabFollow;
+
+  /// Feed tab · same-city / nearby moments.
+  ///
+  /// In en, this message translates to:
+  /// **'NEARBY'**
   String get tabNearby;
+
+  /// Feed tab · personalized recommendations.
+  ///
+  /// In en, this message translates to:
+  /// **'FOR YOU'**
   String get tabRecommend;
 
+  /// Retry CTA on error / empty states (RetryChip default label).
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY'**
   String get retryButton;
+
+  /// Generic loading indicator label.
+  ///
+  /// In en, this message translates to:
+  /// **'LOADING'**
   String get loadingLabel;
 
+  /// Empty state title on the main feed when zero moments exist.
+  ///
+  /// In en, this message translates to:
+  /// **'— NO STORIES YET —'**
   String get emptyFeedTitle;
+
+  /// Empty state subtitle inviting user to publish their first moment.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + below to hang your first'**
   String get emptyFeedSubtitle;
 
+  /// Empty state title on the recommend tab when no personalized results are available.
+  ///
+  /// In en, this message translates to:
+  /// **'— NO TASTE MATCH YET —'**
   String get emptyRecommendTitle;
+
+  /// Empty state subtitle on recommend tab encouraging interaction.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap more hearts, let time find your match'**
   String get emptyRecommendSubtitle;
 
+  /// Empty state title on chat list when there are zero conversations.
+  ///
+  /// In en, this message translates to:
+  /// **'— NO WHISPERS YET —'**
   String get emptyChatTitle;
+
+  /// Empty state subtitle on chat list · editorial reassurance.
+  ///
+  /// In en, this message translates to:
+  /// **'The right ones will find you'**
   String get emptyChatSubtitle;
 
+  /// Search screen initial empty state title (before any query is entered).
+  ///
+  /// In en, this message translates to:
+  /// **'What are you looking for'**
   String get emptySearchInitialTitle;
+
+  /// Search screen initial empty state subtitle suggesting sample queries.
+  ///
+  /// In en, this message translates to:
+  /// **'Try silk  vintage  night ...'**
   String get emptySearchInitialSubtitle;
 
+  /// Search screen no-result empty state title.
+  ///
+  /// In en, this message translates to:
+  /// **'— NOT HERE YET —'**
   String get emptySearchNoResultTitle;
+
+  /// Search screen no-result subtitle inviting user to rephrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Try another word'**
   String get emptySearchNoResultSubtitle;
 
+  /// Orders screen empty state title (buyer / seller tab).
+  ///
+  /// In en, this message translates to:
+  /// **'— NO ORDERS —'**
   String get emptyOrderBuyerTitle;
+
+  /// Orders screen buyer-side empty subtitle inviting discovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse around, find something that moves you'**
   String get emptyOrderBuyerSubtitle;
+
+  /// Orders screen seller-side empty subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No trades yet, good things find their people'**
   String get emptyOrderSellerSubtitle;
 
+  /// Favorites screen empty state title.
+  ///
+  /// In en, this message translates to:
+  /// **'— NO SAVES YET —'**
   String get emptyFavoritesTitle;
+
+  /// Favorites screen empty state subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'tap heart to keep what moves you'**
   String get emptyFavoritesSubtitle;
 
+  /// Generic error / not-found title.
+  ///
+  /// In en, this message translates to:
+  /// **'— NOT FOUND —'**
   String get errorGenericTitle;
+
+  /// Generic network failure message.
+  ///
+  /// In en, this message translates to:
+  /// **'Network error, please try again'**
   String get errorNetworkMessage;
 
+  /// Onboarding skip CTA (J2 owned file · declared here so locale is complete).
+  ///
+  /// In en, this message translates to:
+  /// **'SKIP'**
   String get onboardingSkip;
+
+  /// Onboarding final CTA.
+  ///
+  /// In en, this message translates to:
+  /// **'BEGIN'**
   String get onboardingBegin;
+
+  /// Onboarding next-page CTA.
+  ///
+  /// In en, this message translates to:
+  /// **'NEXT'**
   String get onboardingNext;
 
+  /// Appearance mode · light.
+  ///
+  /// In en, this message translates to:
+  /// **'LIGHT'**
   String get themeLight;
+
+  /// Appearance mode · dark.
+  ///
+  /// In en, this message translates to:
+  /// **'DARK'**
   String get themeDark;
+
+  /// Appearance mode · follow system.
+  ///
+  /// In en, this message translates to:
+  /// **'SYSTEM'**
   String get themeSystem;
+
+  /// Profile screen appearance section header.
+  ///
+  /// In en, this message translates to:
+  /// **'APPEARANCE'**
   String get themeSectionTitle;
 
+  /// Profile screen language section header.
+  ///
+  /// In en, this message translates to:
+  /// **'LANGUAGE'**
   String get languageSectionTitle;
+
+  /// Language selection · follow device locale.
+  ///
+  /// In en, this message translates to:
+  /// **'SYSTEM'**
   String get languageSystem;
+
+  /// Language selection · English label (always shown in English).
+  ///
+  /// In en, this message translates to:
+  /// **'ENGLISH'**
   String get languageEnglish;
+
+  /// Language selection · Chinese label (always shown in Chinese, intentionally untranslated).
+  ///
+  /// In en, this message translates to:
+  /// **'中 文'**
   String get languageChinese;
 
+  /// Moderation rejection message shown on publish.
+  ///
+  /// In en, this message translates to:
+  /// **'Content contains inappropriate information'**
   String get contentViolation;
+
+  /// Moderation forbidden state.
+  ///
+  /// In en, this message translates to:
+  /// **'Forbidden content'**
   String get moderationForbidden;
 }
-
-// ============================================================================
-// Delegate
-// ============================================================================
 
 class _AppLocalizationsDelegate
     extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
-  bool isSupported(Locale locale) {
-    // 只看 languageCode,countryCode 忽略(zh-CN / zh-TW 都落到 zh,en-US /
-    // en-GB 都落到 en)。
-    return <String>{'en', 'zh'}.contains(locale.languageCode);
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
   }
 
   @override
-  Future<AppLocalizations> load(Locale locale) {
-    return SynchronousFuture<AppLocalizations>(_lookup(locale));
-  }
+  bool isSupported(Locale locale) =>
+      <String>['en', 'zh'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
-AppLocalizations _lookup(Locale locale) {
-  return switch (locale.languageCode) {
-    'zh' => _AppLocalizationsZh(),
-    _ => _AppLocalizationsEn(),
-  };
-}
+AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'en':
+      return AppLocalizationsEn();
+    case 'zh':
+      return AppLocalizationsZh();
+  }
 
-// ============================================================================
-// English · keep aligned with lib/l10n/app_en.arb
-// ============================================================================
-
-class _AppLocalizationsEn extends AppLocalizations {
-  _AppLocalizationsEn() : super('en');
-
-  @override
-  String get appName => 'Velvet';
-
-  @override
-  String get tabAll => 'ALL';
-  @override
-  String get tabFollow => 'FOLLOW';
-  @override
-  String get tabNearby => 'NEARBY';
-  @override
-  String get tabRecommend => 'FOR YOU';
-
-  @override
-  String get retryButton => 'RETRY';
-  @override
-  String get loadingLabel => 'LOADING';
-
-  @override
-  String get emptyFeedTitle => '— NO STORIES YET —';
-  @override
-  String get emptyFeedSubtitle => 'Tap + below to hang your first';
-
-  @override
-  String get emptyRecommendTitle => '— NO TASTE MATCH YET —';
-  @override
-  String get emptyRecommendSubtitle =>
-      'Tap more hearts, let time find your match';
-
-  @override
-  String get emptyChatTitle => '— NO WHISPERS YET —';
-  @override
-  String get emptyChatSubtitle => 'The right ones will find you';
-
-  @override
-  String get emptySearchInitialTitle => 'What are you looking for';
-  @override
-  String get emptySearchInitialSubtitle => 'Try silk  vintage  night ...';
-
-  @override
-  String get emptySearchNoResultTitle => '— NOT HERE YET —';
-  @override
-  String get emptySearchNoResultSubtitle => 'Try another word';
-
-  @override
-  String get emptyOrderBuyerTitle => '— NO ORDERS —';
-  @override
-  String get emptyOrderBuyerSubtitle =>
-      'Browse around, find something that moves you';
-  @override
-  String get emptyOrderSellerSubtitle =>
-      'No trades yet, good things find their people';
-
-  @override
-  String get emptyFavoritesTitle => '— NO SAVES YET —';
-  @override
-  String get emptyFavoritesSubtitle => 'tap heart to keep what moves you';
-
-  @override
-  String get errorGenericTitle => '— NOT FOUND —';
-  @override
-  String get errorNetworkMessage => 'Network error, please try again';
-
-  @override
-  String get onboardingSkip => 'SKIP';
-  @override
-  String get onboardingBegin => 'BEGIN';
-  @override
-  String get onboardingNext => 'NEXT';
-
-  @override
-  String get themeLight => 'LIGHT';
-  @override
-  String get themeDark => 'DARK';
-  @override
-  String get themeSystem => 'SYSTEM';
-  @override
-  String get themeSectionTitle => 'APPEARANCE';
-
-  @override
-  String get languageSectionTitle => 'LANGUAGE';
-  @override
-  String get languageSystem => 'SYSTEM';
-  @override
-  String get languageEnglish => 'ENGLISH';
-  @override
-  String get languageChinese => '中 文';
-
-  @override
-  String get contentViolation => 'Content contains inappropriate information';
-  @override
-  String get moderationForbidden => 'Forbidden content';
-}
-
-// ============================================================================
-// 中文 · keep aligned with lib/l10n/app_zh.arb
-// Velvet editorial 调性 · 空格分隔单字
-// ============================================================================
-
-class _AppLocalizationsZh extends AppLocalizations {
-  _AppLocalizationsZh() : super('zh');
-
-  @override
-  String get appName => 'Velvet';
-
-  @override
-  String get tabAll => '全 部';
-  @override
-  String get tabFollow => '关 注';
-  @override
-  String get tabNearby => '同 城';
-  @override
-  String get tabRecommend => '推 荐';
-
-  @override
-  String get retryButton => '重 试';
-  @override
-  String get loadingLabel => '加 载 中';
-
-  @override
-  String get emptyFeedTitle => '— 还 没 有 故 事 —';
-  @override
-  String get emptyFeedSubtitle => '点底部 + 来挂第一件';
-
-  @override
-  String get emptyRecommendTitle => '— 还 没 懂 你 的 品 味 —';
-  @override
-  String get emptyRecommendSubtitle => '多点几个心动，让时间帮你找知己';
-
-  @override
-  String get emptyChatTitle => '— 还 没 有 私 语 —';
-  @override
-  String get emptyChatSubtitle => '懂的人 · 自然会来找你';
-
-  @override
-  String get emptySearchInitialTitle => '懂 的 人 · 自 然 知 道 找 什 么';
-  @override
-  String get emptySearchInitialSubtitle => '试试  真丝  古董  夜里  ……';
-
-  @override
-  String get emptySearchNoResultTitle => '— 此 物 尚 未 出 现 —';
-  @override
-  String get emptySearchNoResultSubtitle => '换一个词 · 再试';
-
-  @override
-  String get emptyOrderBuyerTitle => '— 暂 无 订 单 —';
-  @override
-  String get emptyOrderBuyerSubtitle => '逛 逛 看 · 或 许 有 心 动 的';
-  @override
-  String get emptyOrderSellerSubtitle => '还 没 有 成 交 · 好 物 自 会 遇 见 人';
-
-  @override
-  String get emptyFavoritesTitle => '— 还 没 有 收 藏 —';
-  @override
-  String get emptyFavoritesSubtitle => '心动的 · 按一下 ♡ 留下来';
-
-  @override
-  String get errorGenericTitle => '— 暂 时 找 不 到 —';
-  @override
-  String get errorNetworkMessage => '网络开小差 · 稍等再试';
-
-  @override
-  String get onboardingSkip => '跳 过';
-  @override
-  String get onboardingBegin => '开 始';
-  @override
-  String get onboardingNext => '下 一 页';
-
-  @override
-  String get themeLight => '明 亮';
-  @override
-  String get themeDark => '暗 黑';
-  @override
-  String get themeSystem => '跟 随';
-  @override
-  String get themeSectionTitle => '外 观';
-
-  @override
-  String get languageSectionTitle => '语 言';
-  @override
-  String get languageSystem => '跟 随';
-  @override
-  String get languageEnglish => 'ENGLISH';
-  @override
-  String get languageChinese => '中 文';
-
-  @override
-  String get contentViolation => '内容包含不恰当的信息';
-  @override
-  String get moderationForbidden => '内容无法发布';
+  throw FlutterError(
+      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+      'an issue with the localizations generation tool. Please file an issue '
+      'on GitHub with a reproducible sample app and the gen-l10n configuration '
+      'that was used.');
 }

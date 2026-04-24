@@ -37,7 +37,13 @@ class AuthNotifier extends AsyncNotifier<UserProfile?> {
     });
   }
 
-  Future<void> register(String username, String password, String nickname) async {
+  Future<void> register(
+    String username,
+    String password,
+    String nickname, {
+    required DateTime birthday,
+    required bool agreedTerms,
+  }) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final repo = ref.read(authRepositoryProvider);
@@ -45,6 +51,8 @@ class AuthNotifier extends AsyncNotifier<UserProfile?> {
         username: username,
         password: password,
         nickname: nickname,
+        birthday: birthday,
+        agreedTerms: agreedTerms,
       );
       // 确保注册后一定拿到 user · 否则 feed 页会显示"未登录"
       final user = result.user ?? await repo.currentUser();

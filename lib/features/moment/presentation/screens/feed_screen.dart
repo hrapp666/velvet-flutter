@@ -534,7 +534,7 @@ class _GlassHeader extends StatelessWidget {
               Text(
                 'VELVET',
                 style: Vt.displayMd.copyWith(
-                  fontSize: 22,
+                  fontSize: Vt.tlg,
                   letterSpacing: 4.0,
                   color: Vt.textPrimary,
                   shadows: [

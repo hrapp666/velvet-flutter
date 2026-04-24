@@ -284,17 +284,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
             ),
 
             // 底部 status text
-            const Positioned(
+            Positioned(
               bottom: 24,
               left: 0,
               right: 0,
               child: Center(
                 child: Text(
                   'CONNECTING',
-                  style: TextStyle(
-                    fontFamily: 'Cormorant Garamond',
-                    fontSize: 9,
-                    fontStyle: FontStyle.italic,
+                  style: Vt.caption.copyWith(
+                    fontSize: Vt.t2xs,
                     color: Vt.textTertiary,
                     letterSpacing: 2,
                   ),

@@ -267,7 +267,6 @@ class _SlideView extends StatelessWidget {
               child: Text(
                 slide.display,
                 style: Vt.displayHero.copyWith(
-                  fontSize: 64,
                   color: Colors.white,
                   height: 1.0,
                   letterSpacing: 4,

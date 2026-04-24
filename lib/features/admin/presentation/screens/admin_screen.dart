@@ -103,7 +103,7 @@ class AdminScreen extends ConsumerWidget {
             const SizedBox(width: Vt.s12),
             Text('TODAY · OVERVIEW',
                 style: Vt.label.copyWith(
-                  color: Vt.gold, fontSize: 10, letterSpacing: 3,
+                  color: Vt.gold, fontSize: Vt.t2xs, letterSpacing: 3,
                   fontStyle: FontStyle.italic,
                 )),
             const SizedBox(width: Vt.s12),
@@ -186,7 +186,7 @@ class AdminScreen extends ConsumerWidget {
           Text(
             label,
             style: Vt.cnLabel.copyWith(
-              color: Vt.textTertiary, fontSize: 9,
+              color: Vt.textTertiary, fontSize: Vt.t2xs,
             ),
           ),
         ],
@@ -202,11 +202,11 @@ class AdminScreen extends ConsumerWidget {
       children: [
         Text('$label ',
             style: Vt.label.copyWith(
-              color: Vt.textTertiary, fontSize: 10,
+              color: Vt.textTertiary, fontSize: Vt.t2xs,
               fontStyle: FontStyle.italic,
             )),
         Text(value,
-            style: Vt.headingSm.copyWith(color: Vt.gold, fontSize: 13)),
+            style: Vt.headingSm.copyWith(color: Vt.gold, fontSize: Vt.tsm)),
       ],
     );
   }
