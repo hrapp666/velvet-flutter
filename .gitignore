@@ -1,71 +1,72 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-migrate_working_dir/
+# Velvet Flutter · gitignore
 
-# IntelliJ related
+# Dart / Flutter build artifacts
+**/build/
+**/.dart_tool/
+**/.pub/
+**/.pub-cache/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/pubspec.lock.bak
+.flutter/
+
+# IDE
+.idea/
+.vscode/
 *.iml
 *.ipr
 *.iws
-.idea/
+.DS_Store
 
-# VS Code related
-.vscode/
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Runner.xcworkspace/xcuserdata/
+ios/Runner.xcodeproj/xcuserdata/
+ios/Runner.xcodeproj/project.xcworkspace/xcuserdata/
+**/Pods/
+**/.symlinks/
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-.pub-cache/
-.pub/
-/build/
-pubspec.lock
+# Android
+android/.gradle/
+android/captures/
+android/local.properties
+android/key.properties
+android/app/release/
+android/app/debug/
+android/app/profile/
+**/.gradle/
+*.jks
+*.keystore
 
-# Symbolication related
-app.*.symbols
+# macOS / Linux / Windows desktop builds
+macos/Pods/
+macos/Flutter/ephemeral/
+linux/flutter/ephemeral/
+windows/flutter/ephemeral/
 
-# Obfuscation related
-app.*.map.json
+# Secrets / config
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# Logs / coverage
+*.log
+coverage/
+test/.test_coverage.dart
 
-# Platform-specific
-**/android/**/gradle-wrapper.jar
-**/android/.gradle
-**/android/captures/
-**/android/gradlew
-**/android/gradlew.bat
-**/android/local.properties
-**/android/**/GeneratedPluginRegistrant.java
-**/ios/Flutter/App.framework
-**/ios/Flutter/Flutter.framework
-**/ios/Flutter/Flutter.podspec
-**/ios/Flutter/Generated.xcconfig
-**/ios/Flutter/ephemeral
-**/ios/Flutter/app.flx
-**/ios/Flutter/app.zip
-**/ios/Flutter/flutter_assets/
-**/ios/Flutter/flutter_export_environment.sh
-**/ios/ServiceDefinitions.json
-**/ios/Runner/GeneratedPluginRegistrant.*
+# Generated localization
+**/l10n/.flutter_gen/
 
-# Exceptions
-!/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
-!**/ios/**/googlemaps-sdk-1.4.1.zip
-
-# Google Fonts cache
-google_fonts/
+# Misc
+*.bak
+*.swp

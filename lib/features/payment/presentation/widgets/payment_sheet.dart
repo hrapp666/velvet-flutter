@@ -2,6 +2,7 @@
 // PaymentSheet · 选择付款方式的 bottom sheet
 // ============================================================================
 
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,8 +35,25 @@ class _PaymentSheetBody extends ConsumerStatefulWidget {
 }
 
 class _PaymentSheetBodyState extends ConsumerState<_PaymentSheetBody> {
-  PaymentProvider _selected = PaymentProvider.mock;
+  PaymentProvider? _selected;
   bool _submitting = false;
+
+  /// 计算可见的支付方式:
+  ///   - 优先用 server 配置(`paymentConfigProvider`)
+  ///   - server 未返回时:dev 含 mock,release 不含 mock
+  List<PaymentProvider> _visibleProviders(PaymentConfig? cfg) {
+    if (cfg != null && cfg.providers.isNotEmpty) {
+      // release 兜底:server 误推 mock 也屏蔽
+      return kReleaseMode
+          ? cfg.providers
+              .where((p) => p != PaymentProvider.mock)
+              .toList(growable: false)
+          : cfg.providers;
+    }
+    return PaymentProvider.values
+        .where((p) => !kReleaseMode || p != PaymentProvider.mock)
+        .toList(growable: false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +62,11 @@ class _PaymentSheetBodyState extends ConsumerState<_PaymentSheetBody> {
     final rate = configAsync.valueOrNull?.commissionRate ?? 0.06;
     final commission = (o.priceCents * rate).round();
     final sellerNet = (o.priceCents - commission) / 100.0;
+    final providers = _visibleProviders(configAsync.valueOrNull);
+    // 默认选第一个可见 provider · mock 在 release 已被过滤
+    if (_selected == null || !providers.contains(_selected)) {
+      _selected = providers.isNotEmpty ? providers.first : null;
+    }
 
     return Container(
       constraints: BoxConstraints(
@@ -122,11 +145,21 @@ class _PaymentSheetBodyState extends ConsumerState<_PaymentSheetBody> {
             Text('支 付 方 式',
                 style: Vt.cnLabel.copyWith(color: Vt.textTertiary, fontSize: Vt.t2xs)),
             const SizedBox(height: Vt.s12),
-            ...PaymentProvider.values.map((p) => _methodTile(p)),
+            if (providers.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: Vt.s16),
+                child: Text(
+                  '暂 无 可 用 支 付 方 式 · 请 稍 后 再 试',
+                  style: Vt.cnBody.copyWith(color: Vt.textTertiary),
+                  textAlign: TextAlign.center,
+                ),
+              )
+            else
+              ...providers.map(_methodTile),
             const SizedBox(height: Vt.s24),
             SpringTap(
-              onTap: _submitting ? null : _submit,
-              glow: !_submitting,
+              onTap: (_submitting || _selected == null) ? null : _submit,
+              glow: !_submitting && _selected != null,
               child: Container(
                 padding: const EdgeInsets.symmetric(vertical: Vt.s20),
                 alignment: Alignment.center,
@@ -214,14 +247,16 @@ class _PaymentSheetBodyState extends ConsumerState<_PaymentSheetBody> {
   }
 
   Future<void> _submit() async {
+    final selected = _selected;
+    if (selected == null) return;
     setState(() => _submitting = true);
     try {
       final repo = ref.read(paymentRepositoryProvider);
       await repo.createPayment(
         orderId: widget.order.id,
-        provider: _selected,
+        provider: selected,
       );
-      if (_selected == PaymentProvider.mock) {
+      if (selected == PaymentProvider.mock) {
         await repo.mockMarkPaid(widget.order.id);
       }
       if (!mounted) return;

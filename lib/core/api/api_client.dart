@@ -14,10 +14,10 @@ class ApiClient {
   /// Velvet backend API base URL
   ///
   /// 构建时可用 --dart-define=API_BASE_URL=https://your-api.com 覆盖
-  /// 开发期默认指向 cloudflared tunnel（新 VPS）
+  /// 默认走主人正式域名 · 不再使用一次性 trycloudflare URL
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://episodes-paid-loan-threatened.trycloudflare.com',
+    defaultValue: 'https://agent.ylctkx9s.work',
   );
 
   static const _storage = FlutterSecureStorage();

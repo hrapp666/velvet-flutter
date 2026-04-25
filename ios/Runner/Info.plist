@@ -85,9 +85,9 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 
+	<!-- 仅前台定位 · 用于「同城/附近」discovery · 不申请 Always 后台定位
+	     (Apple App Review 对 NSLocationAlways 严审,无真实后台用例会拒) -->
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>让你和懂的人 · 在同一个夜里相遇</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>让你和懂的人 · 在同一个夜里相遇</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>把柜底的秘密 · 拿出来流转</string>

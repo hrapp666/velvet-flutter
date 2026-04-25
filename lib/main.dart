@@ -48,11 +48,12 @@ class VelvetApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeProvider);
     final locale = ref.watch(localeProvider);
+    final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
       title: 'Velvet',
       debugShowCheckedModeBanner: false,
-      routerConfig: appRouter,
+      routerConfig: router,
       themeMode: mode,
       theme: buildLightTheme(),
       darkTheme: buildDarkTheme(),
