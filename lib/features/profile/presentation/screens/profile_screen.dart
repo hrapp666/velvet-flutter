@@ -7,7 +7,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/services/haptic_service.dart';
@@ -531,12 +530,12 @@ class _ProfileEmpty extends StatelessWidget {
   }
 }
 
-class _ProfileError extends StatelessWidget {
+class _ProfileError extends ConsumerWidget {
   final String error;
   const _ProfileError(this.error);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(Vt.s32),
@@ -545,7 +544,7 @@ class _ProfileError extends StatelessWidget {
           children: [
             Icon(Icons.error_outline,
                 size: 32, color: Vt.gold.withValues(alpha: 0.6)),
-            const SizedBox(height: 16),
+            const SizedBox(height: Vt.s16),
             Text(
               '— 加 载 失 败 —',
               style: Vt.cnHeading.copyWith(
@@ -553,11 +552,32 @@ class _ProfileError extends StatelessWidget {
                 letterSpacing: 5,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Vt.s8),
             Text(
               error,
               textAlign: TextAlign.center,
               style: Vt.bodySm.copyWith(color: Vt.textTertiary),
+            ),
+            const SizedBox(height: Vt.s24),
+            SpringTap(
+              onTap: () => ref.invalidate(currentUserProvider),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Vt.s32,
+                  vertical: Vt.s12,
+                ),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Vt.gold),
+                ),
+                child: Text(
+                  '重  试',
+                  style: Vt.cnButton.copyWith(
+                    fontSize: Vt.tsm,
+                    letterSpacing: 5,
+                    color: Vt.gold,
+                  ),
+                ),
+              ),
             ),
           ],
         ),

@@ -134,12 +134,26 @@ class ChatSocket {
 
   Future<void> _open() async {
     try {
-      // 把 https/http 替换成 wss/ws
-      final base = ApiClient.baseUrl
-          .replaceFirst('https://', 'wss://')
-          .replaceFirst('http://', 'ws://');
-      final uri = Uri.parse('$base/ws/chat?token=$_token');
-      final channel = WebSocketChannel.connect(uri);
+      // 强制 wss · 禁止明文 ws（生产 baseUrl 必须 https,本地调试 http→ws 仅在 dart-define VELVET_INSECURE_WS=true 时通过）
+      final raw = ApiClient.baseUrl;
+      final String base;
+      if (raw.startsWith('https://')) {
+        base = raw.replaceFirst('https://', 'wss://');
+      } else if (raw.startsWith('http://') &&
+          const bool.fromEnvironment('VELVET_INSECURE_WS')) {
+        base = raw.replaceFirst('http://', 'ws://');
+      } else {
+        // 静默原因:不允许走明文 ws,直接进 failed,UI 重试不生效
+        _setState(WsConnectionState.failed);
+        return;
+      }
+      final uri = Uri.parse('$base/ws/chat');
+      // P1-3:token 走 Sec-WebSocket-Protocol header(子协议),不再放 querystring
+      // 子协议名格式 velvet.token.<JWT> · 后端 ChatWebSocketHandler 取该 header 解析
+      final channel = WebSocketChannel.connect(
+        uri,
+        protocols: ['velvet.token.$_token'],
+      );
       _channel = channel;
       channel.stream.listen(
         _onData,

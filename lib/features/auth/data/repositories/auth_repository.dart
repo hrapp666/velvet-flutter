@@ -24,6 +24,14 @@ abstract class AuthRepository {
     required String password,
   });
 
+  /// Apple Sign-In · iOS 上架强制
+  /// [identityToken] Apple 返回的 JWT identity token (RS256 · 后端走 JWKS 验签)
+  /// [nickname] 首次登录时 Apple 给的全名（second login 后 Apple 不再返回）
+  Future<AuthResult> loginWithApple({
+    required String identityToken,
+    String? nickname,
+  });
+
   Future<void> logout();
 
   Future<UserProfile?> currentUser();
@@ -77,6 +85,25 @@ class AuthRepositoryImpl implements AuthRepository {
       throw e.error is AppException ? e.error as AppException : const AppException(
         type: AppErrorType.unknown,
         message: '登录失败',
+      );
+    }
+  }
+
+  @override
+  Future<AuthResult> loginWithApple({
+    required String identityToken,
+    String? nickname,
+  }) async {
+    try {
+      final res = await _api.dio.post('/api/v1/auth/apple', data: {
+        'identityToken': identityToken,
+        if (nickname != null && nickname.isNotEmpty) 'nickname': nickname,
+      });
+      return _parseAuthResponse(res.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw e.error is AppException ? e.error as AppException : const AppException(
+        type: AppErrorType.unknown,
+        message: 'Apple 登录失败',
       );
     }
   }

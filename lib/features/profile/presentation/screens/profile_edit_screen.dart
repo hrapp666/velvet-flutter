@@ -9,17 +9,16 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/api/api_client.dart' show AppException;
 import '../../../../shared/services/haptic_service.dart';
 import '../../../../shared/theme/design_tokens.dart';
+import '../../../../shared/widgets/feedback/velvet_toast.dart';
 import '../../../../shared/widgets/micro/spring_tap.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../moment/presentation/providers/moment_provider.dart';
-import '../../../../shared/widgets/feedback/velvet_toast.dart';
 
 class ProfileEditScreen extends ConsumerStatefulWidget {
   const ProfileEditScreen({super.key});
@@ -32,6 +31,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   final _nicknameCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
   String? _avatarUrl;
+  String? _avatarError;
   bool _loading = false;
   bool _avatarUploading = false;
   String? _error;
@@ -89,14 +89,22 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         imageQuality: 85,
       );
       if (picked == null) return;
-      setState(() => _avatarUploading = true);
+      setState(() {
+        _avatarUploading = true;
+        _avatarError = null; // 重新上传前先清掉旧错误
+      });
       final repo = ref.read(uploadRepositoryProvider);
       final url = await repo.uploadFile(File(picked.path));
       if (!mounted) return;
-      setState(() => _avatarUrl = url);
+      setState(() {
+        _avatarUrl = url;
+        _avatarError = null;
+      });
     } on Object catch (e) {
       if (!mounted) return;
+      // toast 会消失,因此同时把错误持久写入 inline 提示让用户能看到「重试」入口
       VelvetToast.show(context, '头像上传失败：$e', isError: true);
+      setState(() => _avatarError = '上传失败 · 轻 触 重 试');
     } finally {
       if (mounted) setState(() => _avatarUploading = false);
     }
@@ -152,8 +160,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final padding = MediaQuery.paddingOf(context);
-
     return Scaffold(
       backgroundColor: Vt.bgVoid,
       body: Container(
@@ -317,7 +323,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                                 height: 32,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Vt.gold,
+                                  color: _avatarError != null
+                                      ? Vt.statusError
+                                      : Vt.gold,
                                   border: Border.all(
                                     color: Vt.bgVoid,
                                     width: 2,
@@ -332,8 +340,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                                           color: Vt.bgVoid,
                                         ),
                                       )
-                                    : const Icon(
-                                        Icons.camera_alt_outlined,
+                                    : Icon(
+                                        _avatarError != null
+                                            ? Icons.refresh
+                                            : Icons.camera_alt_outlined,
                                         size: 16,
                                         color: Vt.bgVoid,
                                       ),
@@ -344,6 +354,19 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                         ),
                       ),
                     ),
+                    if (_avatarError != null) ...[
+                      const SizedBox(height: Vt.s12),
+                      Center(
+                        child: Text(
+                          _avatarError!,
+                          style: Vt.cnLabel.copyWith(
+                            color: Vt.statusError,
+                            fontSize: Vt.t2xs,
+                            letterSpacing: 3,
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 48),
 
                     // 昵称字段

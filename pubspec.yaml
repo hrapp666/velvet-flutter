@@ -47,6 +47,9 @@ dependencies:
   # 分享
   share_plus: ^10.1.2
 
+  # Apple Sign-In · iOS 上架必须 · 后端 /api/v1/auth/apple 验签
+  sign_in_with_apple: ^6.1.4
+
   # 运动传感器（陀螺仪 / 加速计 · splash 3D tilt）
   sensors_plus: ^6.1.0
 

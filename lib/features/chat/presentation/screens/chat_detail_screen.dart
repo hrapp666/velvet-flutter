@@ -10,7 +10,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../shared/services/haptic_service.dart';
 import '../../../../shared/theme/design_tokens.dart';
@@ -43,10 +42,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final _scrollCtrl = ScrollController();
   bool _sending = false;
   StreamSubscription<MessageModel>? _wsSub;
+  StreamSubscription<WsConnectionState>? _wsStateSub;
+  WsConnectionState _wsState = WsConnectionState.disconnected;
 
   @override
   void initState() {
     super.initState();
+    _wsState = ChatSocket.instance.currentState;
     // 启动 WS（如果还没连）
     ChatSocket.instance.connect();
     // 订阅实时消息
@@ -57,11 +59,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         ref.invalidate(messagesProvider(widget.conversationId));
       }
     });
+    // 订阅连接状态 — UI 暴露 reconnecting / failed
+    _wsStateSub = ChatSocket.instance.connectionState.listen((s) {
+      if (mounted) setState(() => _wsState = s);
+    });
   }
 
   @override
   void dispose() {
     _wsSub?.cancel();
+    _wsStateSub?.cancel();
     _inputCtrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
@@ -229,6 +236,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   widget.prefilledConv?.otherUserNickname,
                 );
               },
+            ),
+
+            // ─── WS 连接状态 ───
+            _WsBanner(
+              state: _wsState,
+              onRetry: () => ChatSocket.instance.manualRetry(),
             ),
 
             // ─── 消息列表 ───
@@ -532,6 +545,78 @@ class _Bubble extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// WS 连接状态条
+// ============================================================================
+class _WsBanner extends StatelessWidget {
+  final WsConnectionState state;
+  final VoidCallback onRetry;
+  const _WsBanner({required this.state, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, showRetry, color) = switch (state) {
+      WsConnectionState.connecting => ('正 在 连 接 …', false, Vt.gold),
+      WsConnectionState.reconnecting => ('网 络 不 稳 · 正 在 重 连 …', false, Vt.gold),
+      WsConnectionState.failed => ('连 接 失 败 · 消 息 不 会 实 时 送 达', true, Vt.statusError),
+      WsConnectionState.disconnected => ('未 连 接', true, Vt.textTertiary),
+      WsConnectionState.connected => ('', false, Vt.gold),
+    };
+    if (state == WsConnectionState.connected || label.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: Vt.s16, vertical: Vt.s8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        border: Border(bottom: BorderSide(color: color.withValues(alpha: 0.3), width: 0.5)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (state == WsConnectionState.connecting ||
+              state == WsConnectionState.reconnecting)
+            SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(strokeWidth: 1, color: color),
+            )
+          else
+            Icon(Icons.error_outline, size: 14, color: color),
+          const SizedBox(width: Vt.s8),
+          Flexible(
+            child: Text(
+              label,
+              style: Vt.cnLabel.copyWith(color: color, fontSize: Vt.t2xs, letterSpacing: 1.5),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (showRetry) ...[
+            const SizedBox(width: Vt.s12),
+            GestureDetector(
+              onTap: onRetry,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Vt.s8, vertical: Vt.s4),
+                child: Text(
+                  '重 试',
+                  style: Vt.cnLabel.copyWith(
+                    color: Vt.gold,
+                    fontSize: Vt.t2xs,
+                    letterSpacing: 2,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

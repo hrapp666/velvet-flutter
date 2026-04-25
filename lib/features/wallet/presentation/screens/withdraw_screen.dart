@@ -37,17 +37,37 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
 
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
-    final yuan = double.tryParse(_amountCtrl.text.trim()) ?? 0;
-    if (yuan < 10) {
+    final raw = _amountCtrl.text.trim();
+    final parsed = double.tryParse(raw);
+    // tryParse 已过 inputFormatter,但稳妥起见显式拒掉 NaN/Infinity
+    if (parsed == null || !parsed.isFinite) {
+      _toast('请输入有效金额');
+      return;
+    }
+    if (parsed < 10) {
       _toast('金额至少 ¥10');
       return;
     }
-    if (_accountCtrl.text.trim().isEmpty) {
+    if (parsed > widget.wallet.balanceYuan + 0.001) {
+      _toast('超出可提现余额 ¥${widget.wallet.balanceYuan.toStringAsFixed(2)}');
+      return;
+    }
+    final account = _accountCtrl.text.trim();
+    if (account.isEmpty) {
       _toast('请填写收款账号');
       return;
     }
-    if (_nameCtrl.text.trim().isEmpty) {
+    if (account.length > 64) {
+      _toast('收款账号过长 · 最多 64 字符');
+      return;
+    }
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) {
       _toast('请填写真实姓名');
+      return;
+    }
+    if (name.length > 32) {
+      _toast('姓名过长 · 最多 32 字符');
       return;
     }
     setState(() => _submitting = true);
@@ -55,10 +75,10 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
       await ref
           .read(myWithdrawalsProvider.notifier)
           .requestWithdraw(WithdrawRequestBody(
-            amountCents: (yuan * 100).round(),
+            amountCents: (parsed * 100).round(),
             method: _method,
-            account: _accountCtrl.text.trim(),
-            accountName: _nameCtrl.text.trim(),
+            account: account,
+            accountName: name,
           ));
       if (!mounted) return;
       _toast('提现申请已提交');
