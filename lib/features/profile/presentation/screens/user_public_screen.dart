@@ -64,6 +64,13 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
         _error = e.message ?? '加载失败';
         _loading = false;
       });
+    } on Object catch (_) {
+      // 静默原因：解析/类型异常时不能让 UI 卡 loading，给用户错误态可重试
+      if (!mounted) return;
+      setState(() {
+        _error = '加载失败';
+        _loading = false;
+      });
     }
   }
 

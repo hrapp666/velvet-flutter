@@ -89,6 +89,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         _error = e.message ?? '搜索失败';
         _loading = false;
       });
+    } on Object catch (_) {
+      // 静默原因：解析/类型异常时不能让 UI 卡在 loading,给错误态可重试
+      if (!mounted) return;
+      setState(() {
+        _error = '搜索失败';
+        _loading = false;
+      });
     }
   }
 
