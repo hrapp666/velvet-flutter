@@ -297,12 +297,14 @@ class _ProfileBody extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // 我的钱包（v22）
-          _GoldBtn(
-            label: '我  的  钱  包',
-            onTap: () => context.push('/wallet'),
-          ),
-          const SizedBox(height: 16),
+          // 我的钱包（v22）· App Store 合规暂隐
+          // 钱包页含支付宝/微信收款字样,可能触发 IAP 强制审核拒绝
+          // 路由 /wallet 仍在 router 注册,后台数据未删,深链可达,只隐藏 UI 入口
+          // _GoldBtn(
+          //   label: '我  的  钱  包',
+          //   onTap: () => context.push('/wallet'),
+          // ),
+          // const SizedBox(height: 16),
 
           // 商家认证（v22）
           _GoldBtn(
