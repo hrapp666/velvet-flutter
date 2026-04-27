@@ -43,6 +43,8 @@ class MessagesNotifier
     extends AutoDisposeFamilyAsyncNotifier<List<MessageModel>, int> {
   @override
   Future<List<MessageModel>> build(int conversationId) async {
+    // 占位会话（从动态详情进入但还未发送过消息）→ 直接空列表，不调后端
+    if (conversationId <= 0) return const <MessageModel>[];
     final repo = ref.read(chatRepositoryProvider);
     final list = await repo.listMessages(conversationId, page: 0, size: 50);
     // 标记已读
@@ -54,7 +56,12 @@ class MessagesNotifier
   Future<void> sendInExisting(int otherUserId, String content) async {
     final repo = ref.read(chatRepositoryProvider);
     await repo.send(otherUserId: otherUserId, content: content);
-    // 重新加载
+    // 占位会话首条消息 → 后端会自动建会话，刷新列表让用户在会话列表里看到
+    if (arg <= 0) {
+      ref.invalidate(conversationListProvider);
+      return;
+    }
+    // 已有会话 → 重新加载消息
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
         () => repo.listMessages(arg, page: 0, size: 50));
