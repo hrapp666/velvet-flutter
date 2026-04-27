@@ -133,6 +133,17 @@ class ChatSocket {
   // --------------------------------------------------------------------------
 
   Future<void> _open() async {
+    // 重连前从 secure storage 重新读 token · 修复死循环 banner
+    // 同事反馈"网络不稳一直显示" = 后端 1008 拒绝 token 后 stale _token 被反复重试
+    // 这里覆盖 _token 让 manualRetry / scheduleReconnect 路径都用最新值
+    final fresh = await ApiClient.getToken();
+    if (fresh == null || fresh.isEmpty) {
+      // token 已被 401 拦截器或登出清掉 → 不重连,等上层路由跳登录
+      _setState(WsConnectionState.failed);
+      return;
+    }
+    _token = fresh;
+
     try {
       // 强制 wss · 禁止明文 ws（生产 baseUrl 必须 https,本地调试 http→ws 仅在 dart-define VELVET_INSECURE_WS=true 时通过）
       final raw = ApiClient.baseUrl;
@@ -158,7 +169,8 @@ class ChatSocket {
       channel.stream.listen(
         _onData,
         onError: _onError,
-        onDone: _onDone,
+        // closure 传 channel 进 _onDone · 用于读 closeCode 区分 auth 拒绝 vs 网络断
+        onDone: () => _onDone(channel),
         cancelOnError: false,
       );
 
@@ -222,14 +234,24 @@ class ChatSocket {
     }
   }
 
-  void _onDone() {
+  void _onDone(WebSocketChannel channel) {
     _channel = null;
     _ping?.cancel();
     _stabilityTimer?.cancel();
-    if (!_disposed) {
-      _setState(WsConnectionState.reconnecting);
-      _scheduleReconnect();
+    if (_disposed) return;
+
+    // close code 1008 (POLICY_VIOLATION) = 后端 ChatWebSocketHandler 主动拒绝 token
+    // 同 token 重连必然死循环 → 清 token + 进 failed,等上层重新登录
+    // 其他 close code (1001 going-away / 1006 abnormal / 1011 server error 等) 走重连
+    if (channel.closeCode == 1008) {
+      ApiClient.clearToken();
+      _token = null;
+      _setState(WsConnectionState.failed);
+      return;
     }
+
+    _setState(WsConnectionState.reconnecting);
+    _scheduleReconnect();
   }
 
   void _scheduleReconnect() {
