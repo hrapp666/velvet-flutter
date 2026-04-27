@@ -40,21 +40,27 @@ class _State extends ConsumerState<MerchantApplyScreen> {
   }
 
   Future<void> _prefill() async {
-    final mAsync = await ref.read(myMerchantProvider.future);
-    if (!mounted || mAsync == null) {
-      setState(() => _loaded = true);
-      return;
+    // 任何异常（401 / 网络 / 解析）都不能让 UI 卡在 loading
+    // 同事反馈"商家认证页面一直 loading" = myMerchant() 抛出后 _loaded 永远 false
+    try {
+      final mAsync = await ref.read(myMerchantProvider.future);
+      if (!mounted) return;
+      if (mAsync != null) {
+        _shopName.text = mAsync.shopName;
+        _shopIntro.text = mAsync.shopIntro ?? '';
+        _realName.text = mAsync.personalRealName ?? '';
+        _phone.text = mAsync.contactPhone ?? '';
+        _wechat.text = mAsync.contactWechat ?? '';
+        _rcvWechat.text = mAsync.receiveWechat ?? '';
+        _rcvAlipay.text = mAsync.receiveAlipay ?? '';
+        _rcvBankName.text = mAsync.receiveBankName ?? '';
+        _type = mAsync.sellerType;
+      }
+    } on Object catch (_) {
+      // 静默原因：商家资料加载失败不阻止用户填写新申请，UI 进可编辑空表单状态
+    } finally {
+      if (mounted) setState(() => _loaded = true);
     }
-    _shopName.text = mAsync.shopName;
-    _shopIntro.text = mAsync.shopIntro ?? '';
-    _realName.text = mAsync.personalRealName ?? '';
-    _phone.text = mAsync.contactPhone ?? '';
-    _wechat.text = mAsync.contactWechat ?? '';
-    _rcvWechat.text = mAsync.receiveWechat ?? '';
-    _rcvAlipay.text = mAsync.receiveAlipay ?? '';
-    _rcvBankName.text = mAsync.receiveBankName ?? '';
-    _type = mAsync.sellerType;
-    setState(() => _loaded = true);
   }
 
   @override

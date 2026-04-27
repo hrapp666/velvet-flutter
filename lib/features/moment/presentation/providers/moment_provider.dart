@@ -98,6 +98,11 @@ class FeedNotifier extends AutoDisposeAsyncNotifier<List<MomentModel>> {
 
   @override
   Future<List<MomentModel>> build() async {
+    // ref.keepAlive() · 切 tab 不销毁缓存
+    // 同事反馈"每次切到首页都会触发刷新状态" = ShellRoute + autoDispose 让
+    // FeedScreen 卸载时 provider 也被 dispose,回来时 build() 重新拉数据
+    // keepAlive 让 list 在 tab 切换间保持,下拉手势仍可 refresh()
+    ref.keepAlive();
     _page = 0;
     _hasMore = true;
     final repo = ref.read(momentRepositoryProvider);

@@ -13,7 +13,11 @@ import '../../../../shared/widgets/motion/scroll_reveal.dart';
 import '../../data/models/moment_model.dart';
 import '../providers/moment_provider.dart';
 
-final myFavoritesProvider = FutureProvider<List<MomentModel>>((ref) async {
+// autoDispose · 每次进入收藏页重新拉取
+// 同事反馈"点击收藏后,收藏页没数据" = 全局缓存的空列表没刷新
+// autoDispose 让 push /favorites 时重建 future,toggleFavorite 后立即可见
+final myFavoritesProvider =
+    FutureProvider.autoDispose<List<MomentModel>>((ref) async {
   final repo = ref.read(momentRepositoryProvider);
   return repo.myFavorites(page: 0, size: 30);
 });
