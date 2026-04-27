@@ -23,6 +23,7 @@ import '../../../../shared/services/share_service.dart';
 import '../../../../shared/theme/design_tokens.dart';
 import '../../../../shared/widgets/ambient/grain_overlay.dart';
 import '../../../../shared/widgets/micro/spring_tap.dart';
+import '../../../chat/data/models/chat_models.dart';
 import '../../../safety/safety_dialogs.dart';
 import '../../data/models/moment_model.dart';
 import '../../data/repositories/comment_repository.dart';
@@ -42,7 +43,8 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
   late final AnimationController _entryCtrl;
   late final Animation<double> _cardSlide;
 
-  bool _isFavorited = false;
+  // null = 跟随服务端 moment.favorited · 非 null = 乐观本地覆盖
+  bool? _favoritedOverride;
 
   @override
   void initState() {
@@ -62,25 +64,45 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
 
   Future<void> _toggleFavorite() async {
     unawaited(HapticService.instance.medium());
+    final current = _favoritedOverride ??
+        ref
+            .read(momentDetailProvider(widget.momentId))
+            .valueOrNull
+            ?.favorited ??
+        false;
+    setState(() => _favoritedOverride = !current);
     try {
       final repo = ref.read(momentRepositoryProvider);
       final favorited = await repo.toggleFavorite(widget.momentId);
       if (!mounted) return;
-      setState(() => _isFavorited = favorited);
+      setState(() => _favoritedOverride = favorited);
+      ref.invalidate(momentDetailProvider(widget.momentId));
     } on Object catch (e) {
       if (!mounted) return;
+      setState(() => _favoritedOverride = current);
       VelvetToast.show(context, '操作失败：$e', isError: true);
     }
   }
 
+  // null = 跟随服务端 moment.liked · 非 null = 乐观本地覆盖
+  bool? _likedOverride;
+
   Future<void> _toggleLike() async {
     unawaited(HapticService.instance.medium());
+    final current = _likedOverride ??
+        ref.read(momentDetailProvider(widget.momentId)).valueOrNull?.liked ??
+        false;
+    setState(() => _likedOverride = !current);
     try {
       final repo = ref.read(momentRepositoryProvider);
-      await repo.toggleLike(widget.momentId);
+      final liked = await repo.toggleLike(widget.momentId);
+      if (!mounted) return;
+      setState(() => _likedOverride = liked);
       ref.invalidate(momentDetailProvider(widget.momentId));
     } on Object catch (_) {
-      // 静默原因：点赞非关键路径，失败不阻塞 UI，detail 下次 invalidate 自动恢复
+      // 静默原因：点赞非关键路径，失败回滚到原值，detail 下次刷新自动恢复
+      if (!mounted) return;
+      setState(() => _likedOverride = current);
     }
   }
 
@@ -255,13 +277,18 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
                         onTap: () => context.pop(),
                       ),
                       const Spacer(),
-                      _GlassIconBtn(
-                        icon: _isFavorited
-                            ? Icons.bookmark_rounded
-                            : Icons.bookmark_outline_rounded,
-                        active: _isFavorited,
-                        onTap: _toggleFavorite,
-                      ),
+                      Builder(builder: (_) {
+                        final favorited = _favoritedOverride ??
+                            momentAsync.valueOrNull?.favorited ??
+                            false;
+                        return _GlassIconBtn(
+                          icon: favorited
+                              ? Icons.bookmark_rounded
+                              : Icons.bookmark_outline_rounded,
+                          active: favorited,
+                          onTap: _toggleFavorite,
+                        );
+                      }),
                       const SizedBox(width: 8),
                       _GlassIconBtn(
                         icon: Icons.ios_share_rounded,
@@ -305,14 +332,23 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
             bottom: 0,
             child: _BottomCta(
               bottomPadding: padding.bottom,
-              liked: momentAsync.valueOrNull?.liked ?? false,
+              liked: _likedOverride ??
+                  momentAsync.valueOrNull?.liked ??
+                  false,
               onLike: _toggleLike,
               onChat: () {
                 final m = momentAsync.valueOrNull;
                 if (m == null) return;
-                // 没真实 conversationId · 先跳 chat list · 用户手动选 seller
-                // TODO(v26): 后端 GET /api/v1/chat/start?with=userId 开会话
-                context.push('/chat/0');
+                // 占位会话：用 conversationId=0 + extra 携带 otherUserId
+                // ChatDetailScreen 用 prefilledConv.otherUserId 调 POST /chat/messages，
+                // 后端自动建会话；MessagesNotifier 跳过 GET /messages/0 避免 400 死循环。
+                context.push('/chat/0', extra: ConversationModel(
+                  id: 0,
+                  otherUserId: m.userId,
+                  otherUserNickname: m.userNickname,
+                  otherUserAvatarUrl: m.userAvatarUrl,
+                  unread: 0,
+                ));
               },
             ),
           ),

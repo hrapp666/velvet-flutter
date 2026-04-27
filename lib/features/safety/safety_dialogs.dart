@@ -26,14 +26,14 @@ import '../auth/presentation/providers/auth_provider.dart';
 
 enum ReportTargetType { user, moment, comment, chat }
 
-const _reportReasons = <String>[
-  '色情低俗',
-  '骚扰辱骂',
-  '政治敏感',
-  '欺诈诱导',
-  '违法内容',
-  '侵犯版权',
-  '其它',
+// 后端枚举：SPAM / ADULT / FAKE / HARASSMENT / OTHER
+// 显示中文 → 提交英文枚举（key 必须严格匹配后端 ReportController.VALID_REASONS）
+const _reportReasons = <(String label, String code)>[
+  ('色情低俗', 'ADULT'),
+  ('骚扰辱骂', 'HARASSMENT'),
+  ('欺诈诱导', 'FAKE'),
+  ('垃圾广告', 'SPAM'),
+  ('其它', 'OTHER'),
 ];
 
 /// 打开举报对话框。target 必填，result 返回是否成功提交。
@@ -121,11 +121,12 @@ class _ReportDialogState extends State<_ReportDialog> {
                 ),
                 const SizedBox(height: Vt.s20),
                 ..._reportReasons.map((r) {
-                  final selected = _reason == r;
+                  final (label, code) = r;
+                  final selected = _reason == code;
                   return _ReasonRow(
-                    text: r,
+                    text: label,
                     selected: selected,
-                    onTap: () => setState(() => _reason = r),
+                    onTap: () => setState(() => _reason = code),
                   );
                 }),
                 const SizedBox(height: Vt.s20),
@@ -250,7 +251,7 @@ Future<bool> showBlockDialog(
   try {
     final api = ref.read(apiClientProvider);
     await api.dio.post('/api/v1/blocks', data: {
-      'blockedId': userId,
+      'targetUserId': userId,
     });
     if (context.mounted) {
       VelvetToast.show(context, '已拉黑');
