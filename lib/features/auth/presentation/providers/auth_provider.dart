@@ -17,6 +17,9 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 // ── 当前用户状态 ──────────────────────────────────────────
 final currentUserProvider = FutureProvider.autoDispose<UserProfile?>((ref) async {
+  // keepAlive 防止切 tab 时"我的"页面闪 loading;login/logout 时通过
+  // ref.invalidate(currentUserProvider) 主动刷新
+  ref.keepAlive();
   final repo = ref.watch(authRepositoryProvider);
   return repo.currentUser();
 });

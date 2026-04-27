@@ -23,6 +23,8 @@ class ConversationListNotifier
     extends AutoDisposeAsyncNotifier<List<ConversationModel>> {
   @override
   Future<List<ConversationModel>> build() async {
+    // keepAlive 让会话列表在 tab 切换间保持,refresh() 仍可手动刷新
+    ref.keepAlive();
     final repo = ref.read(chatRepositoryProvider);
     return repo.listConversations(page: 0, size: 50);
   }
