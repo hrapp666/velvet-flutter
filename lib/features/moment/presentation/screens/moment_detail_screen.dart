@@ -18,17 +18,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../core/api/api_client.dart';
 import '../../../../shared/services/haptic_service.dart';
 import '../../../../shared/services/share_service.dart';
 import '../../../../shared/theme/design_tokens.dart';
 import '../../../../shared/widgets/ambient/grain_overlay.dart';
+import '../../../../shared/widgets/feedback/velvet_toast.dart';
 import '../../../../shared/widgets/micro/spring_tap.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../chat/data/models/chat_models.dart';
+import '../../../order/presentation/widgets/address_sheet.dart';
+import '../../../payment/presentation/widgets/payment_sheet.dart';
 import '../../../safety/safety_dialogs.dart';
 import '../../data/models/moment_model.dart';
 import '../../data/repositories/comment_repository.dart';
 import '../providers/moment_provider.dart';
-import '../../../../shared/widgets/feedback/velvet_toast.dart';
 
 class MomentDetailScreen extends ConsumerStatefulWidget {
   final int momentId;
@@ -80,7 +84,9 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
     } on Object catch (e) {
       if (!mounted) return;
       setState(() => _favoritedOverride = current);
-      VelvetToast.show(context, '操作失败：$e', isError: true);
+      // userMessageOf 对 unauthorized 返回空串 · VelvetToast.show 对空串 noop
+      // 不再把 AppException.toString() 拼进 toast → 不再泄露内部错误对象
+      VelvetToast.show(context, userMessageOf(e, fallback: '收藏失败'), isError: true);
     }
   }
 
@@ -104,6 +110,30 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
       if (!mounted) return;
       setState(() => _likedOverride = current);
     }
+  }
+
+  Future<void> _handleBuy(MomentModel m) async {
+    // 对齐 H5 app.js placeOrder() 三道前置校验
+    final user = ref.read(currentUserProvider).valueOrNull;
+    if (user == null) {
+      VelvetToast.show(context, '请先登录', isError: true);
+      return;
+    }
+    if (!m.hasItem || (m.itemPriceCents ?? 0) <= 0) {
+      VelvetToast.show(context, '此动态未挂售', isError: true);
+      return;
+    }
+    if (user.id == m.userId) {
+      VelvetToast.show(context, '不能购买自己的物品', isError: true);
+      return;
+    }
+
+    unawaited(HapticService.instance.medium());
+    final order = await showAddressSheet(context, momentId: m.id);
+    if (!mounted || order == null) return;
+
+    // 下单成功 · 顺势打开 PaymentSheet (H5 submitAddrAndOrder 完成即 openPaySheet)
+    await showPaymentSheet(context, order);
   }
 
   Widget _coverPlaceholder() {
@@ -146,7 +176,6 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
     final padding = MediaQuery.paddingOf(context);
     final momentAsync = ref.watch(momentDetailProvider(widget.momentId));
 
@@ -157,66 +186,76 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
       orElse: () => null,
     );
 
+    // 封面 widget 供 SliverAppBar 和 Hero 复用
+    final coverWidget = cover != null
+        ? CachedNetworkImage(
+            imageUrl: cover,
+            fit: BoxFit.cover,
+            placeholder: (_, __) => _coverPlaceholder(),
+            errorWidget: (_, __, ___) => _coverPlaceholder(),
+          )
+        : _coverPlaceholder();
+
     return Scaffold(
       backgroundColor: Vt.bgVoid,
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // ─── 顶部全屏封面 · Hero 对接 MomentCard 的同 tag ───
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 0,
-            height: size.height * 0.62,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // Hero 只包图片本身 · vignette/gradient 不参与 flight
-                Hero(
-                  tag: 'moment-cover-${widget.momentId}',
-                  child: cover != null
-                      ? CachedNetworkImage(
-                          imageUrl: cover,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => _coverPlaceholder(),
-                          errorWidget: (_, __, ___) => _coverPlaceholder(),
-                        )
-                      : _coverPlaceholder(),
-                ),
-
-                // 暗角
-                DecoratedBox(decoration: Vt.vignetteOverlay),
-
-                // 底部到内容的渐变过渡（更深更柔）
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: 280,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Vt.bgVoid.withValues(alpha: 0.75),
-                          Vt.bgVoid,
-                        ],
-                        stops: const [0, 0.55, 1],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ─── 主滚动内容 ───
+          // ─── 主滚动视图：SliverAppBar 承载封面图 · 正确跟随滚动 ───
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              SliverToBoxAdapter(child: SizedBox(height: size.height * 0.52)),
+              // 封面图放入 SliverAppBar · pinned=true 让 toolbar 高度钉住
+              // expandedHeight=380 是封面展开高度
+              // 滑动时图片随内容一起向上卷出，正文跟着上推
+              SliverAppBar(
+                expandedHeight: 380,
+                pinned: true,
+                stretch: true,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                automaticallyImplyLeading: false,
+                // toolbar 高度区域故意留空 · 顶部毛玻璃返回栏 Positioned 覆盖在上面
+                toolbarHeight: padding.top + 56,
+                flexibleSpace: FlexibleSpaceBar(
+                  collapseMode: CollapseMode.parallax,
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Hero 只包图片本身 · vignette/gradient 不参与 flight
+                      Hero(
+                        tag: 'moment-cover-${widget.momentId}',
+                        child: coverWidget,
+                      ),
+
+                      // 暗角
+                      DecoratedBox(decoration: Vt.vignetteOverlay),
+
+                      // 底部到正文内容的渐变过渡
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 200,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Vt.bgVoid.withValues(alpha: 0.75),
+                                Vt.bgVoid,
+                              ],
+                              stops: const [0, 0.55, 1],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
 
               // 真数据详情卡
               SliverToBoxAdapter(
@@ -228,7 +267,7 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
                   ),
                   child: switch (momentAsync) {
                     AsyncData(:final value) => _DetailContent(value),
-                    AsyncError(:final error) => _DetailError(error.toString()),
+                    AsyncError(:final error) => _DetailError(userMessageOf(error, fallback: '加载详情失败')),
                     _ => const _DetailLoading(),
                   },
                 ),
@@ -245,7 +284,7 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
             ],
           ),
 
-          // ─── 顶部毛玻璃返回栏 ───
+          // ─── 顶部毛玻璃返回栏（Positioned overlay · 始终浮在最上层）───
           Positioned(
             left: 0,
             right: 0,
@@ -335,6 +374,7 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
               liked: _likedOverride ??
                   momentAsync.valueOrNull?.liked ??
                   false,
+              hasItem: momentAsync.valueOrNull?.hasItem ?? false,
               onLike: _toggleLike,
               onChat: () {
                 final m = momentAsync.valueOrNull;
@@ -349,6 +389,11 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
                   otherUserAvatarUrl: m.userAvatarUrl,
                   unread: 0,
                 ));
+              },
+              onBuy: () {
+                final m = momentAsync.valueOrNull;
+                if (m == null) return;
+                unawaited(_handleBuy(m));
               },
             ),
           ),
@@ -377,7 +422,7 @@ Future<void> _showSafetyMenu(
       options: [
         _SafetyOption(
           icon: Icons.flag_outlined,
-          label: '举  报  此  动  态',
+          label: '举 报 此 动 态',
           onTap: () async {
             Navigator.of(sheetCtx).pop();
             await showReportDialog(
@@ -390,7 +435,7 @@ Future<void> _showSafetyMenu(
         ),
         _SafetyOption(
           icon: Icons.block_outlined,
-          label: '拉  黑  作  者',
+          label: '拉 黑 作 者',
           onTap: () async {
             Navigator.of(sheetCtx).pop();
             await showBlockDialog(context, ref, userId: m.userId);
@@ -472,7 +517,7 @@ class _SafetySheet extends StatelessWidget {
                       const SizedBox(width: Vt.s16),
                       Expanded(
                         child: Text(
-                          '取  消',
+                          '取 消',
                           style: Vt.cnBody.copyWith(
                             color: Vt.textTertiary,
                             letterSpacing: 2,
@@ -527,11 +572,13 @@ class _DetailContent extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Vt.s16),
+          // H5 detail-roman: "MMXXVI · 私 藏 编 号 N°XXX"
           Text(
-            'N° ${m.id.toString().padLeft(3, '0')}  ·  ${m.location ?? 'PRIVATE'}',
+            'MMXXVI  ·  私 藏 编 号  N°${m.id.toString().padLeft(3, '0')}',
             style: Vt.label.copyWith(
-              color: Vt.gold,
-              letterSpacing: 4,
+              fontSize: Vt.txs,
+              color: Vt.gold.withValues(alpha: 0.5),
+              letterSpacing: Vt.txs * 0.32,
               fontStyle: FontStyle.italic,
             ),
           ),
@@ -654,10 +701,10 @@ class _DetailContent extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _MetaItem(num: m.viewCount.toString(), label: 'VIEWS'),
-                _MetaItem(num: m.likeCount.toString(), label: 'HEARTS'),
-                _MetaItem(num: m.favoriteCount.toString(), label: 'SAVED'),
-                _MetaItem(num: m.commentCount.toString(), label: 'NOTES'),
+                _MetaItem(num: m.viewCount.toString(), label: '浏 览'),
+                _MetaItem(num: m.favoriteCount.toString(), label: '收 藏'),
+                _MetaItem(num: m.likeCount.toString(), label: '点 赞'),
+                _MetaItem(num: m.commentCount.toString(), label: '评 论'),
               ],
             ),
           ),
@@ -714,7 +761,36 @@ class _DetailContent extends StatelessWidget {
               fontStyle: FontStyle.italic,
             ),
           ),
-          const SizedBox(height: Vt.s32),
+          const SizedBox(height: 64),
+          // FINIS · H5 styles.css §detail-finis
+          //   32×1 gold-15 hairline · "FINIS" italic 12px gold-35 letter-spacing 5
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 32,
+                height: 1,
+                color: Vt.gold.withValues(alpha: 0.15),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                'FINIS',
+                style: Vt.label.copyWith(
+                  fontSize: Vt.txs,
+                  fontStyle: FontStyle.italic,
+                  letterSpacing: 5,
+                  color: Vt.gold.withValues(alpha: 0.35),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Container(
+                width: 32,
+                height: 1,
+                color: Vt.gold.withValues(alpha: 0.15),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
         ],
       ),
     );
@@ -837,13 +913,17 @@ class GoogleFontsLocal {
 class _BottomCta extends StatelessWidget {
   final double bottomPadding;
   final bool liked;
+  final bool hasItem;
   final VoidCallback onLike;
   final VoidCallback onChat;
+  final VoidCallback onBuy;
   const _BottomCta({
     required this.bottomPadding,
     required this.liked,
+    required this.hasItem,
     required this.onLike,
     required this.onChat,
+    required this.onBuy,
   });
 
   @override
@@ -899,51 +979,114 @@ class _BottomCta extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: Vt.s12),
-              // 主 CTA · "私 下 聊 聊" · SpringTap + onChat
-              Expanded(
-                child: SpringTap(
-                  onTap: onChat,
-                  glow: true, // 主 CTA 永远 burst
-                  child: Container(
-                    height: 56,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(Vt.rPill),
-                      gradient: const LinearGradient(
-                        colors: [Vt.gold, Vt.goldDark],
+              // hasItem: 副 CTA "问 一 问" (玻璃) + 主 CTA "立 即 拍 下" (金)
+              // !hasItem: 主 CTA "私 下 聊 聊" (金) 全宽
+              if (hasItem) ...[
+                Expanded(
+                  child: SpringTap(
+                    onTap: onChat,
+                    child: Container(
+                      height: 56,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(Vt.rPill),
+                        color: Vt.glassFill,
+                        border: Border.all(
+                          color: Vt.gold.withValues(alpha: 0.4),
+                        ),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Vt.gold.withValues(alpha: 0.6),
-                          blurRadius: 32,
-                          spreadRadius: -4,
+                      child: Center(
+                        child: Text(
+                          '问 一 问',
+                          style: Vt.button.copyWith(
+                            color: Vt.gold,
+                            letterSpacing: 2.0,
+                          ),
                         ),
-                        BoxShadow(
-                          color: Vt.gold.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                        ),
-                      ],
+                      ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.chat_bubble_outline_rounded,
-                          color: Colors.white,
-                          size: 18,
+                  ),
+                ),
+                const SizedBox(width: Vt.s12),
+                Expanded(
+                  child: SpringTap(
+                    onTap: onBuy,
+                    glow: true,
+                    child: Container(
+                      height: 56,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(Vt.rPill),
+                        gradient: const LinearGradient(
+                          colors: [Vt.gold, Vt.goldDark],
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '私 下 聊 聊',
+                        boxShadow: [
+                          BoxShadow(
+                            color: Vt.gold.withValues(alpha: 0.6),
+                            blurRadius: 32,
+                            spreadRadius: -4,
+                          ),
+                          BoxShadow(
+                            color: Vt.gold.withValues(alpha: 0.3),
+                            blurRadius: 12,
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          '立 即 拍 下',
                           style: Vt.button.copyWith(
                             color: Colors.white,
                             letterSpacing: 2.0,
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ] else
+                Expanded(
+                  child: SpringTap(
+                    onTap: onChat,
+                    glow: true,
+                    child: Container(
+                      height: 56,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(Vt.rPill),
+                        gradient: const LinearGradient(
+                          colors: [Vt.gold, Vt.goldDark],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Vt.gold.withValues(alpha: 0.6),
+                            blurRadius: 32,
+                            spreadRadius: -4,
+                          ),
+                          BoxShadow(
+                            color: Vt.gold.withValues(alpha: 0.3),
+                            blurRadius: 12,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.chat_bubble_outline_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '私 下 聊 聊',
+                            style: Vt.button.copyWith(
+                              color: Colors.white,
+                              letterSpacing: 2.0,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -1055,7 +1198,11 @@ class _CommentsSectionState extends ConsumerState<_CommentsSection> {
       }
     } on Object catch (e) {
       if (mounted) {
-        VelvetToast.show(context, '寄出失败：$e', isError: true);
+        // 用 userMessageOf 过滤异常对象 · 防止 stack 信息泄露给用户
+        final msg = userMessageOf(e, fallback: '寄 出 失 败');
+        if (msg.isNotEmpty) {
+          VelvetToast.show(context, msg, isError: true);
+        }
       }
     } finally {
       if (mounted) setState(() => _sending = false);

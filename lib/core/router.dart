@@ -93,7 +93,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state, child) => MainScaffold(child: child),
         routes: [
           GoRoute(path: '/feed', pageBuilder: (_, __) => _noAnim(const FeedScreen())),
-          GoRoute(path: '/discover', pageBuilder: (_, __) => _noAnim(const _DiscoverPlaceholder())),
+          GoRoute(path: '/search', pageBuilder: (_, __) => _noAnim(const SearchScreen())),
           GoRoute(path: '/publish', pageBuilder: (_, __) => _noAnim(const CreateMomentScreen())),
           GoRoute(path: '/chats', pageBuilder: (_, __) => _noAnim(const ChatListScreen())),
           GoRoute(path: '/profile', pageBuilder: (_, __) => _noAnim(const ProfileScreen())),
@@ -109,10 +109,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             momentId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
           ),
         ),
-      ),
-      GoRoute(
-        path: '/search',
-        pageBuilder: (_, state) => CinematicPage(key: state.pageKey, child: const SearchScreen()),
       ),
       GoRoute(
         path: '/notifications',
@@ -225,26 +221,3 @@ CustomTransitionPage<void> _noAnim(Widget child) {
   );
 }
 
-// 占位：发现页 placeholder
-class _DiscoverPlaceholder extends StatelessWidget {
-  const _DiscoverPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Vt.bgPrimary,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.bookmark_outline_rounded, color: Vt.gold, size: 48),
-            const SizedBox(height: Vt.s16),
-            Text('收藏', style: Vt.displayMd.copyWith(fontSize: Vt.txl, letterSpacing: 4)),
-            const SizedBox(height: Vt.s8),
-            Text('SAVED FOR LATER', style: Vt.caption),
-          ],
-        ),
-      ),
-    );
-  }
-}

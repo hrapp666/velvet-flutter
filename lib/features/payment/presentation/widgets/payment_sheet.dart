@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/api/api_client.dart';
 import '../../../../shared/theme/design_tokens.dart';
 import '../../../../shared/widgets/feedback/velvet_toast.dart';
 import '../../../../shared/widgets/micro/spring_tap.dart';
@@ -127,7 +128,7 @@ class _PaymentSheetBodyState extends ConsumerState<_PaymentSheetBody> {
                     '¥${(o.priceCents / 100).toStringAsFixed(2)}',
                     style: Vt.displayLg.copyWith(
                       color: Vt.gold,
-                      shadows: const [Shadow(color: Color(0x80C9A961), blurRadius: 30)],
+                      shadows: [Shadow(color: Vt.gold.withValues(alpha: 0.5), blurRadius: 30)],
                     ),
                   ),
                   const SizedBox(height: Vt.s8),
@@ -263,7 +264,11 @@ class _PaymentSheetBodyState extends ConsumerState<_PaymentSheetBody> {
       Navigator.of(context).pop(true);
     } on Object catch (e) {
       if (!mounted) return;
-      VelvetToast.show(context, '付款失败 · $e', isError: true);
+      // 用 userMessageOf 过滤敏感异常对象 · 不让支付路径泄露内部细节
+      final msg = userMessageOf(e, fallback: '付款失败，请稍后再试');
+      if (msg.isNotEmpty) {
+        VelvetToast.show(context, msg, isError: true);
+      }
       Navigator.of(context).pop(false);
     } finally {
       if (mounted) setState(() => _submitting = false);

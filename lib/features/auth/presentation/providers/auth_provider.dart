@@ -26,10 +26,38 @@ final currentUserProvider = FutureProvider.autoDispose<UserProfile?>((ref) async
 
 // ── 登录状态 ──────────────────────────────────────────────
 class AuthNotifier extends AsyncNotifier<UserProfile?> {
+  /// 最近一次因 session 过期登出的时间 · 5 分钟内重复触发会被节流
+  /// 防止极端情况下短时多个 401 同时打到 onSessionExpired 引发抖动
+  DateTime? _lastExpiredAt;
+
   @override
   Future<UserProfile?> build() async {
+    // 注册全局 session 失效回调 · ApiClient refresh-fail 时触发 ·
+    // 单次置 state 为 null → GoRouter redirect 跳 /login，
+    // 避免 N 个并发请求各自弹"请先登录"toast 洪水。
+    ApiClient.onSessionExpired = _handleSessionExpired;
+    ref.onDispose(() {
+      // 仅当回调未被替换时清理 · 防止覆盖后续 AuthNotifier 实例
+      if (identical(ApiClient.onSessionExpired, _handleSessionExpired)) {
+        ApiClient.onSessionExpired = null;
+      }
+    });
+
     final repo = ref.read(authRepositoryProvider);
     return repo.currentUser();
+  }
+
+  void _handleSessionExpired() {
+    // 已经是未登录态 · 不重复触发
+    if (state.value == null) return;
+    // 节流 · 5 分钟内最多触发一次 · 防止短时多 401 抖动登出
+    final now = DateTime.now();
+    final last = _lastExpiredAt;
+    if (last != null && now.difference(last).inMinutes < 5) return;
+    _lastExpiredAt = now;
+    ChatSocket.instance.disconnect();
+    state = const AsyncValue.data(null);
+    ref.invalidate(currentUserProvider);
   }
 
   Future<void> login(String account, String password) async {
@@ -41,8 +69,11 @@ class AuthNotifier extends AsyncNotifier<UserProfile?> {
       final result = await repo.login(account: account, password: password);
       return result.user ?? await repo.currentUser();
     });
-    // 同步 currentUserProvider · profile_screen 立即看到登录态
+    // 同步 currentUserProvider · 必须 await refresh 而非 invalidate
+    // invalidate 不阻塞 → router redirect 抢跑读到旧 null → 弹"请登录"
+    // invalidate + await read · refresh 触发 unused_result lint
     ref.invalidate(currentUserProvider);
+    await ref.read(currentUserProvider.future);
     // 用新 token 建立 WS
     if (state.value != null) {
       await ChatSocket.instance.connect();
@@ -77,7 +108,10 @@ class AuthNotifier extends AsyncNotifier<UserProfile?> {
       }
       return user;
     });
+    // 注册成功后必须 await refresh · 否则 feed 抢跑读旧 null 弹"请登录"
+    // invalidate + await read · refresh 触发 unused_result lint
     ref.invalidate(currentUserProvider);
+    await ref.read(currentUserProvider.future);
     if (state.value != null) {
       await ChatSocket.instance.connect();
     }
@@ -97,7 +131,9 @@ class AuthNotifier extends AsyncNotifier<UserProfile?> {
       );
       return result.user ?? await repo.currentUser();
     });
+    // invalidate + await read · refresh 触发 unused_result lint
     ref.invalidate(currentUserProvider);
+    await ref.read(currentUserProvider.future);
     if (state.value != null) {
       await ChatSocket.instance.connect();
     }

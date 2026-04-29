@@ -11,8 +11,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/api/api_client.dart';
 import '../../../../shared/services/haptic_service.dart';
 import '../../../../shared/theme/design_tokens.dart';
+import '../../../../shared/widgets/feedback/velvet_toast.dart';
 import '../../../../shared/widgets/micro/spring_tap.dart';
 import '../../../../shared/widgets/motion/scroll_reveal.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -20,7 +22,6 @@ import '../../../safety/safety_dialogs.dart';
 import '../../data/models/chat_models.dart';
 import '../../data/services/chat_socket.dart';
 import '../providers/chat_provider.dart';
-import '../../../../shared/widgets/feedback/velvet_toast.dart';
 
 class ChatDetailScreen extends ConsumerStatefulWidget {
   final int conversationId;
@@ -50,7 +51,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     super.initState();
     _wsState = ChatSocket.instance.currentState;
     // 启动 WS（如果还没连）
-    ChatSocket.instance.connect();
+    unawaited(ChatSocket.instance.connect());
     // 订阅实时消息
     _wsSub = ChatSocket.instance.messages.listen((msg) {
       // 只处理当前会话
@@ -99,19 +100,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   _buildSheetTile(
                     sheetCtx,
                     icon: Icons.flag_outlined,
-                    label: '举  报  对  方',
+                    label: '举 报 对 方',
                     value: 'report',
                   ),
                   _buildSheetTile(
                     sheetCtx,
                     icon: Icons.block_outlined,
-                    label: '拉  黑  对  方',
+                    label: '拉 黑 对 方',
                     value: 'block',
                   ),
                   _buildSheetTile(
                     sheetCtx,
                     icon: Icons.close,
-                    label: '取  消',
+                    label: '取 消',
                     value: null,
                     muted: true,
                   ),
@@ -166,7 +167,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 label,
                 style: Vt.cnBody.copyWith(
                   color: muted ? Vt.textTertiary : Vt.textPrimary,
-                  letterSpacing: 2,
+                  letterSpacing: 0.5,
                   fontSize: Vt.tmd,
                 ),
               ),
@@ -241,7 +242,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             // ─── WS 连接状态 ───
             _WsBanner(
               state: _wsState,
-              onRetry: () => ChatSocket.instance.manualRetry(),
+              onRetry: ChatSocket.instance.manualRetry,
             ),
 
             // ─── 消息列表 ───
@@ -254,8 +255,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                         Text(
                           '— 还 没 有 消 息 —',
                           style: Vt.cnHeading.copyWith(
-                            fontSize: Vt.tsm,
-                            letterSpacing: 5,
+                            fontSize: Vt.tmd,
+                            letterSpacing: 0.5,
                             color: Vt.gold.withValues(alpha: 0.7),
                           ),
                         ),
@@ -299,13 +300,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           Text(
                             '— 加 载 失 败 —',
                             style: Vt.cnHeading.copyWith(
-                              fontSize: Vt.tsm,
-                              letterSpacing: 5,
+                              fontSize: Vt.tmd,
+                              letterSpacing: 0.5,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            error.toString(),
+                            userMessageOf(error, fallback: '消息加载失败'),
                             textAlign: TextAlign.center,
                             style: Vt.bodySm.copyWith(color: Vt.textTertiary),
                           ),
@@ -355,77 +356,157 @@ class _HeaderBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 对照 H5 §3446 .chat-header
+    // - 渐变深底 + blur 16 + saturate 1.4
+    // - 居中 cn 标题 + ::after 32px 渐变细线
+    // - chat-deco ❦ 小衬线装饰
+    // - bottom: -1px radial 金色 glow line
     return ClipRect(
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          padding: EdgeInsets.only(
-            top: padding.top + 12,
-            left: 16,
-            right: 24,
-            bottom: 16,
-          ),
-          decoration: BoxDecoration(
-            color: Vt.bgVoid.withValues(alpha: 0.85),
-            border: Border(
-              bottom: BorderSide(
-                color: Vt.gold.withValues(alpha: 0.18),
-                width: 0.5,
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                padding.top + 18,
+                20,
+                18,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Vt.bgPureBlack,
+                    Vt.bgVoid.withValues(alpha: 0.97),
+                    Vt.bgVoid.withValues(alpha: 0.90),
+                  ],
+                  stops: const [0, 0.6, 1],
+                ),
+                border: Border(
+                  bottom: BorderSide(
+                    color: Vt.gold.withValues(alpha: 0.25),
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () => context.pop(),
+                    behavior: HitTestBehavior.opaque,
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Center(
+                        child: Text(
+                          '←',
+                          style: Vt.headingLg.copyWith(
+                            fontSize: Vt.txl,
+                            fontWeight: FontWeight.w300,
+                            color: Vt.gold,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // 标题列 — 居中 + ::after 渐变细线
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          nickname,
+                          textAlign: TextAlign.center,
+                          style: Vt.cnHeading.copyWith(
+                            fontSize: Vt.tmd,
+                            fontWeight: FontWeight.w300,
+                            letterSpacing: 0.32 * Vt.tmd, // 0.32em
+                            color: Vt.gold,
+                            shadows: [
+                              Shadow(
+                                color: Vt.gold.withValues(alpha: 0.5),
+                                blurRadius: 20,
+                              ),
+                            ],
+                            height: 1,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 8),
+                        // 标题下细线 32x1 gold-50% 渐变
+                        Container(
+                          width: 32,
+                          height: 1,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.transparent,
+                                Vt.gold.withValues(alpha: 0.5),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // chat-deco ❦ + more · 双语义合一
+                  GestureDetector(
+                    onTap: onMoreTap,
+                    behavior: HitTestBehavior.opaque,
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Center(
+                        child: Text(
+                          '❦',
+                          style: Vt.headingLg.copyWith(
+                            fontSize: Vt.tlg,
+                            fontWeight: FontWeight.w400,
+                            color: Vt.gold.withValues(alpha: 0.7),
+                            shadows: [
+                              Shadow(
+                                color: Vt.gold.withValues(alpha: 0.65),
+                                blurRadius: 16,
+                              ),
+                            ],
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: () => context.pop(),
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.arrow_back_ios_new_rounded,
-                    color: Vt.gold,
-                    size: 18,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  nickname,
-                  textAlign: TextAlign.center,
-                  style: Vt.headingLg.copyWith(
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 2,
-                    color: Vt.textGoldSoft,
-                    shadows: [
-                      Shadow(
-                        color: Vt.gold.withValues(alpha: 0.4),
-                        blurRadius: 16,
-                      ),
+            // header bottom radial glow line
+            Positioned(
+              left: MediaQuery.sizeOf(context).width * 0.2,
+              right: MediaQuery.sizeOf(context).width * 0.2,
+              bottom: -1,
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    colors: [
+                      Vt.gold.withValues(alpha: 0.5),
+                      Colors.transparent,
                     ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              GestureDetector(
-                onTap: onMoreTap,
-                behavior: HitTestBehavior.opaque,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  alignment: Alignment.center,
-                  child: const Icon(
-                    Icons.more_horiz_rounded,
-                    color: Vt.gold,
-                    size: 22,
+                    stops: const [0, 0.7],
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -446,25 +527,30 @@ class _Bubble extends StatelessWidget {
     return '$h:$m';
   }
 
+  /// L 角装饰 — 12x12，由两条边构成 L 形
+  /// alignment 决定保留哪两条边（朝向气泡内部的两条不画）
   Widget _corner({required Alignment alignment, required Color color}) {
-    final topSide = (alignment == Alignment.topLeft || alignment == Alignment.topRight)
-        ? BorderSide(color: color, width: 1)
-        : BorderSide.none;
-    final bottomSide = (alignment == Alignment.bottomLeft || alignment == Alignment.bottomRight)
-        ? BorderSide(color: color, width: 1)
-        : BorderSide.none;
-    final leftSide = (alignment == Alignment.topLeft || alignment == Alignment.bottomLeft)
-        ? BorderSide(color: color, width: 1)
-        : BorderSide.none;
-    final rightSide = (alignment == Alignment.topRight || alignment == Alignment.bottomRight)
-        ? BorderSide(color: color, width: 1)
-        : BorderSide.none;
+    // H5 .bubble::before / ::after：12x12 + border 1px，
+    // 移除朝向气泡内的两条 border（保留朝外的两条）
+    BorderSide side(bool keep) =>
+        keep ? BorderSide(color: color, width: 1) : BorderSide.none;
+
+    final isTop = alignment == Alignment.topLeft ||
+        alignment == Alignment.topRight;
+    final isLeft = alignment == Alignment.topLeft ||
+        alignment == Alignment.bottomLeft;
+
     return SizedBox(
       width: 12,
       height: 12,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          border: Border(top: topSide, bottom: bottomSide, left: leftSide, right: rightSide),
+          border: Border(
+            top: side(isTop),
+            bottom: side(!isTop),
+            left: side(isLeft),
+            right: side(!isLeft),
+          ),
         ),
       ),
     );
@@ -472,7 +558,12 @@ class _Bubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cornerColor = isMe ? Vt.gold : Vt.gold.withValues(alpha: 0.55);
+    // H5 §3494 .bubble: rgba(201,169,97,.45) opacity .7
+    // H5 §3542 .bubble.me: rgba(201,169,97,.7) opacity .85
+    final cornerColor = isMe
+        ? Vt.gold.withValues(alpha: 0.7 * 0.85)
+        : Vt.gold.withValues(alpha: 0.45 * 0.7);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Vt.s8),
       child: Row(
@@ -483,7 +574,7 @@ class _Bubble extends StatelessWidget {
           Flexible(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                maxWidth: MediaQuery.sizeOf(context).width * 0.72,
+                maxWidth: MediaQuery.sizeOf(context).width * 0.76,
               ),
               child: Stack(
                 clipBehavior: Clip.none,
@@ -492,23 +583,49 @@ class _Bubble extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 20, vertical: 16),
                     decoration: BoxDecoration(
-                      color: isMe
-                          ? Vt.gold.withValues(alpha: 0.10)
-                          : Vt.bgPrimary.withValues(alpha: 0.7),
+                      // H5 §3497/§3529: 对方 2/16/16/16 · 自己 16/2/16/16
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(isMe ? 16 : 2),
+                        topRight: Radius.circular(isMe ? 2 : 16),
+                        bottomLeft: const Radius.circular(16),
+                        bottomRight: const Radius.circular(16),
+                      ),
+                      // H5: 对方 rgba(12,10,6,.92) · 自己 暗金渐变
+                      color: isMe ? null : Vt.bgPrimary.withValues(alpha: 0.92),
+                      gradient: isMe
+                          ? const LinearGradient(
+                              begin: Alignment(-0.3, -1),
+                              end: Alignment(0.5, 1),
+                              colors: Vt.gradientChatBubbleMe,
+                              stops: [0, 0.5, 1],
+                            )
+                          : null,
                       border: Border.all(
                         color: isMe
-                            ? Vt.gold.withValues(alpha: 0.45)
-                            : Vt.gold.withValues(alpha: 0.18),
+                            ? Vt.gold.withValues(alpha: 0.55)
+                            : Vt.gold.withValues(alpha: 0.22),
                       ),
                       boxShadow: isMe
                           ? [
                               BoxShadow(
-                                color: Vt.gold.withValues(alpha: 0.28),
-                                blurRadius: 22,
-                                spreadRadius: -8,
+                                color: Vt.gold.withValues(alpha: 0.4),
+                                blurRadius: 24,
+                                spreadRadius: -6,
+                              ),
+                              const BoxShadow(
+                                color: Color(0xB3000000),
+                                blurRadius: 16,
+                                offset: Offset(0, 4),
+                                spreadRadius: -4,
                               ),
                             ]
-                          : null,
+                          : const [
+                              BoxShadow(
+                                color: Color(0x80000000),
+                                blurRadius: 12,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -516,31 +633,79 @@ class _Bubble extends StatelessWidget {
                         Text(
                           msg.content,
                           style: Vt.cnBody.copyWith(
-                            height: 1.7,
-                            letterSpacing: 1.2,
-                            color: Vt.textGoldSoft,
+                            // H5: 对方 rgba(232,214,178,.9) · 自己 #FAF4E6
+                            color: isMe
+                                ? Vt.goldIvory
+                                : const Color(0xE6E8D6B2),
+                            height: 1.95,
+                            letterSpacing: 0.3,
+                            shadows: isMe
+                                ? [
+                                    Shadow(
+                                      color: Vt.gold.withValues(alpha: 0.18),
+                                      blurRadius: 10,
+                                    ),
+                                  ]
+                                : null,
                           ),
                         ),
-                        const SizedBox(height: Vt.s6),
-                        Text(
-                          _formatTime(msg.createdAt),
-                          style: Vt.caption.copyWith(
-                            color: Vt.textTertiary,
-                            letterSpacing: 1,
+                        const SizedBox(height: Vt.s12),
+                        Align(
+                          // H5 §3565: me 时间右对齐 · 对方左对齐
+                          alignment:
+                              isMe ? Alignment.centerRight : Alignment.centerLeft,
+                          child: Text(
+                            _formatTime(msg.createdAt),
+                            style: Vt.caption.copyWith(
+                              fontSize: Vt.txs,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: 0.5,
+                              color: Vt.gold.withValues(alpha: 0.45),
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  // 四角 editorial L 装饰 — 金 1px
-                  Positioned(
-                      top: -1, left: -1, child: _corner(alignment: Alignment.topLeft, color: cornerColor)),
-                  Positioned(
-                      top: -1, right: -1, child: _corner(alignment: Alignment.topRight, color: cornerColor)),
-                  Positioned(
-                      bottom: -1, left: -1, child: _corner(alignment: Alignment.bottomLeft, color: cornerColor)),
-                  Positioned(
-                      bottom: -1, right: -1, child: _corner(alignment: Alignment.bottomRight, color: cornerColor)),
+                  // L 角装饰 — H5 是对角双角不是四角
+                  // 对方气泡 (.bubble:not(.me))：左上 + 右下
+                  // 自己气泡 (.bubble.me)：右上 + 左下
+                  if (isMe) ...[
+                    Positioned(
+                      top: -1,
+                      right: -1,
+                      child: _corner(
+                        alignment: Alignment.topRight,
+                        color: cornerColor,
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -1,
+                      left: -1,
+                      child: _corner(
+                        alignment: Alignment.bottomLeft,
+                        color: cornerColor,
+                      ),
+                    ),
+                  ] else ...[
+                    Positioned(
+                      top: -1,
+                      left: -1,
+                      child: _corner(
+                        alignment: Alignment.topLeft,
+                        color: cornerColor,
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -1,
+                      right: -1,
+                      child: _corner(
+                        alignment: Alignment.bottomRight,
+                        color: cornerColor,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -561,63 +726,54 @@ class _WsBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, showRetry, color) = switch (state) {
-      WsConnectionState.connecting => ('正 在 连 接 …', false, Vt.gold),
-      WsConnectionState.reconnecting => ('网 络 不 稳 · 正 在 重 连 …', false, Vt.gold),
-      WsConnectionState.failed => ('连 接 失 败 · 消 息 不 会 实 时 送 达', true, Vt.statusError),
-      WsConnectionState.disconnected => ('未 连 接', true, Vt.textTertiary),
-      WsConnectionState.connected => ('', false, Vt.gold),
-    };
-    if (state == WsConnectionState.connected || label.isEmpty) {
+    // 静默 connecting / reconnecting / disconnected 三态 · 避免主人看到 banner 闪烁
+    // 只在真正 failed (10 次重连耗尽) 时才提示用户，给重试入口
+    if (state != WsConnectionState.failed) {
       return const SizedBox.shrink();
     }
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: Vt.s16, vertical: Vt.s8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        border: Border(bottom: BorderSide(color: color.withValues(alpha: 0.3), width: 0.5)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (state == WsConnectionState.connecting ||
-              state == WsConnectionState.reconnecting)
-            SizedBox(
-              width: 12,
-              height: 12,
-              child: CircularProgressIndicator(strokeWidth: 1, color: color),
-            )
-          else
-            Icon(Icons.error_outline, size: 14, color: color),
-          const SizedBox(width: Vt.s8),
-          Flexible(
-            child: Text(
-              label,
-              style: Vt.cnLabel.copyWith(color: color, fontSize: Vt.t2xs, letterSpacing: 1.5),
-              overflow: TextOverflow.ellipsis,
-            ),
+    const label = '消 息 暂 不 实 时';
+    const color = Vt.statusError;
+    return GestureDetector(
+      onTap: onRetry,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: double.infinity,
+        padding:
+            const EdgeInsets.symmetric(horizontal: Vt.s16, vertical: Vt.s8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          border: Border(
+            bottom: BorderSide(color: color.withValues(alpha: 0.3), width: 0.5),
           ),
-          if (showRetry) ...[
-            const SizedBox(width: Vt.s12),
-            GestureDetector(
-              onTap: onRetry,
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: Vt.s8, vertical: Vt.s4),
-                child: Text(
-                  '重 试',
-                  style: Vt.cnLabel.copyWith(
-                    color: Vt.gold,
-                    fontSize: Vt.t2xs,
-                    letterSpacing: 2,
-                    decoration: TextDecoration.underline,
-                  ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 14, color: color),
+            const SizedBox(width: Vt.s8),
+            Flexible(
+              child: Text(
+                label,
+                style: Vt.cnLabel.copyWith(
+                  color: color,
+                  fontSize: Vt.tsm,
+                  letterSpacing: 0.5,
                 ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: Vt.s12),
+            Text(
+              '点 此 重 连',
+              style: Vt.cnLabel.copyWith(
+                color: Vt.gold,
+                fontSize: Vt.tsm,
+                letterSpacing: 0.5,
+                decoration: TextDecoration.underline,
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -654,29 +810,34 @@ class _InputBar extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
+          // H5 §3590 .chat-input：border-bottom only · 52px tall · 无背景
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              height: 52,
+              padding: const EdgeInsets.fromLTRB(4, 0, 16, 0),
               decoration: BoxDecoration(
-                color: Vt.gold.withValues(alpha: 0.04),
-                border: Border.all(
-                  color: Vt.gold.withValues(alpha: 0.25),
+                border: Border(
+                  bottom: BorderSide(
+                    color: Vt.gold.withValues(alpha: 0.35),
+                  ),
                 ),
               ),
               child: TextField(
                 controller: controller,
                 style: Vt.cnBody.copyWith(
                   color: Vt.textGoldSoft,
+                  letterSpacing: 0.3,
                 ),
                 cursorColor: Vt.gold,
                 minLines: 1,
-                maxLines: 4,
+                maxLines: 1,
                 maxLength: 500,
                 decoration: InputDecoration(
-                  hintText: '说一句…',
+                  hintText: '说 一 句 …',
                   hintStyle: Vt.cnBody.copyWith(
-                    color: Vt.gold.withValues(alpha: 0.35),
+                    color: Vt.gold.withValues(alpha: 0.28),
                     fontStyle: FontStyle.italic,
+                    letterSpacing: 0.5,
                   ),
                   border: InputBorder.none,
                   isDense: true,
@@ -687,45 +848,97 @@ class _InputBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
+          // H5 §3610 .chat-send：52x52 + L 角装饰（左上+右下）
           SpringTap(
             onTap: sending ? null : onSend,
             glow: !sending,
-            child: Container(
-              width: 56,
-              height: 48,
-              decoration: BoxDecoration(
-                color: sending
-                    ? Vt.gold.withValues(alpha: 0.2)
-                    : Vt.gold.withValues(alpha: 0.06),
-                border: Border.all(color: Vt.gold),
-                boxShadow: sending
-                    ? null
-                    : [
-                        BoxShadow(
-                          color: Vt.gold.withValues(alpha: 0.4),
-                          blurRadius: 18,
-                          spreadRadius: -6,
-                        ),
-                      ],
-              ),
-              child: Center(
-                child: sending
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 1.5,
-                          color: Vt.gold,
-                        ),
-                      )
-                    : Text(
-                        '寄',
-                        style: Vt.cnButton.copyWith(
-                          fontSize: Vt.tmd,
-                          letterSpacing: 0,
-                          color: Vt.gold,
+            child: SizedBox(
+              width: 52,
+              height: 52,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: sending
+                          ? Vt.gold.withValues(alpha: 0.2)
+                          : Vt.gold.withValues(alpha: 0.06),
+                      border: Border.all(
+                        color: Vt.gold.withValues(alpha: 0.55),
+                      ),
+                      boxShadow: sending
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: Vt.gold.withValues(alpha: 0.4),
+                                blurRadius: 20,
+                                spreadRadius: -6,
+                              ),
+                            ],
+                    ),
+                    alignment: Alignment.center,
+                    child: sending
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1.5,
+                              color: Vt.gold,
+                            ),
+                          )
+                        : Text(
+                            '寄',
+                            style: Vt.cnButton.copyWith(
+                              fontSize: Vt.tmd,
+                              letterSpacing: 0,
+                              color: Vt.gold,
+                            ),
+                          ),
+                  ),
+                  // L 角装饰：左上 + 右下
+                  Positioned(
+                    top: -1,
+                    left: -1,
+                    child: SizedBox(
+                      width: 8,
+                      height: 8,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            top: BorderSide(
+                              color: Vt.gold.withValues(alpha: 0.7),
+                            ),
+                            left: BorderSide(
+                              color: Vt.gold.withValues(alpha: 0.7),
+                            ),
+                          ),
                         ),
                       ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -1,
+                    right: -1,
+                    child: SizedBox(
+                      width: 8,
+                      height: 8,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Vt.gold.withValues(alpha: 0.7),
+                            ),
+                            right: BorderSide(
+                              color: Vt.gold.withValues(alpha: 0.7),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

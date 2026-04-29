@@ -114,6 +114,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get languageChinese => '中 文';
 
   @override
+  String get navHome => '寻 物';
+
+  @override
+  String get navSearch => '寻 找';
+
+  @override
+  String get navPublish => '发 布';
+
+  @override
+  String get navChats => '私 语';
+
+  @override
+  String get navProfile => '我 的';
+
+  @override
+  String get feedTabAll => '全部';
+
+  @override
+  String get feedTabNearby => '同城';
+
+  @override
   String get contentViolation => '内容包含不恰当的信息';
 
   @override

@@ -2,10 +2,14 @@
 // Velvet · main.dart (v25 · C2 主题 + I1 i18n)
 // Touch what was touched.
 // ============================================================================
+// 2026-04-28: WebView 套壳路线撤回（Google Play 政策禁止纯套壳）→ 回到 Flutter
+// 原生 GoRouter / Riverpod 入口，逐页 1:1 翻译 H5 truth source
+// ============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/router.dart';
@@ -17,6 +21,10 @@ import 'shared/theme/theme_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 字体只走本地 bundle，禁止 fonts.gstatic.com CDN 抓取。
+  // 中国网络下 CDN 不可达 → 静默 fallback 系统 serif → 全屏字体破相。
+  GoogleFonts.config.allowRuntimeFetching = false;
 
   final prefs = await SharedPreferences.getInstance();
 
@@ -53,28 +61,13 @@ class VelvetApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'Velvet',
       debugShowCheckedModeBanner: false,
-      routerConfig: router,
-      themeMode: mode,
       theme: buildLightTheme(),
       darkTheme: buildDarkTheme(),
-      // ── i18n (v25 · I1) ──
-      // locale == null → 跟随系统 · 非 null → 手动锁定
+      themeMode: mode,
       locale: locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      // Dynamic Type: 响应系统字号 · 但 clamp 到 [0.9, 1.3] 避免极端
-      // 缩放破版 editorial 排版 · 满足 Apple 辅助功能要求
-      builder: (context, child) {
-        final mediaQuery = MediaQuery.of(context);
-        final clampedScaler = mediaQuery.textScaler.clamp(
-          minScaleFactor: 0.9,
-          maxScaleFactor: 1.3,
-        );
-        return MediaQuery(
-          data: mediaQuery.copyWith(textScaler: clampedScaler),
-          child: child ?? const SizedBox.shrink(),
-        );
-      },
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      routerConfig: router,
     );
   }
 }

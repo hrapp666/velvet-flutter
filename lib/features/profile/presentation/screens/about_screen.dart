@@ -21,6 +21,7 @@ class AboutScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // H5 .header pattern: VELVET mark + divider + 关 于 + spacer + 返 回 link
               Row(
                 children: [
                   GestureDetector(
@@ -31,10 +32,14 @@ class AboutScreen extends StatelessWidget {
                       child: Icon(Icons.arrow_back, color: Vt.gold, size: 18),
                     ),
                   ),
-                  const Spacer(),
-                  Text('关 于', style: Vt.cnHeading.copyWith(color: Vt.gold)),
-                  const Spacer(),
-                  const SizedBox(width: 48),
+                  const SizedBox(width: Vt.s8),
+                  Text('VELVET', style: Vt.headingLg.copyWith(
+                    color: Vt.textPrimary, letterSpacing: 5,
+                  )),
+                  const SizedBox(width: Vt.s12),
+                  Container(width: 1, height: 16, color: Vt.borderMedium),
+                  const SizedBox(width: Vt.s12),
+                  Text('关 于', style: Vt.cnLabel.copyWith(color: Vt.textSecondary)),
                 ],
               ),
               const SizedBox(height: Vt.s40),
@@ -56,8 +61,10 @@ class AboutScreen extends StatelessWidget {
                     style: Vt.displayHero.copyWith(
                       color: Colors.white,
                       letterSpacing: 8,
-                      shadows: const [
-                        Shadow(color: Color(0x80C9A961), blurRadius: 40),
+                      shadows: [
+                        Shadow(
+                            color: Vt.gold.withValues(alpha: 0.5),
+                            blurRadius: 40),
                       ],
                     ),
                   ),
@@ -66,7 +73,7 @@ class AboutScreen extends StatelessWidget {
               const SizedBox(height: Vt.s12),
               Center(
                 child: Text(
-                  '天  鹅  绒',
+                  '天 鹅 绒',
                   style: Vt.cnHeading.copyWith(
                     color: Vt.gold, letterSpacing: 8, fontSize: Vt.tmd,
                   ),
@@ -159,7 +166,10 @@ class AboutScreen extends StatelessWidget {
           Text(title,
               style: Vt.cnHeading.copyWith(
                 color: Vt.gold,
-                shadows: const [Shadow(color: Color(0x33C9A961), blurRadius: 12)],
+                shadows: [
+                  Shadow(
+                      color: Vt.gold.withValues(alpha: 0.2), blurRadius: 12),
+                ],
               )),
           const SizedBox(height: Vt.s16),
           ...lines.map((line) {

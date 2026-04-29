@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/api/api_client.dart';
 import '../../../../shared/theme/design_tokens.dart';
 import '../../../../shared/widgets/feedback/velvet_toast.dart';
 import '../../../../shared/widgets/micro/spring_tap.dart';
@@ -85,7 +86,7 @@ class _WithdrawScreenState extends ConsumerState<WithdrawScreen> {
       Navigator.of(context).pop();
     } on Object catch (e) {
       if (!mounted) return;
-      _toast(e.toString());
+      _toast(userMessageOf(e, fallback: '提现失败，请稍后再试'));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

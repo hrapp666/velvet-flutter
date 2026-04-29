@@ -1,5 +1,5 @@
 // ============================================================================
-// UserPublicScreen · 看别人的主页
+// UserPublicScreen · 看别人的主页 · v5 Editorial Luxury
 // ============================================================================
 
 import 'dart:ui';
@@ -45,7 +45,8 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
     });
     try {
       final api = ref.read(apiClientProvider);
-      final userRes = await api.dio.get('/api/v1/users/public/${widget.userId}');
+      final userRes =
+          await api.dio.get<dynamic>('/api/v1/users/public/${widget.userId}');
       final u = UserProfile.fromJson(userRes.data as Map<String, dynamic>);
 
       final momentsRes = await ref
@@ -65,7 +66,7 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
         _loading = false;
       });
     } on Object catch (_) {
-      // 静默原因：解析/类型异常时不能让 UI 卡 loading，给用户错误态可重试
+      // 静默原因：解析/类型异常时不能让 UI 卡 loading · 给用户错误态可重试
       if (!mounted) return;
       setState(() {
         _error = '加载失败';
@@ -79,12 +80,13 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
     if (user == null) return;
     try {
       final api = ref.read(apiClientProvider);
-      final res = await api.dio.post('/api/v1/users/${user.id}/follow');
+      final res =
+          await api.dio.post<dynamic>('/api/v1/users/${user.id}/follow');
       final followed =
           (res.data as Map<String, dynamic>)['followed'] as bool? ?? false;
       if (!mounted) return;
       setState(() => _following = followed);
-      VelvetToast.show(context, followed ? '已关注' : '取消关注', isError: true);
+      VelvetToast.show(context, followed ? '已 关 注' : '取 消 关 注');
     } on Object catch (e) {
       if (!mounted) return;
       VelvetToast.show(context, '失败：$e', isError: true);
@@ -96,44 +98,45 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
     final choice = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.65),
+      barrierColor: Colors.black.withValues(alpha: 0.7),
       builder: (sheetCtx) {
         final padding = MediaQuery.paddingOf(sheetCtx);
-        return ClipRRect(
-          borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(Vt.rLg)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-            child: Container(
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          child: Container(
+            decoration: BoxDecoration(
               color: Vt.bgElevated.withValues(alpha: 0.92),
-              padding: EdgeInsets.only(
-                top: Vt.s16,
-                bottom: padding.bottom + Vt.s16,
+              border: Border(
+                top: BorderSide(color: Vt.gold.withValues(alpha: 0.32)),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _sheetTile(
-                    sheetCtx,
-                    icon: Icons.flag_outlined,
-                    label: '举  报  此  用  户',
-                    value: 'report',
-                  ),
-                  _sheetTile(
-                    sheetCtx,
-                    icon: Icons.block_outlined,
-                    label: '拉  黑  此  用  户',
-                    value: 'block',
-                  ),
-                  _sheetTile(
-                    sheetCtx,
-                    icon: Icons.close,
-                    label: '取  消',
-                    value: null,
-                    muted: true,
-                  ),
-                ],
-              ),
+            ),
+            padding: EdgeInsets.only(
+              top: Vt.s16,
+              bottom: padding.bottom + Vt.s16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _sheetTile(
+                  sheetCtx,
+                  icon: Icons.flag_outlined,
+                  label: '举 报 此 用 户',
+                  value: 'report',
+                ),
+                _sheetTile(
+                  sheetCtx,
+                  icon: Icons.block_outlined,
+                  label: '拉 黑 此 用 户',
+                  value: 'block',
+                ),
+                _sheetTile(
+                  sheetCtx,
+                  icon: Icons.close,
+                  label: '取 消',
+                  value: null,
+                  muted: true,
+                ),
+              ],
             ),
           ),
         );
@@ -175,15 +178,18 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
             const EdgeInsets.symmetric(horizontal: Vt.s24, vertical: Vt.s16),
         child: Row(
           children: [
-            Icon(icon,
-                color: muted ? Vt.textTertiary : Vt.gold, size: 20),
+            Icon(
+              icon,
+              color: muted ? Vt.textTertiary : Vt.gold,
+              size: 20,
+            ),
             const SizedBox(width: Vt.s16),
             Expanded(
               child: Text(
                 label,
                 style: Vt.cnBody.copyWith(
                   color: muted ? Vt.textTertiary : Vt.textPrimary,
-                  letterSpacing: 2,
+                  letterSpacing: 4,
                   fontSize: Vt.tmd,
                 ),
               ),
@@ -197,402 +203,718 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
   @override
   Widget build(BuildContext context) {
     final padding = MediaQuery.paddingOf(context);
-
     return Scaffold(
       backgroundColor: Vt.bgVoid,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment(0, -0.5),
-            radius: 1.4,
-            colors: Vt.gradientAmbient,
-          ),
-        ),
-        child: Stack(
-          children: [
-            // 金色 ambient
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 320,
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(0, -0.6),
-                      radius: 1.0,
-                      colors: [
-                        Vt.gold.withValues(alpha: 0.12),
-                        Colors.transparent,
-                      ],
-                    ),
+      body: Stack(
+        children: [
+          // Ambient 顶部金光
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 360,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: const Alignment(0, -0.6),
+                    radius: 1.0,
+                    colors: [
+                      Vt.gold.withValues(alpha: 0.12),
+                      Colors.transparent,
+                    ],
                   ),
                 ),
               ),
             ),
+          ),
 
-            // 主体
-            if (_loading)
-              Center(
-                child: Padding(
-                  padding: EdgeInsets.only(top: padding.top + 100),
-                  child: const SizedBox(
-                    width: 28,
-                    height: 28,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 1.5,
-                      color: Vt.gold,
+          if (_loading)
+            const Center(
+              child: SizedBox(
+                width: 28,
+                height: 28,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.5,
+                  color: Vt.gold,
+                ),
+              ),
+            )
+          else if (_error != null)
+            _ErrorView(error: _error!, onRetry: _load)
+          else if (_user != null)
+            _Body(
+              user: _user!,
+              moments: _moments,
+              following: _following,
+              padding: padding,
+              onFollow: _toggleFollow,
+              onMessage: () => VelvetToast.show(context, '可 从 具 体 动 态 页 发 私 信'),
+            ),
+
+          // 顶部返回栏
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            child: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                child: Container(
+                  padding: EdgeInsets.only(
+                    top: padding.top + Vt.s12,
+                    left: Vt.s8,
+                    right: Vt.s8,
+                    bottom: Vt.s12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Vt.bgVoid.withValues(alpha: 0.72),
+                    border: Border(
+                      bottom: BorderSide(
+                          color: Vt.gold.withValues(alpha: 0.18)),
                     ),
                   ),
-                ),
-              )
-            else if (_error != null)
-              Center(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                      horizontal: 32, vertical: padding.top + 80),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Row(
                     children: [
-                      Icon(Icons.error_outline,
-                          size: 32, color: Vt.gold.withValues(alpha: 0.6)),
-                      const SizedBox(height: 16),
-                      Text(
-                        '— 加 载 失 败 —',
-                        style: Vt.cnHeading.copyWith(
-                          fontSize: Vt.tsm,
-                          letterSpacing: 5,
+                      GestureDetector(
+                        onTap: () => context.pop(),
+                        behavior: HitTestBehavior.opaque,
+                        child: const SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            color: Vt.gold,
+                            size: 18,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _error!,
-                        textAlign: TextAlign.center,
-                        style: Vt.bodySm.copyWith(color: Vt.textTertiary),
-                      ),
+                      const Spacer(),
+                      if (_user != null)
+                        GestureDetector(
+                          onTap: () => _showSafetyMenu(_user!),
+                          behavior: HitTestBehavior.opaque,
+                          child: const SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: Icon(
+                              Icons.more_horiz_rounded,
+                              color: Vt.gold,
+                              size: 22,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
-              )
-            else if (_user != null)
-              Builder(builder: (_) {
-                final user = _user!;
-                return SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(
-                    0, padding.top + 100, 0, padding.bottom + 48),
-                child: Column(
-                  children: [
-                    // MEMBER 标签
-                    Text(
-                      'MEMBER',
-                      style: Vt.label.copyWith(
-                        color: Vt.gold,
-                        letterSpacing: 5,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-                    // 大金昵称
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: ShaderMask(
-                        shaderCallback: (rect) => const LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: Vt.gradientGold4,
-                        ).createShader(rect),
-                        child: Text(
-                          user.nickname,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: Vt.displayMd.copyWith(
-                            fontSize: Vt.t2xl,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: -0.5,
-                            color: Colors.white,
-                            height: 1,
-                            shadows: const [
-                              Shadow(
-                                color: Color(0x55C9A961),
-                                blurRadius: 32,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '@${user.username}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Vt.label.copyWith(
-                        color: Vt.textSecondary,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                    const SizedBox(height: 28),
+// ────────────────────────────────────────────────────────────────────────────
+// 主体内容
+// ────────────────────────────────────────────────────────────────────────────
 
-                    // 钻石装饰线
-                    SizedBox(
-                      width: 56,
-                      height: 1,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.transparent,
-                                  Vt.gold,
-                                  Colors.transparent,
-                                ],
-                              ),
-                            ),
-                          ),
-                          Transform.rotate(
-                            angle: 0.785,
-                            child: Container(
-                              width: 5,
-                              height: 5,
-                              decoration: const BoxDecoration(color: Vt.gold),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 28),
+class _Body extends StatelessWidget {
+  final UserProfile user;
+  final List<MomentModel> moments;
+  final bool following;
+  final EdgeInsets padding;
+  final VoidCallback onFollow;
+  final VoidCallback onMessage;
 
-                    // bio
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 48),
-                      child: Text(
-                        switch (user.bio) {
-                          final b? when b.isNotEmpty => b,
-                          _ => '— 尚 未 留 言 —',
-                        },
-                        textAlign: TextAlign.center,
-                        maxLines: 6,
-                        overflow: TextOverflow.ellipsis,
-                        style: Vt.cnBody.copyWith(
-                          color: Vt.textSecondary,
-                          letterSpacing: 1.5,
-                          fontStyle: FontStyle.italic,
-                          height: 1.85,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 40),
+  const _Body({
+    required this.user,
+    required this.moments,
+    required this.following,
+    required this.padding,
+    required this.onFollow,
+    required this.onMessage,
+  });
 
-                    // 三栏数据
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 36),
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          top: BorderSide(
-                              color: Vt.gold.withValues(alpha: 0.2)),
-                          bottom: BorderSide(
-                              color: Vt.gold.withValues(alpha: 0.2)),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _Stat(
-                              num: user.momentsCount.toString(),
-                              label: 'PIECES'),
-                          _Stat(
-                              num: user.followersCount.toString(),
-                              label: 'FOLLOWERS'),
-                          _Stat(
-                              num: user.followingCount.toString(),
-                              label: 'FOLLOWING'),
-                        ],
-                      ),
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(
+        0,
+        padding.top + Vt.s96,
+        0,
+        padding.bottom + Vt.s64,
+      ),
+      child: Column(
+        children: [
+          const _Ornament(),
+          const SizedBox(height: Vt.s24),
+          _AvatarRing(letter: _initialOf(user.nickname)),
+          const SizedBox(height: Vt.s20),
+          Text(
+            'MEMBER',
+            style: Vt.label.copyWith(
+              color: Vt.gold.withValues(alpha: 0.7),
+              letterSpacing: 6,
+              fontSize: Vt.t2xs,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          const SizedBox(height: Vt.s12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Vt.s32),
+            child: ShaderMask(
+              shaderCallback: (rect) => const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: Vt.gradientGold4,
+              ).createShader(rect),
+              child: Text(
+                user.nickname,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Vt.displayMd.copyWith(
+                  fontSize: Vt.t2xl,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: -1,
+                  color: Colors.white,
+                  height: 1,
+                  shadows: [
+                    Shadow(
+                      color: Vt.gold.withValues(alpha: 0.33),
+                      blurRadius: 32,
                     ),
-                    const SizedBox(height: 32),
-
-                    // 关注按钮 / 私聊按钮
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 36),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: _toggleFollow,
-                              child: Container(
-                                height: 52,
-                                decoration: BoxDecoration(
-                                  color: _following
-                                      ? Vt.gold.withValues(alpha: 0.18)
-                                      : Vt.gold.withValues(alpha: 0.06),
-                                  border: Border.all(color: Vt.gold),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color:
-                                          Vt.gold.withValues(alpha: 0.3),
-                                      blurRadius: 20,
-                                      spreadRadius: -6,
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    _following ? '已  关  注' : '关  注',
-                                    style: Vt.cnButton.copyWith(
-                                      letterSpacing: 6,
-                                      color: Vt.gold,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                VelvetToast.show(context, '可从具体动态页发私信');
-                              },
-                              child: Container(
-                                height: 52,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color:
-                                        Vt.gold.withValues(alpha: 0.3),
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '私  下  聊',
-                                    style: Vt.cnButton.copyWith(
-                                      fontSize: Vt.tsm,
-                                      letterSpacing: 6,
-                                      color: Vt.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-
-                    // 她的发布
-                    if (_moments.isNotEmpty) ...[
-                      Row(
-                        children: [
-                          const SizedBox(width: 36),
-                          Text(
-                            '她 的 发 布',
-                            style: Vt.cnHeading.copyWith(
-                              letterSpacing: 5,
-                              color: Vt.gold,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Container(
-                              height: 1,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Vt.gold.withValues(alpha: 0.5),
-                                    Colors.transparent,
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 36),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 36),
-                        child: Column(
-                          children: _moments
-                              .map((m) => _MomentRow(moment: m))
-                              .toList(),
-                        ),
-                      ),
-                    ] else
-                      Padding(
-                        padding: const EdgeInsets.all(Vt.s32),
-                        child: Text(
-                          '— 尚 未 发 布 —',
-                          textAlign: TextAlign.center,
-                          style: Vt.cnHeading.copyWith(
-                            fontSize: Vt.tsm,
-                            letterSpacing: 4,
-                            color: Vt.textTertiary,
-                          ),
-                        ),
-                      ),
                   ],
                 ),
-              );
-              }),
-
-            // 顶部返回栏
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 0,
-              child: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-                  child: Container(
-                    padding: EdgeInsets.only(
-                      top: padding.top + 12,
-                      left: 16,
-                      right: 16,
-                      bottom: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Vt.bgVoid.withValues(alpha: 0.7),
-                    ),
-                    child: Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () => context.pop(),
-                          behavior: HitTestBehavior.opaque,
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            alignment: Alignment.center,
-                            child: const Icon(
-                              Icons.arrow_back_ios_new_rounded,
-                              color: Vt.gold,
-                              size: 18,
-                            ),
+              ),
+            ),
+          ),
+          const SizedBox(height: Vt.s12),
+          Container(
+            padding: const EdgeInsets.only(bottom: Vt.s4),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Vt.gold.withValues(alpha: 0.28),
+                  style: BorderStyle.solid,
+                ),
+              ),
+            ),
+            child: Text(
+              '@${user.username}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Vt.label.copyWith(
+                color: Vt.textSecondary,
+                letterSpacing: 3,
+                fontSize: Vt.t2xs,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+          const SizedBox(height: Vt.s28),
+          const _OrnamentRich(),
+          const SizedBox(height: Vt.s24),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Vt.s48),
+            child: Text(
+              switch (user.bio) {
+                final b? when b.isNotEmpty => b,
+                _ => '— 尚 未 留 言 —',
+              },
+              textAlign: TextAlign.center,
+              maxLines: 6,
+              overflow: TextOverflow.ellipsis,
+              style: Vt.cnBody.copyWith(
+                color: Vt.textSecondary,
+                letterSpacing: 1.5,
+                fontStyle: FontStyle.italic,
+                height: 1.85,
+              ),
+            ),
+          ),
+          const SizedBox(height: Vt.s40),
+          // 三栏数据
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: Vt.s32),
+            padding: const EdgeInsets.symmetric(vertical: Vt.s24),
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(0, 0.5),
+                radius: 0.9,
+                colors: [
+                  Vt.gold.withValues(alpha: 0.05),
+                  Colors.transparent,
+                ],
+              ),
+              border: Border(
+                top: BorderSide(color: Vt.gold.withValues(alpha: 0.18)),
+                bottom: BorderSide(color: Vt.gold.withValues(alpha: 0.18)),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _StatCol(
+                    value: user.momentsCount.toString(),
+                    label: '发 布',
+                  ),
+                ),
+                const _VStatDivider(),
+                Expanded(
+                  child: _StatCol(
+                    value: user.followersCount.toString(),
+                    label: '关 注 者',
+                  ),
+                ),
+                const _VStatDivider(),
+                Expanded(
+                  child: _StatCol(
+                    value: user.followingCount.toString(),
+                    label: '关 注 中',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: Vt.s32),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Vt.s32),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onFollow,
+                    child: Container(
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: following
+                            ? Vt.gold.withValues(alpha: 0.18)
+                            : Vt.gold.withValues(alpha: 0.06),
+                        border: Border.all(color: Vt.gold),
+                        boxShadow: following
+                            ? null
+                            : [
+                                BoxShadow(
+                                  color: Vt.gold.withValues(alpha: 0.32),
+                                  blurRadius: 24,
+                                  spreadRadius: -8,
+                                ),
+                              ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          following ? '已 关 注' : '关 注',
+                          style: Vt.cnButton.copyWith(
+                            letterSpacing: 8,
+                            color: Vt.gold,
                           ),
                         ),
-                        const Spacer(),
-                        if (_user != null)
-                          GestureDetector(
-                            onTap: () => _showSafetyMenu(_user!),
-                            behavior: HitTestBehavior.opaque,
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              alignment: Alignment.center,
-                              child: const Icon(
-                                Icons.more_horiz_rounded,
-                                color: Vt.gold,
-                                size: 22,
-                              ),
-                            ),
-                          ),
-                      ],
+                      ),
                     ),
+                  ),
+                ),
+                const SizedBox(width: Vt.s12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: onMessage,
+                    child: Container(
+                      height: 52,
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: Vt.gold.withValues(alpha: 0.32),
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          '私 下 聊',
+                          style: Vt.cnButton.copyWith(
+                            fontSize: Vt.tsm,
+                            letterSpacing: 6,
+                            color: Vt.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: Vt.s48),
+          // 她的发布
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Vt.s32),
+            child: Row(
+              children: [
+                Text(
+                  '她 的 发 布',
+                  style: Vt.cnHeading.copyWith(
+                    fontSize: Vt.tmd,
+                    letterSpacing: 6,
+                    color: Vt.gold,
+                  ),
+                ),
+                const SizedBox(width: Vt.s12),
+                Expanded(
+                  child: Container(
+                    height: 1,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Vt.gold.withValues(alpha: 0.45),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: Vt.s20),
+          if (moments.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Vt.s32),
+              child: Column(
+                children: [
+                  for (var i = 0; i < moments.length; i++)
+                    _MomentRow(
+                      moment: moments[i],
+                      isLast: i == moments.length - 1,
+                    ),
+                ],
+              ),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Vt.s32,
+                vertical: Vt.s48,
+              ),
+              child: Text(
+                '— 尚 未 发 布 —',
+                textAlign: TextAlign.center,
+                style: Vt.cnHeading.copyWith(
+                  fontSize: Vt.tsm,
+                  letterSpacing: 6,
+                  color: Vt.textTertiary,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _initialOf(String name) {
+    if (name.isEmpty) return 'V';
+    return name.characters.first.toUpperCase();
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// 装饰组件
+// ────────────────────────────────────────────────────────────────────────────
+
+class _Ornament extends StatelessWidget {
+  const _Ornament();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 96,
+          height: 1,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  Vt.gold.withValues(alpha: 0.5),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Vt.s12),
+          child: Text(
+            '❦',
+            style: Vt.displayMd.copyWith(
+              fontSize: Vt.tlg,
+              color: Vt.gold,
+              shadows: [
+                Shadow(
+                  color: Vt.gold.withValues(alpha: 0.55),
+                  blurRadius: 18,
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 96,
+          height: 1,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Vt.gold.withValues(alpha: 0.5),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _OrnamentRich extends StatelessWidget {
+  const _OrnamentRich();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 140,
+      height: 8,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            height: 1,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  Vt.gold.withValues(alpha: 0.5),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+          Transform.rotate(
+            angle: 0.785,
+            child: Container(
+              width: 5,
+              height: 5,
+              decoration: const BoxDecoration(color: Vt.gold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AvatarRing extends StatelessWidget {
+  final String letter;
+  const _AvatarRing({required this.letter});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 100,
+      height: 100,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: SweepGradient(
+                colors: [
+                  Vt.gold.withValues(alpha: 0),
+                  Vt.goldLight,
+                  Vt.gold,
+                  Vt.goldDark,
+                  Vt.gold.withValues(alpha: 0),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            width: 88,
+            height: 88,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Vt.bgPrimary,
+            ),
+          ),
+          Container(
+            width: 84,
+            height: 84,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const RadialGradient(
+                center: Alignment(-0.3, -0.3),
+                colors: [Vt.bgAmbientSoft, Vt.bgAmbientBottom],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Vt.gold.withValues(alpha: 0.32),
+                  blurRadius: 32,
+                  spreadRadius: -4,
+                ),
+              ],
+            ),
+            child: Center(
+              child: ShaderMask(
+                shaderCallback: (rect) => const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: Vt.gradientGold4,
+                ).createShader(rect),
+                child: Text(
+                  letter,
+                  style: Vt.displayMd.copyWith(
+                    fontSize: Vt.t2xl,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                    letterSpacing: -2,
+                    height: 1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatCol extends StatelessWidget {
+  final String value;
+  final String label;
+  const _StatCol({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ShaderMask(
+          shaderCallback: (rect) => const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: Vt.gradientGold4,
+          ).createShader(rect),
+          child: Text(
+            value,
+            style: Vt.displayLg.copyWith(
+              fontSize: Vt.t3xl,
+              fontWeight: FontWeight.w500,
+              letterSpacing: -1.5,
+              height: 0.88,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        const SizedBox(height: Vt.s8),
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Vt.cnLabel.copyWith(
+            color: Vt.textSecondary,
+            letterSpacing: 4,
+            fontSize: Vt.t2xs,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _VStatDivider extends StatelessWidget {
+  const _VStatDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 1,
+      height: 56,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Vt.gold.withValues(alpha: 0.32),
+              Colors.transparent,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// 错误态
+// ────────────────────────────────────────────────────────────────────────────
+
+class _ErrorView extends StatelessWidget {
+  final String error;
+  final VoidCallback onRetry;
+
+  const _ErrorView({required this.error, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(Vt.s40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 32,
+              color: Vt.gold.withValues(alpha: 0.6),
+            ),
+            const SizedBox(height: Vt.s16),
+            Text(
+              '— 加 载 失 败 —',
+              style: Vt.cnHeading.copyWith(
+                fontSize: Vt.tsm,
+                letterSpacing: 6,
+                color: Vt.gold,
+              ),
+            ),
+            const SizedBox(height: Vt.s8),
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: Vt.bodySm.copyWith(color: Vt.textTertiary),
+            ),
+            const SizedBox(height: Vt.s24),
+            GestureDetector(
+              onTap: onRetry,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Vt.s24,
+                  vertical: Vt.s12,
+                ),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Vt.gold),
+                ),
+                child: Text(
+                  '重 试',
+                  style: Vt.cnLabel.copyWith(
+                    color: Vt.gold,
+                    letterSpacing: 4,
+                    fontSize: Vt.tsm,
                   ),
                 ),
               ),
@@ -604,42 +926,15 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
   }
 }
 
-class _Stat extends StatelessWidget {
-  final String num;
-  final String label;
-  const _Stat({required this.num, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          num,
-          style: Vt.headingLg.copyWith(
-            fontWeight: FontWeight.w500,
-            color: Vt.gold,
-            height: 1,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Vt.label.copyWith(
-            color: Vt.textSecondary,
-            letterSpacing: 2,
-          ),
-        ),
-      ],
-    );
-  }
-}
+// ────────────────────────────────────────────────────────────────────────────
+// her moment row
+// ────────────────────────────────────────────────────────────────────────────
 
 class _MomentRow extends StatelessWidget {
   final MomentModel moment;
-  const _MomentRow({required this.moment});
+  final bool isLast;
+
+  const _MomentRow({required this.moment, required this.isLast});
 
   @override
   Widget build(BuildContext context) {
@@ -648,8 +943,15 @@ class _MomentRow extends StatelessWidget {
     return GestureDetector(
       onTap: () => context.push('/moment/${moment.id}'),
       behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: Vt.s16),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: isLast
+                ? BorderSide.none
+                : BorderSide(color: Vt.gold.withValues(alpha: 0.09)),
+          ),
+        ),
         child: Row(
           children: [
             Container(
@@ -657,29 +959,32 @@ class _MomentRow extends StatelessWidget {
               height: 84,
               decoration: BoxDecoration(
                 color: Vt.bgPrimary,
-                border: Border.all(color: Vt.gold.withValues(alpha: 0.3)),
+                border: Border.all(color: Vt.gold.withValues(alpha: 0.32)),
               ),
               child: cover != null
-                  ? Image.network(cover, fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _vPlaceholder())
-                  : _vPlaceholder(),
+                  ? Image.network(
+                      cover,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _placeholder(),
+                    )
+                  : _placeholder(),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: Vt.s16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    moment.title?.isNotEmpty == true
-                        ? moment.title!
-                        : '无 题',
-                    style: Vt.headingSm.copyWith(
+                    moment.title?.isNotEmpty == true ? moment.title! : '无 题',
+                    style: Vt.cnHeading.copyWith(
+                      fontSize: Vt.tmd,
                       color: Vt.textGoldSoft,
+                      letterSpacing: 3,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: Vt.s8),
                   if (moment.hasItem && moment.itemPriceCents != null)
                     Text(
                       '¥ ${(moment.itemPriceCents! / 100).toStringAsFixed(0)}',
@@ -691,17 +996,23 @@ class _MomentRow extends StatelessWidget {
                 ],
               ),
             ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: Vt.gold.withValues(alpha: 0.4),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _vPlaceholder() {
+  Widget _placeholder() {
     return Center(
       child: Text(
         'V',
-        style: Vt.headingLg.copyWith(
+        style: Vt.displayMd.copyWith(
+          fontSize: Vt.tlg,
           fontWeight: FontWeight.w500,
           color: Vt.gold.withValues(alpha: 0.5),
         ),

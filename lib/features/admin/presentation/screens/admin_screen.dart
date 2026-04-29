@@ -178,7 +178,7 @@ class AdminScreen extends ConsumerWidget {
               value,
               style: Vt.headingMd.copyWith(
                 color: Vt.gold,
-                shadows: const [Shadow(color: Color(0x55C9A961), blurRadius: 12)],
+                shadows: [Shadow(color: Vt.gold.withValues(alpha: 0.33), blurRadius: 12)],
               ),
             ),
           ),

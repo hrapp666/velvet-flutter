@@ -1,14 +1,16 @@
 // ============================================================================
-// Velvet · Design Token v1
+// Velvet · Design Token v5 · Editorial Luxury (对齐 H5 styles.css v5)
 // ----------------------------------------------------------------------------
-// 灵感综合：Sanity (黑色阶) + Ferrari (单一品牌色仅 CTA) + Pinterest (masonry)
-//          + Sentry (深紫黑 + 毛玻璃) + Lambo (色阶分层) + MongoDB (衬线 display)
+// 灵感：TASCHEN / Phaidon / Hermès / Bottega Veneta / Rolls-Royce / 山本耀司
+// 原则：纯黑金 · 0 圆角 · 极致留白 · editorial 衬线 · 单列垂直流
 //
 // 哲学："Touch what was touched." 私藏，流转。
-// 视觉锚点：天鹅绒酒红 + 黄金箔 + 樱花粉点缀 + 黑天鹅绒纹理
-// 字体策略：Cinzel (display) + Marcellus SC (accent) + Manrope (body)
+// 视觉锚点：暗金底色 + 黄金箔 + 暖象牙文字 + L 角装饰（替代圆角）
+// 字体策略：Cormorant Garamond (display + body) + ZCOOL XiaoWei (中文衬线)
+//          + Marcellus SC (accent · 价格 / 徽章)
 //
 // 单一真相源 — 任何 widget 都必须用 Vt.* 而非硬编码颜色/间距/圆角/阴影
+// 圆角铁律：所有元素 0 圆角，仅头像 / 圆形按钮使用 rPill (9999)
 // ============================================================================
 
 import 'package:flutter/material.dart';
@@ -21,23 +23,25 @@ class Vt {
   // 颜色系统
   // ==========================================================================
 
-  // ----- 背景层级（4 层 + 色阶分层替代阴影）-----
-  // v25 升级:主人反馈"整体可以稍亮一点" · 每层 +5% 亮度 · 仍保持夜色 editorial 调性
-  static const Color bgVoid = Color(0xFF101014);        // 深空黑(+5%)· 原 0A0A0E
-  static const Color bgPrimary = Color(0xFF1B1B23);     // 主背景(+5%)· 原 15151C
-  static const Color bgElevated = Color(0xFF261C20);    // 卡片 带 1% 酒红底(+5%)· 原 1E1517
-  static const Color bgHighest = Color(0xFF322236);     // 浮层 带紫底(+5%)· 原 2A1A2E
+  // ----- 背景层级（4 层 · H5 v5 暗金底色 Versace/Rolls-Royce/Tom Ford 方向）-----
+  // 不是灰黑、不是蓝黑 — 是带暖金底的炽热暗色
+  static const Color bgVoid = Color(0xFF050402);        // 极深暖黑 · 微金底（H5 --void）
+  static const Color bgPrimary = Color(0xFF0C0A06);     // 深暖棕黑（H5 --char）
+  static const Color bgElevated = Color(0xFF16120C);    // 暗金棕（H5 --ink）
+  static const Color bgHighest = Color(0xFF1F1A12);     // 浮层 略亮（ink 之上一档）
 
   // ----- 品牌色（极端克制，仅信号化使用）-----
-  /// 天鹅绒酒红 — 主品牌色，仅在 logo / 关键品牌锚点使用
-  static const Color velvet = Color(0xFF6B0F1A);
-  static const Color velvetLight = Color(0xFF8B1F2A);
-  static const Color velvetDark = Color(0xFF4A0A12);
-
-  /// 黄金箔片 — 仅强调（精选标 / 心动徽章 / 卖家信誉认证）
+  /// 黄金箔片 — 唯一品牌色（精选标 / 心动徽章 / 卖家信誉认证 / CTA）
+  /// v5 取消酒红，纯黑金 editorial，对齐 Hermès/Tom Ford
   static const Color gold = Color(0xFFC9A961);
   static const Color goldLight = Color(0xFFE8C879);
   static const Color goldDark = Color(0xFF8C7536);
+
+  /// （已废弃 — v5 删除天鹅绒酒红，仍保留常量但全部指向暗金底色，零回归切换）
+  /// 后续重构再逐文件改名为 bgPrimary/bgElevated/gold
+  static const Color velvet = bgElevated;
+  static const Color velvetLight = bgHighest;
+  static const Color velvetDark = bgPrimary;
 
   /// （已废弃 — Velvet 不用樱花粉，那是春水圈的语言）
   /// 重新指向黄金箔色阶，让所有遗留 Vt.sakura 调用自动转为金色，
@@ -52,45 +56,75 @@ class Vt {
   /// 警告红 — 退款 / 争议
   static const Color warn = Color(0xFFEF4E5C);
 
-  // ----- 酒红 ambient 沉底（多屏复用：splash/login/register/profile/notification/chat/search）-----
-  /// Radial gradient 顶色（酒红沉底）
-  static const Color bgAmbientTop = Color(0xFF120A0A);
-  /// Radial gradient 底色（近纯黑）
-  static const Color bgAmbientBottom = Color(0xFF050303);
+  // ----- 暗金 ambient 沉底（多屏复用：splash/login/register/profile/notification/chat/search）-----
+  // v5 改为暖金棕底色 ambient（不再是酒红 → editorial 黑金）
+  /// Radial gradient 顶色（暗金棕，比 ink 略暖）
+  static const Color bgAmbientTop = Color(0xFF120E08);
+  /// Radial gradient 底色（近纯黑暖底）
+  static const Color bgAmbientBottom = Color(0xFF050402);
   /// 稍亮一档（moment detail / chat list）
-  static const Color bgAmbientSoft = Color(0xFF1A0F12);
+  static const Color bgAmbientSoft = Color(0xFF181308);
   /// 稍暗一档（moment detail 底部）
-  static const Color bgAmbientDeep = Color(0xFF080404);
+  static const Color bgAmbientDeep = Color(0xFF080604);
 
-  /// 标准 velvet ambient 2 档（所有全屏 Scaffold 背景）
+  /// 标准 ambient 2 档（所有全屏 Scaffold 背景）
   static const List<Color> gradientAmbient = [bgAmbientTop, bgAmbientBottom];
 
-  // ----- VELVET logo shader 5 档金渐变（splash/login/register/profile/feed）-----
-  /// 最亮：象牙白
-  static const Color goldIvory = Color(0xFFFAF4E6);
-  /// 最暗：深铜金
-  static const Color goldDeepest = Color(0xFF5A4820);
+  // ----- 纯黑/极深暖底（H5 真相源 register/chat/profile · 多处 radial 用）-----
+  // 对照 H5 styles.css line 447/551/3125: radial(#0A0600 0%, #000000 78%~80%)
+  /// 纯黑（H5 #000000 · register Scaffold / chat header 底 / profile bottom）
+  static const Color bgPureBlack = Color(0xFF000000);
+  /// 极深暖底（H5 #0A0600 · register/profile/feed radial 顶档）
+  static const Color bgVoidShallow = Color(0xFF0A0600);
+  /// 暖琥珀微底（H5 #1A0C02 · chat list / chat detail radial 顶档）
+  static const Color bgVoidEmber = Color(0xFF1A0C02);
+  /// 暖暗金底（H5 #1C1408 · chat detail logo gradient 顶档 / profile pet）
+  static const Color bgVoidWarm = Color(0xFF1C1408);
+  /// 冷暗底（H5 #050400 · chat detail logo gradient 底档）
+  static const Color bgVoidCool = Color(0xFF050400);
 
-  /// VELVET logo 专用 5 档金渐变（ShaderMask）
+  // ----- VELVET logo shader 6 档金渐变（splash/login/register/profile/feed）-----
+  // 对照 H5 styles.css line 480/752 真相源：
+  //   linear-gradient(180deg, #FDFAF2 0%, #F0D98A 18%, #E8C879 35%,
+  //                            #C9A961 58%, #8C7536 84%, #4A2E0A 100%)
+  /// 最亮：象牙白（H5 logo 0% 档）
+  static const Color goldIvory = Color(0xFFFDFAF2);
+  /// 高光金（H5 logo 18% 档 · 新增）
+  static const Color goldHighlight = Color(0xFFF0D98A);
+  /// 最暗：深铜金（H5 logo 100% 档）
+  static const Color goldDeepest = Color(0xFF4A2E0A);
+
+  /// VELVET logo 专用 6 档金渐变（ShaderMask）— 对齐 H5
   static const List<Color> gradientGoldLogo = [
     goldIvory,
+    goldHighlight,
     goldLight,
     gold,
     goldDark,
     goldDeepest,
   ];
-  static const List<double> gradientGoldLogoStops = [0.0, 0.28, 0.56, 0.86, 1.0];
+  static const List<double> gradientGoldLogoStops = [0.0, 0.18, 0.35, 0.58, 0.84, 1.0];
 
   /// 4 档金渐变（标题 / 强调文字 shader）
   static const List<Color> gradientGold4 = [goldIvory, goldLight, gold, goldDark];
 
-  /// Feed/masonry cover 占位色阶（5 档酒红/紫/咖变体）
+  /// 自己消息气泡 3 档暗金渐变（chat detail · "me" bubble）
+  /// 对照 H5 styles.css line 3530-3534:
+  ///   linear-gradient(160deg,
+  ///     rgba(70,50,12,.95) 0%, rgba(45,30,6,.98) 50%, rgba(25,16,2,1) 100%)
+  static const List<Color> gradientChatBubbleMe = [
+    Color(0xF2463208),  // rgba(70,50,12,.95)
+    Color(0xFA2D1E06),  // rgba(45,30,6,.98)
+    Color(0xFF191002),  // rgba(25,16,2,1)
+  ];
+
+  /// Feed/masonry cover 占位色阶（5 档暗金/咖/棕变体 · v5 editorial 黑金）
   static const List<Color> moodCoverVariants = [
-    Color(0xFF2A1A2E),  // 深紫
-    Color(0xFF3D1F2C),  // 酒红紫
-    bgElevated,          // 卡片底
-    Color(0xFF2C1810),  // 深咖
-    Color(0xFF1A1A2E),  // 深蓝黑
+    Color(0xFF1F1A12),  // 暖暗金（与 bgHighest 同）
+    Color(0xFF261E10),  // 深咖金
+    bgElevated,          // 暗金棕
+    Color(0xFF2C2410),  // 深咖
+    Color(0xFF1A140A),  // 暖暗黑
   ];
 
   // ----- 状态色（审批 / 订单 / 钱包）-----
@@ -112,6 +146,9 @@ class Vt {
   static const Color textGold = Color(0xFFC9A961);
   static const Color textGoldLight = Color(0xFFE8C879);
   static const Color textGoldSoft = Color(0xFFF5E6C8);   // 最浅金（输入框文字）
+
+  /// gold 1px 细线（border / divider · alpha 30/100）
+  static const Color goldHairline = Color(0x4DC9A961);
 
   // ----- Light mode tokens (v25 · C2 · Notion warm minimalism) -----
   static const Color bgLightVoid = Color(0xFFFAF6EE);      // 暖奶油白
@@ -159,18 +196,24 @@ class Vt {
   static const double s96 = 96.0;
   static const double s120 = 120.0;
 
+  // —— v5 兼容别名（profile/orders/feed 残留引用，避免 in-flight rewrite 挂掉）——
+  static const double s14 = 14.0;
+  static const double s28 = 28.0;
+  static const double s56 = 56.0;
+
   // ==========================================================================
-  // 圆角（融合 Sanity / Pinterest / Ferrari）
-  // ⚠️ Sanity 共识：禁止 13-99998 之间的圆角 — 要么 ≤12 要么 pill
+  // 圆角 v5 · Editorial Luxury（TASCHEN/Hermès 共识：0 圆角 + L 角装饰）
+  // ⚠️ 所有 r* 全部 0 — 仅 rPill 保留给头像 / 圆形 icon 按钮
+  // 所有原 r* 调用点会自动变 0 角（零回归切换 · 后续逐页清理）
   // ==========================================================================
-  static const double rXxs = 3.0;    // Sanity radius-xs（输入框小角）
-  static const double rXs = 5.0;     // Sanity radius-sm（次要按钮 / tag）
-  static const double rSm = 8.0;     // 标准小卡
-  static const double rMd = 12.0;    // 商品卡（Pinterest 12px 标准）
-  static const double rLg = 16.0;    // Pinterest 大按钮 / 中卡
-  static const double rXl = 20.0;    // Pinterest feature card
-  static const double rXxl = 28.0;   // Pinterest 大容器
-  static const double rPill = 9999;  // Sanity 主 CTA 必须 pill
+  static const double rXxs = 0.0;
+  static const double rXs = 0.0;
+  static const double rSm = 0.0;
+  static const double rMd = 0.0;
+  static const double rLg = 0.0;
+  static const double rXl = 0.0;
+  static const double rXxl = 0.0;
+  static const double rPill = 9999;  // 仅头像 / 圆形 icon 按钮保留
 
   // ==========================================================================
   // 阴影系统（Sanity 共识：阴影已死，用 ring border + 色阶分层）
@@ -226,10 +269,10 @@ class Vt {
     blurRadius: 12,
   );
 
-  /// 紫色环境光（Sentry 启发：purple-tinted shadows，不要 neutral gray）
+  /// 暗金环境光（v5：原 velvetAmbient 改用金色暗光，editorial 不要紫红）
   static List<BoxShadow> shadowVelvetAmbient = const [
     BoxShadow(
-      color: Color(0x336B0F1A),
+      color: Color(0x33C9A961),
       blurRadius: 24,
       offset: Offset(0, 8),
     ),
@@ -252,12 +295,12 @@ class Vt {
   // ----------------------------------------------------------------------------
   // 基准：16px body = md
   // 向上：md ×1.33 ≈ lg(21) ×1.33 ≈ xl(28) ×1.33 ≈ 2xl(38) ≈ 3xl(54) ≈ 4xl(76) ≈ 5xl(108)
-  // 向下：md ÷1.14 ≈ sm(14) ÷1.17 ≈ xs(12) ÷1.09 ≈ 2xs(11)
+  // 向下：md ÷1.13 ≈ sm(15) ÷1.15 ≈ xs(13) ÷1.08 ≈ 2xs(12)（v6: +1px 全局提升）
   // ==========================================================================
-  static const double t2xs = 11.0;   // 最小脚注/版权
-  static const double txs = 12.0;    // label / caption
-  static const double tsm = 14.0;    // body sm / cn body
-  static const double tmd = 16.0;    // body / button
+  static const double t2xs = 12.0;   // 最小脚注/版权（v6: +1px 全局提升）
+  static const double txs = 13.0;    // label / caption（v6: +1px 全局提升）
+  static const double tsm = 15.0;    // body sm / cn body（v6: +1px 全局提升）
+  static const double tmd = 17.0;    // body / button（v6: +1px 全局提升）
   static const double tlg = 21.0;    // heading sm / cn heading
   static const double txl = 28.0;    // heading md / price / display sm
   static const double t2xl = 38.0;   // heading lg / display md

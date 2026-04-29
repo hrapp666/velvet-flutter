@@ -1,5 +1,9 @@
 // ============================================================================
-// RegisterScreen · v13 复刻 H5
+// RegisterScreen · v5 Editorial Luxury · 像素级对齐 H5 #login (注册态)
+// ----------------------------------------------------------------------------
+// 4 角 1px L 装饰 + VELVET · MMXXVI eyebrow + VELVET 大金 + 天 鹅 绒
+// + diamond hairline + 余 温 · 未 散 + Touch what was touched + mode-row
+// + 双语 field-label · 0 圆角铁律
 // ============================================================================
 
 import 'dart:async';
@@ -111,12 +115,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final nickname = _nicknameCtrl.text.trim();
     final password = _passwordCtrl.text;
 
-    if (account.isEmpty || nickname.isEmpty || password.isEmpty) {
-      setState(() => _errorText = '请填写所有字段');
+    if (account.isEmpty || password.isEmpty) {
+      setState(() => _errorText = '请填写账号和密码');
       return;
     }
-    if (account.length < 3 ||
-        !RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(account)) {
+    if (nickname.isEmpty) {
+      setState(() => _errorText = '请填写昵称');
+      return;
+    }
+    if (account.length < 3 || !RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(account)) {
       setState(() => _errorText = '账号 3-32 位字母数字下划线');
       return;
     }
@@ -129,16 +136,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       setState(() => _errorText = '密码需包含字母和数字');
       return;
     }
-    if (_birthday == null) {
+    final birthday = _birthday;
+    if (birthday == null) {
       setState(() => _errorText = '请选择出生日期');
       return;
     }
     // 18+ 客户端预检（后端 final gate）
     final now = DateTime.now();
     final age = now.year -
-        _birthday!.year -
-        ((now.month < _birthday!.month ||
-                (now.month == _birthday!.month && now.day < _birthday!.day))
+        birthday.year -
+        ((now.month < birthday.month ||
+                (now.month == birthday.month && now.day < birthday.day))
             ? 1
             : 0);
     if (age < 18) {
@@ -159,11 +167,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             account,
             password,
             nickname,
-            birthday: _birthday!,
+            birthday: birthday,
             agreedTerms: _agreedTerms,
           );
       if (!mounted) return;
-      ChatSocket.instance.connect();
+      unawaited(ChatSocket.instance.connect());
       context.go('/feed');
     } on AppException catch (e) {
       if (!mounted) return;
@@ -180,32 +188,95 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     final padding = MediaQuery.paddingOf(context);
     return Scaffold(
-      backgroundColor: Vt.bgVoid,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment(0, -0.68),
-            radius: 1.4,
-            colors: Vt.gradientAmbient,
-          ),
-        ),
+      backgroundColor: Vt.bgPureBlack,
+      body: SizedBox.expand(
         child: Stack(
           children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 360,
+            // H5 #login.page bg · 4 层 stacked radial gradients · 全屏无黑边
+            // 1) 基底 ellipse at 50% 35% · #0A0600 → #000000
+            Positioned.fill(
               child: IgnorePointer(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: RadialGradient(
-                      center: const Alignment(0, -0.7),
+                      center: Alignment(0, -0.30),
+                      radius: 1.2,
+                      colors: [Vt.bgVoidShallow, Vt.bgPureBlack],
+                      stops: [0.0, 0.80],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // 2) 中心微暖 ellipse at 50% 50% · gold 4%
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment.center,
                       radius: 0.9,
                       colors: [
-                        Vt.gold.withValues(alpha: 0.16),
+                        Vt.gold.withValues(alpha: 0.04),
                         Colors.transparent,
                       ],
+                      stops: const [0.0, 0.40],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // 3) 底部深邃 ellipse at 50% 95% · #080400 90% → 透明
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment(0, 0.95),
+                      radius: 1.1,
+                      colors: [
+                        Color(0xE6080400),
+                        Colors.transparent,
+                      ],
+                      stops: [0.0, 0.50],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // 4) 顶部金色光晕 ellipse at 50% 5% · 30% → 9% → 透明
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment(0, -0.95),
+                      radius: 1.2,
+                      colors: [
+                        Vt.gold.withValues(alpha: 0.30),
+                        Vt.gold.withValues(alpha: 0.09),
+                        Colors.transparent,
+                      ],
+                      stops: const [0.0, 0.25, 0.50],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // 内 vignette · H5 box-shadow inset 0 -160px 140px -60px rgba(0,0,0,.7)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.transparent,
+                        Color(0x66000000),
+                      ],
+                      stops: [0.0, 0.7, 1.0],
                     ),
                   ),
                 ),
@@ -241,10 +312,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               // ClampingScrollPhysics: 禁止 iOS 弹性过度滚动 · 主人反馈"注册页竟然能滑动"
               child: SingleChildScrollView(
                 physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(36, 64, 36, 56),
+                padding: const EdgeInsets.fromLTRB(36, 56, 36, 56),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // VELVET · MMXXVI eyebrow (H5 .login-eyebrow)
+                    Center(
+                      child: Text(
+                        'VELVET  ·  MMXXVI',
+                        style: Vt.label.copyWith(
+                          fontSize: 9,
+                          letterSpacing: 5,
+                          color: Vt.gold.withValues(alpha: 0.4),
+                          fontStyle: FontStyle.normal,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     Center(
                       child: ShaderMask(
                         shaderCallback: (rect) => const LinearGradient(
@@ -259,9 +343,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           style: Vt.displayHero.copyWith(
                             color: Colors.white,
                             letterSpacing: 10,
-                            shadows: const [
+                            shadows: [
                               Shadow(
-                                color: Color(0x6BC9A961),
+                                color: Vt.gold.withValues(alpha: 0.42),
                                 blurRadius: 56,
                               ),
                             ],
@@ -272,7 +356,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     const SizedBox(height: 16),
                     Center(
                       child: Text(
-                        '天   鹅   绒',
+                        '天 鹅 绒',
                         style: Vt.cnCaption.copyWith(
                           letterSpacing: 8,
                           color: Vt.gold.withValues(alpha: 0.75),
@@ -338,8 +422,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         'Some warmth lingers.',
                         style: Vt.label.copyWith(
                           color: Vt.textSecondary.withValues(alpha: 0.7),
-                          fontSize: Vt.txs,
-                          letterSpacing: 2,
+                          fontSize: Vt.tsm,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -394,6 +478,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     const SizedBox(height: 36),
                     _Field(
                       label: '账 号',
+                      labelEn: 'Account',
                       controller: _accountCtrl,
                       focusNode: _accountFocus,
                       placeholder: '字母 / 数字 / 下划线',
@@ -401,6 +486,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     const SizedBox(height: 32),
                     _Field(
                       label: '昵 称',
+                      labelEn: 'Name',
                       controller: _nicknameCtrl,
                       focusNode: _nicknameFocus,
                       placeholder: '夜里 · 别人怎么叫你',
@@ -408,6 +494,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     const SizedBox(height: 32),
                     _Field(
                       label: '密 码',
+                      labelEn: 'Pass',
                       controller: _passwordCtrl,
                       focusNode: _passwordFocus,
                       placeholder: '6 位以上 · 字母 + 数字',
@@ -439,8 +526,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     // 生日 · 18+ 合规
                     _BirthdayField(
                       birthday: _birthday,
-                      formattedLabel:
-                          _birthday == null ? null : _formatBirthday(_birthday!),
+                      formattedLabel: _birthday == null
+                          ? null
+                          : _formatBirthday(_birthday!),
                       onTap: _pickBirthday,
                     ),
                     const SizedBox(height: 28),
@@ -494,18 +582,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 ),
                               )
                             : _LuxCenter(
-                                text: '创  建  账  号',
-                                letterSpacing: 12,
+                                text: '创 建 账 号',
+                                letterSpacing: 0.5,
                               ),
                       ),
                     ),
                     const SizedBox(height: 24),
                     Center(
                       child: Text(
-                        '懂  的  人  ·  不  必  多  言',
+                        '懂 的 人  ·  不 必 多 言',
                         style: Vt.cnCaption.copyWith(
-                          fontSize: Vt.txs,
-                          letterSpacing: 3,
+                          fontSize: Vt.tsm,
+                          letterSpacing: 0.5,
                           color: Vt.textSecondary.withValues(alpha: 0.7),
                         ),
                       ),
@@ -515,9 +603,54 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               ),
             ),
 
+            // 四角 1px 金色 L 装饰 (H5 #login .corner-leaf · Hermès/Bottega)
+            const Positioned(
+                top: 12, left: 12, child: _LCorner(corner: _Corner.topLeft)),
+            const Positioned(
+                top: 12, right: 12, child: _LCorner(corner: _Corner.topRight)),
+            const Positioned(
+                bottom: 12,
+                left: 12,
+                child: _LCorner(corner: _Corner.bottomLeft)),
+            const Positioned(
+                bottom: 12,
+                right: 12,
+                child: _LCorner(corner: _Corner.bottomRight)),
+
             // UI12 · editorial 胶片纹理 · 默认 intensity 0.022 保护中文可读性
             const GrainOverlay(seed: 11),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+enum _Corner { topLeft, topRight, bottomLeft, bottomRight }
+
+/// 编辑式 1px 金色 L 角装饰（24x24 · 仅 2 边）
+class _LCorner extends StatelessWidget {
+  final _Corner corner;
+  const _LCorner({required this.corner});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Vt.gold.withValues(alpha: 0.30);
+    final side = BorderSide(color: color, width: 1);
+    final none = BorderSide.none;
+    final isTop = corner == _Corner.topLeft || corner == _Corner.topRight;
+    final isLeft = corner == _Corner.topLeft || corner == _Corner.bottomLeft;
+    return SizedBox(
+      width: 24,
+      height: 24,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            top: isTop ? side : none,
+            bottom: !isTop ? side : none,
+            left: isLeft ? side : none,
+            right: !isLeft ? side : none,
+          ),
         ),
       ),
     );
@@ -536,7 +669,7 @@ class _ModeBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ls = active ? 12.0 : 10.0;
+    final ls = active ? 0.5 : 0.4;
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -638,13 +771,31 @@ class _BirthdayField extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 6, bottom: 14),
-          child: Text(
-            '生 日',
-            style: Vt.cnLabel.copyWith(
-              fontSize: Vt.tsm,
-              letterSpacing: 5,
-              color: Vt.gold.withValues(alpha: 0.82),
-            ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '生 日',
+                style: Vt.cnLabel.copyWith(
+                  fontSize: Vt.tsm,
+                  letterSpacing: 0.5,
+                  color: Vt.gold.withValues(alpha: 0.85),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 1),
+                child: Text(
+                  'BIRTHDAY',
+                  style: Vt.label.copyWith(
+                    fontSize: Vt.txs,
+                    letterSpacing: 1.5,
+                    fontStyle: FontStyle.italic,
+                    color: Vt.gold.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         GestureDetector(
@@ -655,9 +806,7 @@ class _BirthdayField extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: filled
-                      ? Vt.gold
-                      : Vt.gold.withValues(alpha: 0.22),
+                  color: filled ? Vt.gold : Vt.gold.withValues(alpha: 0.22),
                   width: 1,
                 ),
               ),
@@ -666,9 +815,9 @@ class _BirthdayField extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    formattedLabel ?? '年  满  十  八  ·  点  击  选  择',
+                    formattedLabel ?? '年 满 十 八  ·  点 击 选 择',
                     style: filled
-                        ? Vt.input.copyWith(letterSpacing: 3)
+                        ? Vt.input.copyWith(letterSpacing: 0.5)
                         : Vt.inputPlaceholder,
                   ),
                 ),
@@ -736,9 +885,8 @@ class _TermsCheckState extends State<_TermsCheck> {
                     ? Vt.gold.withValues(alpha: 0.22)
                     : Colors.transparent,
                 border: Border.all(
-                  color: widget.agreed
-                      ? Vt.gold
-                      : Vt.gold.withValues(alpha: 0.35),
+                  color:
+                      widget.agreed ? Vt.gold : Vt.gold.withValues(alpha: 0.35),
                 ),
               ),
               child: widget.agreed
@@ -750,18 +898,18 @@ class _TermsCheckState extends State<_TermsCheck> {
                 TextSpan(
                   children: [
                     TextSpan(
-                      text: '我  已  阅  读  并  同  意  ',
+                      text: '我 已 阅 读 并 同 意  ',
                       style: Vt.cnCaption.copyWith(
-                        fontSize: Vt.txs,
-                        letterSpacing: 2,
+                        fontSize: Vt.tsm,
+                        letterSpacing: 0.5,
                         color: Vt.textSecondary,
                       ),
                     ),
                     TextSpan(
                       text: '《用户协议》',
                       style: Vt.cnCaption.copyWith(
-                        fontSize: Vt.txs,
-                        letterSpacing: 1,
+                        fontSize: Vt.tsm,
+                        letterSpacing: 0.3,
                         color: Vt.gold,
                       ),
                       recognizer: _termsTap,
@@ -769,16 +917,16 @@ class _TermsCheckState extends State<_TermsCheck> {
                     TextSpan(
                       text: '  与  ',
                       style: Vt.cnCaption.copyWith(
-                        fontSize: Vt.txs,
-                        letterSpacing: 2,
+                        fontSize: Vt.tsm,
+                        letterSpacing: 0.5,
                         color: Vt.textSecondary,
                       ),
                     ),
                     TextSpan(
                       text: '《隐私政策》',
                       style: Vt.cnCaption.copyWith(
-                        fontSize: Vt.txs,
-                        letterSpacing: 1,
+                        fontSize: Vt.tsm,
+                        letterSpacing: 0.3,
                         color: Vt.gold,
                       ),
                       recognizer: _privacyTap,
@@ -796,6 +944,7 @@ class _TermsCheckState extends State<_TermsCheck> {
 
 class _Field extends StatelessWidget {
   final String label;
+  final String? labelEn;
   final TextEditingController controller;
   final FocusNode focusNode;
   final String placeholder;
@@ -804,6 +953,7 @@ class _Field extends StatelessWidget {
 
   const _Field({
     required this.label,
+    this.labelEn,
     required this.controller,
     required this.focusNode,
     required this.placeholder,
@@ -814,21 +964,41 @@ class _Field extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final focused = focusNode.hasFocus;
+    final en = labelEn;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: EdgeInsets.only(left: focused ? 8 : 6, bottom: 14),
-          child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 300),
-            style: Vt.cnLabel.copyWith(
-              fontSize: Vt.tsm,
-              letterSpacing: focused ? 7 : 5,
-              color: focused
-                  ? Vt.gold
-                  : Vt.gold.withValues(alpha: 0.82),
-            ),
-            child: Text(label),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 300),
+                style: Vt.cnLabel.copyWith(
+                  fontSize: Vt.tsm,
+                  letterSpacing: focused ? 0.5 : 0.4,
+                  color:
+                      focused ? Vt.goldLight : Vt.gold.withValues(alpha: 0.85),
+                ),
+                child: Text(label),
+              ),
+              if (en != null) ...[
+                const SizedBox(width: 12),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 1),
+                  child: Text(
+                    en.toUpperCase(),
+                    style: Vt.label.copyWith(
+                      fontSize: Vt.txs,
+                      letterSpacing: 1.5,
+                      fontStyle: FontStyle.italic,
+                      color: Vt.gold.withValues(alpha: focused ? 0.7 : 0.5),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
         Row(

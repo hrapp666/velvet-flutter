@@ -2,7 +2,7 @@
 // CreateMomentScreen · 发布动态页
 // ----------------------------------------------------------------------------
 // 视觉策略：
-//   - 顶部：返回 X + 标题"私 藏 上 架" + 右上发布按钮（樱花粉文字按钮）
+//   - 顶部：返回 X + 标题"私 藏 上 架" + 右上发布按钮（金色 outline + 文字）
 //   - 媒体网格：3 列方块，左上角"+"添加，已添加图右上 X 删除
 //   - 标题字段：单行 + 光标金色
 //   - 描述字段：多行 + 自适应高度
@@ -88,7 +88,11 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
           setState(() => _mediaUrls.add(url));
         } on Object catch (e) {
           if (!mounted) return;
-          VelvetToast.show(context, '上传失败：$e', isError: true);
+          // 用 userMessageOf 过滤异常对象 · 不向用户暴露内部细节
+          final msg = userMessageOf(e, fallback: '上传失败，请重试');
+          if (msg.isNotEmpty) {
+            VelvetToast.show(context, msg, isError: true);
+          }
         }
       }
     } finally {
@@ -155,10 +159,11 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
         _locating = false;
         _geoError = null;
       });
-    } on Object catch (e) {
+    } on Object catch (_) {
+      // 静默原因:Geolocator 抛 PlatformException 含平台细节 · 不向用户暴露
       if (!mounted) return;
       setState(() {
-        _geoError = '定位失败：$e';
+        _geoError = '定 位 失 败 · 请 检 查 权 限';
         _locating = false;
       });
     }
@@ -260,11 +265,37 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                     child: const Icon(Icons.close_rounded, color: Vt.textPrimary),
                   ),
                 ),
+                const SizedBox(width: Vt.s12),
+                ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Vt.statusWaiting, Vt.gold],
+                    stops: [0, 0.8],
+                  ).createShader(bounds),
+                  child: Text(
+                    'VELVET',
+                    style: Vt.headingSm.copyWith(
+                      color: Colors.white,
+                      letterSpacing: 5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: Vt.s12),
+                Container(
+                  width: 1,
+                  height: 14,
+                  color: Vt.gold.withValues(alpha: 0.3),
+                ),
+                const SizedBox(width: Vt.s12),
                 Expanded(
-                  child: Center(
-                    child: Text(
-                      '私 藏 上 架',
-                      style: Vt.headingSm.copyWith(letterSpacing: 3),
+                  child: Text(
+                    '上 架 一 件',
+                    style: Vt.headingSm.copyWith(
+                      color: Vt.gold.withValues(alpha: 0.82),
+                      letterSpacing: 3,
+                      fontSize: Vt.txs,
                     ),
                   ),
                 ),
@@ -272,7 +303,7 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                   onTap: _publishing ? null : _publish,
                   glow: !_publishing,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    padding: const EdgeInsets.symmetric(horizontal: Vt.s14, vertical: Vt.s8),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Vt.gold, Vt.goldDark],
@@ -296,7 +327,7 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                             ),
                           )
                         : Text(
-                            '发布',
+                            '立 即 上 架',
                             style: Vt.button.copyWith(
                               color: Colors.white,
                               fontSize: Vt.tsm,
@@ -404,6 +435,34 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                       ],
                     ),
                     Container(height: 1, color: Vt.borderHairline),
+                    const SizedBox(height: Vt.s12),
+                    // ─── 平台抽佣 6% · 担保交易 ───
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _priceCtrl,
+                      builder: (_, value, __) {
+                        final price = double.tryParse(value.text) ?? 0;
+                        final fee = price * 0.06;
+                        return Row(
+                          children: [
+                            Text(
+                              '平台抽佣 6% · 担保交易',
+                              style: Vt.bodySm.copyWith(
+                                color: Vt.textTertiary,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              price > 0 ? '¥ ${fee.toStringAsFixed(2)}' : '— —',
+                              style: Vt.bodySm.copyWith(
+                                color: Vt.gold,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ],
 
                   const SizedBox(height: Vt.s32),
@@ -507,7 +566,7 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                         const SizedBox(width: Vt.s8),
                         Expanded(
                           child: Text(
-                            'Velvet 平台不参与交易、不收手续费。\n所有价格仅作展示，买卖双方私下完成。',
+                            '买家在平台付款 · 平台担保 · 卖家发货后放款\n禁止私下交易 · 禁止留下任何第三方联系方式',
                             style: Vt.bodySm.copyWith(
                               color: Vt.textSecondary,
                               height: 1.6,

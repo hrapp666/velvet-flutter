@@ -53,6 +53,10 @@ dependencies:
   # 运动传感器（陀螺仪 / 加速计 · splash 3D tilt）
   sensors_plus: ^6.1.0
 
+  # WebView 主壳 · 直接渲染 https://agent.ylctkx9s.work H5
+  # 主人 2026-04-28 决定：Flutter 1:1 改 H5 太慢，改成 H5 套壳
+  webview_flutter: ^4.10.0
+
   # 工具
   intl: ^0.20.1
   freezed_annotation: ^2.4.4

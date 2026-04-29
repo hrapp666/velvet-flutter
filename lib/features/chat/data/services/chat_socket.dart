@@ -94,11 +94,21 @@ class ChatSocket {
   /// 启动连接
   Future<void> connect() async {
     if (_disposed) return;
+    if (_channel != null && _currentState == WsConnectionState.connected) {
+      return; // 已连
+    }
+    // 先把状态切到 connecting · 消除"未 连 接"的闪烁(getToken async gap)
+    if (_currentState != WsConnectionState.connected) {
+      _setState(WsConnectionState.connecting);
+    }
     final token = await ApiClient.getToken();
-    if (token == null || token.isEmpty) return;
+    if (token == null || token.isEmpty) {
+      // 没 token 不连 · 维持 disconnected · 不显 connecting
+      _setState(WsConnectionState.disconnected);
+      return;
+    }
     if (_token == token && _channel != null) return; // 已连
     _token = token;
-    _setState(WsConnectionState.connecting);
     await _open();
   }
 
@@ -146,19 +156,20 @@ class ChatSocket {
 
     try {
       // 强制 wss · 禁止明文 ws（生产 baseUrl 必须 https,本地调试 http→ws 仅在 dart-define VELVET_INSECURE_WS=true 时通过）
-      final raw = ApiClient.baseUrl;
-      final String base;
-      if (raw.startsWith('https://')) {
-        base = raw.replaceFirst('https://', 'wss://');
-      } else if (raw.startsWith('http://') &&
+      // 用 Uri.replace 而不是字符串替换 —— 兼容 baseUrl 带 path 前缀（如 /api）的场景。
+      final apiUri = Uri.parse(ApiClient.baseUrl);
+      final String wsScheme;
+      if (apiUri.scheme == 'https') {
+        wsScheme = 'wss';
+      } else if (apiUri.scheme == 'http' &&
           const bool.fromEnvironment('VELVET_INSECURE_WS')) {
-        base = raw.replaceFirst('http://', 'ws://');
+        wsScheme = 'ws';
       } else {
         // 静默原因:不允许走明文 ws,直接进 failed,UI 重试不生效
         _setState(WsConnectionState.failed);
         return;
       }
-      final uri = Uri.parse('$base/ws/chat');
+      final uri = apiUri.replace(scheme: wsScheme, path: '/ws/chat', query: '');
       // P1-3:token 走 Sec-WebSocket-Protocol header(子协议),不再放 querystring
       // 子协议名格式 velvet.token.<JWT> · 后端 ChatWebSocketHandler 取该 header 解析
       final channel = WebSocketChannel.connect(
@@ -174,6 +185,11 @@ class ChatSocket {
         cancelOnError: false,
       );
 
+      // web_socket_channel v3: connect() は同步返回，握手结果在 channel.ready 里。
+      // 必须 await ready 才知道握手成功 · 失败会 throw · 被下方 on Object catch 接住走重连
+      await channel.ready;
+      if (_disposed) return; // dispose() 在握手期间被调用 · 不再切状态或启动 timer
+      // 到这里握手已成功，才切换到 connected 状态
       _setState(WsConnectionState.connected);
 
       // 每 25s ping
@@ -185,11 +201,10 @@ class ChatSocket {
 
       // 稳定 30s 后重置退避计数器（防 flap）
       _stabilityTimer?.cancel();
-      _stabilityTimer = Timer(const Duration(seconds: 30), () {
-        _backoff.reset();
-      });
+      _stabilityTimer = Timer(const Duration(seconds: 30), _backoff.reset);
     } on Object catch (_) {
-      // 静默原因：WS 建连任何失败都走 reconnect schedule，上层无需知道细节
+      // 静默原因：WS 建连任何失败（含 ready 抛出的握手错误）都走 reconnect schedule
+      _channel = null;
       _setState(WsConnectionState.reconnecting);
       _scheduleReconnect();
     }
@@ -241,10 +256,12 @@ class ChatSocket {
     if (_disposed) return;
 
     // close code 1008 (POLICY_VIOLATION) = 后端 ChatWebSocketHandler 主动拒绝 token
-    // 同 token 重连必然死循环 → 清 token + 进 failed,等上层重新登录
+    // 同 token 重连必然死循环 → 进 failed 等用户手动重试或下次 HTTP 401 触发 refresh
+    // 注意:不再调 ApiClient.clearToken() · WS 单点拒绝不该全局踢用户登录
+    //   如果 token 真的失效,下次任何 HTTP 请求会拿到 401 → ApiClient 走 refresh 流程,
+    //   refresh 失败才登出。这避免了 WS 误标 1008 把整个 session 干掉。
     // 其他 close code (1001 going-away / 1006 abnormal / 1011 server error 等) 走重连
     if (channel.closeCode == 1008) {
-      ApiClient.clearToken();
       _token = null;
       _setState(WsConnectionState.failed);
       return;

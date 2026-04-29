@@ -2,6 +2,8 @@
 // Notification providers
 // ============================================================================
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -25,8 +27,9 @@ class NotificationListNotifier
   Future<List<NotificationModel>> build() async {
     final repo = ref.read(notificationRepositoryProvider);
     final list = await repo.list(page: 0, size: 50);
-    // 自动标记全部已读
-    repo.markAllRead().catchError((_) {});
+    // 自动标记全部已读 · fire-and-forget
+    // 静默原因:markAllRead 失败不影响列表展示 · 下次进入会再触发
+    unawaited(repo.markAllRead().catchError((_) {}));
     // 拉取未读数后（因为我们刚 markAllRead，会变 0）
     ref.invalidate(unreadCountProvider);
     return list;

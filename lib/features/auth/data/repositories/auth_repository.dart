@@ -118,18 +118,24 @@ class AuthRepositoryImpl implements AuthRepository {
     final token = await ApiClient.getToken();
     if (token == null || token.isEmpty) return null;
     try {
-      // 优先 /auth/me（含 role + merchantStatus），回退到 /users/me
+      // 优先 /auth/me（含 role + merchantStatus），仅在 404 时回退 /users/me。
       try {
         final res = await _api.dio.get('/api/v1/auth/me');
         return UserProfile.fromJson(res.data as Map<String, dynamic>);
-      } on DioException catch (_) {
-        // 静默原因：新接口缺失时走旧接口兜底，两者均失败才真报错
+      } on DioException catch (e) {
+        if (e.response?.statusCode != 404) rethrow;
         final res = await _api.dio.get('/api/v1/users/me');
         return UserProfile.fromJson(res.data as Map<String, dynamic>);
       }
-    } on DioException catch (_) {
-      // 静默原因：currentUser() 失败即视为未登录，返回 null 让 UI 走未登录态
-      return null;
+    } on DioException catch (e) {
+      // 401 / body code=UNAUTHORIZED 由 _ErrorInterceptor 已清 token,这里转 AppException 走未登录态
+      // 5xx / 网络错误 rethrow,让上层显示"网络错误"而非静默当未登录
+      final appErr = e.error;
+      if (appErr is AppException &&
+          appErr.type == AppErrorType.unauthorized) {
+        return null;
+      }
+      rethrow;
     }
   }
 
@@ -139,6 +145,10 @@ class AuthRepositoryImpl implements AuthRepository {
       throw const AppException(type: AppErrorType.server, message: '后端返回 token 为空');
     }
     await ApiClient.saveToken(token);
+    final refreshToken = json['refreshToken'] as String?;
+    if (refreshToken != null && refreshToken.isNotEmpty) {
+      await ApiClient.saveRefreshToken(refreshToken);
+    }
     final userJson = json['user'] as Map<String, dynamic>?;
     return AuthResult(
       token: token,

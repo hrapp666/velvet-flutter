@@ -2,6 +2,8 @@
 // Chat Providers · Riverpod
 // ============================================================================
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -49,8 +51,9 @@ class MessagesNotifier
     if (conversationId <= 0) return const <MessageModel>[];
     final repo = ref.read(chatRepositoryProvider);
     final list = await repo.listMessages(conversationId, page: 0, size: 50);
-    // 标记已读
-    repo.markRead(conversationId).catchError((_) {});
+    // 标记已读 · fire-and-forget
+    // 静默原因:markRead 失败不影响消息展示 · 下次进入会重试
+    unawaited(repo.markRead(conversationId).catchError((_) {}));
     return list;
   }
 

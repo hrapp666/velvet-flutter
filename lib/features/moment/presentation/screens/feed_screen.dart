@@ -15,18 +15,20 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/api/api_client.dart';
 import '../../../../shared/services/haptic_service.dart';
 import '../../../../shared/theme/design_tokens.dart';
+import '../../../../shared/widgets/editorial/page_fleuron.dart';
 import '../../../../shared/widgets/empty_state/empty_state.dart';
 import '../../../../shared/widgets/error_state/error_state.dart';
 import '../../../../shared/widgets/motion/scroll_reveal.dart';
 import '../../../../shared/widgets/skeleton/feed_skeleton.dart';
 import '../../data/models/moment_model.dart';
 import '../providers/moment_provider.dart';
+import '../../../../l10n/app_localizations.dart';
 import '../widgets/moment_card.dart';
 
 class FeedScreen extends ConsumerStatefulWidget {
@@ -61,9 +63,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   }
 
   void _onScroll() {
-    // 仅普通 feedProvider tab (0 全部 / 1 关注) 走分页 loadMore
-    // 2 同城 / 3 推荐 都是一次性返回，不需要 loadMore
-    final isPagedFeed = _selectedTab == 0 || _selectedTab == 1;
+    // 仅 0=全部 走分页 loadMore；1=同城 一次性返回不分页（H5 同城单页）
+    final isPagedFeed = _selectedTab == 0;
     if (isPagedFeed &&
         _scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 400) {
       ref.read(feedProvider.notifier).loadMore();
@@ -72,15 +73,11 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
   Future<void> _onRefresh() async {
     unawaited(HapticService.instance.selection());
-    switch (_selectedTab) {
-      case 2:
-        // 同城 tab refresh = 重新定位
-        await _requestLocation(force: true);
-      case 3:
-        // 推荐 tab refresh = 重新请求
-        await ref.read(recommendedMomentsProvider.notifier).refresh();
-      default:
-        await ref.read(feedProvider.notifier).refresh();
+    if (_selectedTab == 1) {
+      // 同城 tab refresh = 重新定位
+      await _requestLocation(force: true);
+    } else {
+      await ref.read(feedProvider.notifier).refresh();
     }
   }
 
@@ -133,10 +130,11 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
         _userLng = pos.longitude;
         _locatingInProgress = false;
       });
-    } on Object catch (e) {
+    } on Object catch (_) {
+      // 静默原因:Geolocator PlatformException 含平台细节 · 用户友好文案兜底
       if (!mounted) return;
       setState(() {
-        _locationError = '定位失败：$e';
+        _locationError = '定 位 失 败 · 请 检 查 权 限';
         _locatingInProgress = false;
       });
     }
@@ -144,7 +142,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
   void _onTabChanged(int i) {
     setState(() => _selectedTab = i);
-    if (i == 2) {
+    if (i == 1) {
       _requestLocation();
     }
   }
@@ -157,7 +155,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     final List<MomentModel>? nearbyValue;
     final Object? nearbyError;
     final bool nearbyLoading;
-    if (_selectedTab == 2 && _userLat != null && _userLng != null) {
+    if (_selectedTab == 1 && _userLat != null && _userLng != null) {
       final nearbyAsync = ref.watch(nearbyFeedProvider((
         lat: _userLat!,
         lng: _userLng!,
@@ -173,13 +171,9 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     }
 
     final feedAsync = ref.watch(feedProvider);
-    // 推荐 tab · 只在选中时才实际触发 provider build (autoDispose 空闲释放)
-    final recommendedAsync = _selectedTab == 3
-        ? ref.watch(recommendedMomentsProvider)
-        : null;
 
     return Scaffold(
-      backgroundColor: Vt.bgPrimary,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       extendBodyBehindAppBar: true,
       extendBody: true,
       body: Stack(
@@ -198,16 +192,23 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
                 // Feed 内容（按 tab 路由）
                 ..._buildFeedSlivers(
-                  isNearby: _selectedTab == 2,
-                  isRecommended: _selectedTab == 3,
+                  isNearby: _selectedTab == 1,
                   feedAsync: feedAsync,
                   nearbyValue: nearbyValue,
                   nearbyError: nearbyError,
                   nearbyLoading: nearbyLoading,
-                  recommendedAsync: recommendedAsync,
                 ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 120)),
+                // H5 章节封底 · inline CTA + page-fleuron（仅在全部 tab 显示）
+                if (_selectedTab == 0) ...[
+                  const SliverToBoxAdapter(child: _PublishInlineCta()),
+                  const SliverToBoxAdapter(
+                    child: PageFleuron(caption: 'Velvet · Private Collection'),
+                  ),
+                ],
+
+                // 底部为 tabbar 留白
+                SliverToBoxAdapter(child: SizedBox(height: padding.bottom + 96)),
               ],
             ),
           ),
@@ -230,29 +231,19 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
               onChanged: _onTabChanged,
             ),
           ),
-
-          // ─── 底部发布 FAB ───
-          Positioned(
-            right: Vt.s24,
-            bottom: padding.bottom + Vt.s24,
-            child: const _PublishFab(),
-          ),
         ],
       ),
     );
   }
 
   /// 同城 tab：定位中 / 定位失败 / 定位成功 → 渲染对应 sliver
-  /// 推荐 tab：渲染 recommendedAsync
-  /// 其他 tab：直接渲染 feedAsync
+  /// 全部 tab：渲染 feedAsync
   List<Widget> _buildFeedSlivers({
     required bool isNearby,
-    required bool isRecommended,
     required AsyncValue<List<MomentModel>> feedAsync,
     required List<MomentModel>? nearbyValue,
     required Object? nearbyError,
     required bool nearbyLoading,
-    required AsyncValue<List<MomentModel>>? recommendedAsync,
   }) {
     if (isNearby) {
       // 1. 还没拿到坐标 → 显示定位状态
@@ -270,11 +261,13 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       }
       // 2. 同城列表
       if (nearbyError != null) {
+        // userMessageOf 把 DioException/AppException 转成给用户看的中文文案
+        final errMsg = userMessageOf(nearbyError, fallback: '附 近 加 载 失 败');
         return [
           SliverFillRemaining(
             hasScrollBody: false,
             child: ErrorState(
-              message: nearbyError.toString(),
+              message: errMsg.isEmpty ? '附 近 加 载 失 败' : errMsg,
               onRetry: () => _requestLocation(force: true),
             ),
           ),
@@ -296,31 +289,6 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       return [_buildMasonry(nearbyValue, isNearby: true)];
     }
 
-    // 推荐 tab
-    if (isRecommended && recommendedAsync != null) {
-      return switch (recommendedAsync) {
-        AsyncData(:final value) when value.isEmpty => [
-            const SliverFillRemaining(
-              hasScrollBody: false,
-              child: EmptyState(
-                title: '— 还 没 懂 你 的 品 味 —',
-                subtitle: '多点几个心动，让时间帮你找知己',
-              ),
-            ),
-          ],
-        AsyncData(:final value) => [_buildMasonry(value, isNearby: false)],
-        AsyncError(:final error) => [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: ErrorState(message: error.toString(), onRetry: _onRefresh),
-            ),
-          ],
-        _ => [
-            const SliverToBoxAdapter(child: FeedSkeleton()),
-          ],
-      };
-    }
-
     // 普通 tab
     return switch (feedAsync) {
       AsyncData(:final value) when value.isEmpty => [
@@ -336,7 +304,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       AsyncError(:final error) => [
           SliverFillRemaining(
             hasScrollBody: false,
-            child: ErrorState(message: error.toString(), onRetry: _onRefresh),
+            child: ErrorState(message: userMessageOf(error, fallback: '加载失败，请下拉重试'), onRetry: _onRefresh),
           ),
         ],
       _ => [
@@ -346,39 +314,44 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   }
 
   Widget _buildMasonry(List<MomentModel> value, {required bool isNearby}) {
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: Vt.s12),
-      sliver: SliverMasonryGrid.count(
-        crossAxisCount: 2,
-        mainAxisSpacing: Vt.s12,
-        crossAxisSpacing: Vt.s12,
-        childCount: value.length,
-        itemBuilder: (context, i) {
-          final m = value[i];
-          return ScrollReveal(
-            // 前 10 张线性 stagger 60ms · 之后统一 600ms 防 200 条延迟炸裂
-            delay: Duration(milliseconds: (i * 60).clamp(0, 600)),
-            duration: const Duration(milliseconds: 500),
-            fromOffsetY: 30,
-            child: MomentCard(
-              momentId: m.id,
-              title: m.title ?? m.content,
-              sellerName: m.userNickname,
-              sellerAvatar: m.userAvatarUrl ?? '',
-              priceCents: m.itemPriceCents ?? 0,
-              likeCount: m.likeCount,
-              coverHeight: 240.0 + (m.id * 31 % 5) * 60,
-              coverColor: _coverFor(m.id),
-              location: m.location ?? '',
-              imageUrl: m.mediaUrls.isNotEmpty ? m.mediaUrls.first : null,
-              liked: m.liked,
-              distanceLabel: isNearby ? m.distanceLabel : null,
-              onTap: () => context.push('/moment/${m.id}'),
-              onLike: () => ref.read(feedProvider.notifier).toggleLike(m.id),
-            ),
-          );
-        },
-      ),
+    // v5 editorial 单列 — 已抛弃 Pinterest masonry 双列（H5 真相源已迁移到单列）
+    return SliverList.builder(
+      itemCount: value.length,
+      itemBuilder: (context, i) {
+        final m = value[i];
+        // 标题 fallback: title 不存在时取 content 的首句
+        final cardTitle = (m.title?.isNotEmpty ?? false)
+            ? m.title!
+            : (m.content.length > 28
+                ? '${m.content.substring(0, 28)}…'
+                : m.content);
+        // content lead: 如果 title 已经从 content 抽出，lead 用剩余部分
+        final cardContent = (m.title?.isNotEmpty ?? false) ? m.content : '';
+        return ScrollReveal(
+          // 前 10 张线性 stagger 60ms · 之后统一 600ms 防 200 条延迟炸裂
+          delay: Duration(milliseconds: (i * 60).clamp(0, 600)),
+          duration: const Duration(milliseconds: 500),
+          fromOffsetY: 30,
+          child: MomentCard(
+            momentId: m.id,
+            title: cardTitle,
+            content: cardContent,
+            sellerName: m.userNickname,
+            sellerAvatar: m.userAvatarUrl ?? '',
+            priceCents: m.itemPriceCents ?? 0,
+            likeCount: m.likeCount,
+            indexInFeed: i,
+            coverColor: _coverFor(m.id),
+            location: m.location ?? '',
+            createdAt: m.createdAt,
+            imageUrl: m.mediaUrls.isNotEmpty ? m.mediaUrls.first : null,
+            liked: m.liked,
+            distanceLabel: isNearby ? m.distanceLabel : null,
+            onTap: () => context.push('/moment/${m.id}'),
+            onLike: () => ref.read(feedProvider.notifier).toggleLike(m.id),
+          ),
+        );
+      },
     );
   }
 }
@@ -411,7 +384,7 @@ class _LocationGate extends StatelessWidget {
             ),
             const SizedBox(height: Vt.s24),
             Text(
-              loading ? '— 正 在 寻 找 你 —' : '— 同  城  在  哪  里 —',
+              loading ? '— 正 在 寻 找 你 —' : '— 同 城 在 哪 里 —',
               style: Vt.cnHeading.copyWith(
                 color: Vt.gold,
                 letterSpacing: 6,
@@ -443,7 +416,7 @@ class _LocationGate extends StatelessWidget {
                     color: Vt.gold.withValues(alpha: 0.08),
                   ),
                   child: Text(
-                    '允  许  定  位',
+                    '允 许 定 位',
                     style: Vt.cnButton.copyWith(
                       color: Vt.gold,
                       letterSpacing: 6,
@@ -527,12 +500,13 @@ class _GlassHeader extends StatelessWidget {
               bottom: BorderSide(color: Vt.borderHairline, width: 0.5),
             ),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          // H5 editorial: 顶部仅居中 VELVET wordmark + 装饰 fleuron · 不挂功能按钮
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Logo wordmark
               Text(
                 'VELVET',
+                textAlign: TextAlign.center,
                 style: Vt.displayMd.copyWith(
                   fontSize: Vt.tlg,
                   letterSpacing: 4.0,
@@ -545,62 +519,18 @@ class _GlassHeader extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              // 钻石分割
-              Transform.rotate(
-                angle: 0.785,
-                child: Container(
-                  width: 4,
-                  height: 4,
-                  color: Vt.gold,
+              const SizedBox(height: 4),
+              Text(
+                '❦',
+                style: Vt.headingSm.copyWith(
+                  fontSize: Vt.tsm,
+                  color: Vt.gold.withValues(alpha: 0.55),
+                  letterSpacing: 0,
                 ),
-              ),
-              const Spacer(),
-              // 搜索按钮
-              _IconBtn(
-                icon: Icons.search_rounded,
-                onTap: () => context.push('/search'),
-              ),
-              const SizedBox(width: Vt.s8),
-              // 通知按钮
-              _IconBtn(
-                icon: Icons.notifications_none_rounded,
-                onTap: () => context.push('/notifications'),
-              ),
-              const SizedBox(width: Vt.s8),
-              // 个人入口
-              _IconBtn(
-                icon: Icons.person_outline_rounded,
-                onTap: () => context.push('/profile'),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _IconBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _IconBtn({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: 38,
-        height: 38,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Vt.glassFill,
-          shape: BoxShape.circle,
-          border: Border.all(color: Vt.glassBorder, width: 1),
-        ),
-        child: Icon(icon, color: Vt.textPrimary, size: 18),
       ),
     );
   }
@@ -614,10 +544,15 @@ class _TabRow extends StatelessWidget {
   final ValueChanged<int> onChanged;
   const _TabRow({required this.selectedIndex, required this.onChanged});
 
-  static const _tabs = ['全部', '关注', '同城', '推荐'];
-
   @override
   Widget build(BuildContext context) {
+    // H5 styles.css §1233-1283 .feed-subtabs：仅 2 个 tab
+    // v25-I1: Labels driven by l10n so locale switch takes effect immediately.
+    final l10n = AppLocalizations.of(context);
+    final _tabs = [
+      l10n?.feedTabAll ?? '全部',
+      l10n?.feedTabNearby ?? '同城',
+    ];
     return Container(
       height: 48,
       decoration: BoxDecoration(
@@ -684,40 +619,42 @@ class _TabRow extends StatelessWidget {
 }
 
 // ============================================================================
-// 发布 FAB（樱花粉发光球）
+// 发一件 inline CTA · 替代浮动 FAB（H5 index.html L188 .cta）
 // ============================================================================
-class _PublishFab extends StatelessWidget {
-  const _PublishFab();
+class _PublishInlineCta extends StatelessWidget {
+  const _PublishInlineCta();
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/publish'),
-      child: Container(
-        width: 64,
-        height: 64,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const RadialGradient(
-            colors: [Vt.goldIvory, Vt.gold, Vt.goldDeepest],
-            stops: [0.0, 0.55, 1.0],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(32, 64, 32, 0),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 280),
+          child: GestureDetector(
+            onTap: () {
+              unawaited(HapticService.instance.light());
+              context.push('/publish');
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              height: 52,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                border: Border.all(color: Vt.gold.withValues(alpha: 0.55), width: 1),
+              ),
+              child: Text(
+                '发 一 件',
+                style: Vt.cnHeading.copyWith(
+                  fontSize: Vt.tsm,
+                  color: Vt.gold,
+                  letterSpacing: Vt.tsm * 0.4,
+                  fontWeight: FontWeight.w400,
+                ),
+              ),
+            ),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Vt.gold.withValues(alpha: 0.55),
-              blurRadius: 32,
-              spreadRadius: -2,
-            ),
-            BoxShadow(
-              color: Vt.gold.withValues(alpha: 0.3),
-              blurRadius: 16,
-            ),
-          ],
-        ),
-        child: const Icon(
-          Icons.add_rounded,
-          color: Vt.bgVoid,
-          size: 30,
         ),
       ),
     );

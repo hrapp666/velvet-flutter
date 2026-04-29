@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/api/api_client.dart';
 import '../../../../shared/theme/design_tokens.dart';
 import '../../../../shared/widgets/feedback/velvet_toast.dart';
 import '../../../../shared/widgets/micro/spring_tap.dart';
@@ -121,7 +122,7 @@ class _State extends ConsumerState<MerchantApplyScreen> {
       }
     } on Object catch (e) {
       if (!mounted) return;
-      _toast(e.toString());
+      _toast(userMessageOf(e, fallback: '提交失败，请稍后再试'));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -180,7 +181,7 @@ class _State extends ConsumerState<MerchantApplyScreen> {
                     Text('成 为 卖 家',
                         style: Vt.cnDisplay.copyWith(
                           color: Vt.gold, fontSize: Vt.t2xl, letterSpacing: 8,
-                          shadows: const [Shadow(color: Color(0x80C9A961), blurRadius: 30)],
+                          shadows: [Shadow(color: Vt.gold.withValues(alpha: 0.5), blurRadius: 30)],
                         )),
                     const SizedBox(height: Vt.s12),
                     Text('完 成 认 证 · 才 能 发 布 商 品',

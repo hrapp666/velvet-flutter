@@ -102,7 +102,7 @@ class _ReportDialogState extends State<_ReportDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  '举   报',
+                  '举 报',
                   textAlign: TextAlign.center,
                   style: Vt.cnHeading.copyWith(
                     fontSize: Vt.tlg,
@@ -134,7 +134,7 @@ class _ReportDialogState extends State<_ReportDialog> {
                   children: [
                     Expanded(
                       child: _DialogBtn(
-                        label: '取  消',
+                        label: '取 消',
                         ghost: true,
                         onTap: () => Navigator.of(context).pop(),
                       ),
@@ -142,7 +142,7 @@ class _ReportDialogState extends State<_ReportDialog> {
                     const SizedBox(width: Vt.s12),
                     Expanded(
                       child: _DialogBtn(
-                        label: '提  交',
+                        label: '提 交',
                         onTap: _reason == null
                             ? null
                             : () => Navigator.of(context).pop(_reason),
@@ -243,7 +243,7 @@ Future<bool> showBlockDialog(
       body: nickname == null
           ? '拉黑后，对方不会再出现在你的动态和消息里。'
           : '拉黑 $nickname 后，对方不会再出现在你的动态和消息里。',
-      confirmLabel: '确  认  拉  黑',
+      confirmLabel: '确 认 拉 黑',
     ),
   );
   if (confirmed != true || !context.mounted) return false;
@@ -335,7 +335,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  '注  销  账  号',
+                  '注 销 账 号',
                   textAlign: TextAlign.center,
                   style: Vt.cnHeading.copyWith(
                     fontSize: Vt.tlg,
@@ -399,7 +399,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                   children: [
                     Expanded(
                       child: _DialogBtn(
-                        label: '取  消',
+                        label: '取 消',
                         ghost: true,
                         onTap: () => Navigator.of(context).pop(false),
                       ),
@@ -407,7 +407,7 @@ class _DeleteAccountDialogState extends State<_DeleteAccountDialog> {
                     const SizedBox(width: Vt.s12),
                     Expanded(
                       child: _DialogBtn(
-                        label: '永  久  注  销',
+                        label: '永 久 注 销',
                         danger: true,
                         onTap: _typed
                             ? () => Navigator.of(context).pop(true)
@@ -436,8 +436,8 @@ Future<void> showLegalDocument(
   LegalDoc doc,
 ) async {
   final (title, body) = switch (doc) {
-    LegalDoc.terms => ('用  户  协  议', _termsText),
-    LegalDoc.privacy => ('隐  私  政  策', _privacyText),
+    LegalDoc.terms => ('用 户 协 议', _termsText),
+    LegalDoc.privacy => ('隐 私 政 策', _privacyText),
   };
   await showDialog<void>(
     context: context,
@@ -499,7 +499,7 @@ class _LegalDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: Vt.s16),
                 _DialogBtn(
-                  label: '我  已  知  悉',
+                  label: '我 已 知 悉',
                   onTap: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -618,7 +618,7 @@ class _ConfirmDialog extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _DialogBtn(
-                        label: '取  消',
+                        label: '取 消',
                         ghost: true,
                         onTap: () => Navigator.of(context).pop(false),
                       ),

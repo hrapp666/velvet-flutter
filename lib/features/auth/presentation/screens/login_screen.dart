@@ -1,8 +1,10 @@
 // ============================================================================
-// LoginScreen · v13 复刻 H5 editorial luxury
+// LoginScreen · v5 Editorial Luxury · 像素级对齐 H5 #login
 // ----------------------------------------------------------------------------
-// VELVET 大金 + 天 鹅 绒 + 余 温 · 未 散 + 登录/注册切换 + 账号/密码字段
-// 密码 显/隐 toggle + Cormorant Garamond 衬线字体 + 金色文字
+// 4 角 1px L 装饰 + 顶部 VELVET · MMXXVI eyebrow + VELVET 大金 + 天 鹅 绒
+// + diamond hairline + 余 温 · 未 散 + Touch what was touched + mode-row
+// + 双语 field-label (账号 Account / 密码 Pass)
+// 0 圆角铁律 · CTA 直角 + 1px gold border + gold→ivory 渐变 hover ready
 // ============================================================================
 
 import 'dart:async';
@@ -94,7 +96,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           );
       if (!mounted) return;
       unawaited(HapticService.instance.success());
-      ChatSocket.instance.connect();
+      unawaited(ChatSocket.instance.connect());
       context.go('/feed');
     } on SignInWithAppleAuthorizationException catch (e) {
       if (!mounted) return;
@@ -133,7 +135,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await ref.read(authNotifierProvider.notifier).login(account, password);
       if (!mounted) return;
       unawaited(HapticService.instance.success());
-      ChatSocket.instance.connect();
+      unawaited(ChatSocket.instance.connect());
       context.go('/feed');
     } on AppException catch (e) {
       if (!mounted) return;
@@ -217,10 +219,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             SafeArea(
               child: SingleChildScrollView(
                 physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(36, 64, 36, 56),
+                padding: const EdgeInsets.fromLTRB(36, 56, 36, 56),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    // VELVET · MMXXVI eyebrow (H5 .login-eyebrow line 66)
+                    Center(
+                      child: Text(
+                        'VELVET  ·  MMXXVI',
+                        style: Vt.label.copyWith(
+                          fontSize: 9,
+                          letterSpacing: 5,
+                          color: Vt.gold.withValues(alpha: 0.4),
+                          fontStyle: FontStyle.normal,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
                     // VELVET 大金 logo
                     Center(
                       child: ShaderMask(
@@ -236,9 +252,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           style: Vt.displayHero.copyWith(
                             color: Colors.white,
                             letterSpacing: 10,
-                            shadows: const [
+                            shadows: [
                               Shadow(
-                                color: Color(0x6BC9A961),
+                                color: Vt.gold.withValues(alpha: 0.42),
                                 blurRadius: 56,
                               ),
                             ],
@@ -251,7 +267,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     // 天 鹅 绒
                     Center(
                       child: Text(
-                        '天   鹅   绒',
+                        '天 鹅 绒',
                         style: Vt.cnCaption.copyWith(
                           letterSpacing: 8,
                           color: Vt.gold.withValues(alpha: 0.75),
@@ -323,8 +339,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         'Some warmth lingers.',
                         style: Vt.label.copyWith(
                           color: Vt.textSecondary.withValues(alpha: 0.7),
-                          fontSize: Vt.txs,
-                          letterSpacing: 2,
+                          fontSize: Vt.tsm,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -384,6 +400,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     // 账号
                     _Field(
                       label: '账 号',
+                      labelEn: 'Account',
                       controller: _accountCtrl,
                       focusNode: _accountFocus,
                       placeholder: '字母 / 数字 / 下划线',
@@ -393,6 +410,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     // 密码
                     _Field(
                       label: '密 码',
+                      labelEn: 'Pass',
                       controller: _passwordCtrl,
                       focusNode: _passwordFocus,
                       placeholder: '6 位以上 · 字母 + 数字',
@@ -467,8 +485,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 ),
                               )
                             : _LuxCenter(
-                                text: '进  入  VELVET',
-                                letterSpacing: 12,
+                                text: '进 入  VELVET',
+                                letterSpacing: 0.5,
                               ),
                       ),
                     ),
@@ -496,8 +514,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             child: Text(
                               '或',
                               style: Vt.cnLabel.copyWith(
-                                fontSize: Vt.txs,
-                                letterSpacing: 4,
+                                fontSize: Vt.tsm,
+                                letterSpacing: 0.5,
                                 color: Vt.gold.withValues(alpha: 0.6),
                               ),
                             ),
@@ -548,10 +566,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                               const SizedBox(width: 14),
                               Text(
-                                '使  用  Apple  继  续',
+                                '使 用  Apple  继 续',
                                 style: Vt.cnButton.copyWith(
                                   fontSize: Vt.tmd,
-                                  letterSpacing: 6,
+                                  letterSpacing: 0.5,
                                   color: Vt.gold,
                                 ),
                               ),
@@ -566,10 +584,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     // legal
                     Center(
                       child: Text(
-                        '懂  的  人  ·  不  必  多  言',
+                        '懂 的 人  ·  不 必 多 言',
                         style: Vt.cnCaption.copyWith(
-                          fontSize: Vt.txs,
-                          letterSpacing: 3,
+                          fontSize: Vt.tsm,
+                          letterSpacing: 0.5,
                           color: Vt.textSecondary.withValues(alpha: 0.7),
                         ),
                       ),
@@ -580,8 +598,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         'Those who know, need no words.',
                         style: Vt.label.copyWith(
                           color: Vt.textTertiary,
-                          fontSize: Vt.t2xs,
-                          letterSpacing: 1.5,
+                          fontSize: Vt.txs,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -590,9 +608,54 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ),
             ),
 
+            // 四角 1px 金色 L 装饰 (H5 #login .corner-leaf · Hermès/Bottega)
+            const Positioned(
+                top: 12, left: 12, child: _LCorner(corner: _Corner.topLeft)),
+            const Positioned(
+                top: 12, right: 12, child: _LCorner(corner: _Corner.topRight)),
+            const Positioned(
+                bottom: 12,
+                left: 12,
+                child: _LCorner(corner: _Corner.bottomLeft)),
+            const Positioned(
+                bottom: 12,
+                right: 12,
+                child: _LCorner(corner: _Corner.bottomRight)),
+
             // UI12 · editorial 胶片纹理 · 默认 intensity 0.022 保护中文可读性
             const GrainOverlay(seed: 7),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+enum _Corner { topLeft, topRight, bottomLeft, bottomRight }
+
+/// 编辑式 1px 金色 L 角装饰（24x24 · 仅 2 边）
+class _LCorner extends StatelessWidget {
+  final _Corner corner;
+  const _LCorner({required this.corner});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Vt.gold.withValues(alpha: 0.30);
+    final side = BorderSide(color: color, width: 1);
+    final none = BorderSide.none;
+    final isTop = corner == _Corner.topLeft || corner == _Corner.topRight;
+    final isLeft = corner == _Corner.topLeft || corner == _Corner.bottomLeft;
+    return SizedBox(
+      width: 24,
+      height: 24,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            top: isTop ? side : none,
+            bottom: !isTop ? side : none,
+            left: isLeft ? side : none,
+            right: !isLeft ? side : none,
+          ),
         ),
       ),
     );
@@ -611,7 +674,7 @@ class _ModeBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ls = active ? 12.0 : 10.0;
+    final ls = active ? 0.5 : 0.4;
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
@@ -693,6 +756,7 @@ class _Diamond extends StatelessWidget {
 
 class _Field extends StatelessWidget {
   final String label;
+  final String? labelEn;
   final TextEditingController controller;
   final FocusNode focusNode;
   final String placeholder;
@@ -701,6 +765,7 @@ class _Field extends StatelessWidget {
 
   const _Field({
     required this.label,
+    this.labelEn,
     required this.controller,
     required this.focusNode,
     required this.placeholder,
@@ -711,21 +776,42 @@ class _Field extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final focused = focusNode.hasFocus;
+    final en = labelEn;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: EdgeInsets.only(left: focused ? 8 : 6, bottom: 14),
-          child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 300),
-            style: Vt.cnLabel.copyWith(
-              fontSize: Vt.tsm,
-              letterSpacing: focused ? 7 : 5,
-              color: focused
-                  ? Vt.gold
-                  : Vt.gold.withValues(alpha: 0.82),
-            ),
-            child: Text(label),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 300),
+                style: Vt.cnLabel.copyWith(
+                  fontSize: Vt.tsm,
+                  letterSpacing: focused ? 0.5 : 0.4,
+                  color:
+                      focused ? Vt.goldLight : Vt.gold.withValues(alpha: 0.85),
+                ),
+                child: Text(label),
+              ),
+              if (en != null) ...[
+                const SizedBox(width: 12),
+                // 双语英文小字 italic (H5 .field-label .en)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 1),
+                  child: Text(
+                    en.toUpperCase(),
+                    style: Vt.label.copyWith(
+                      fontSize: Vt.txs,
+                      letterSpacing: 1.5,
+                      fontStyle: FontStyle.italic,
+                      color: Vt.gold.withValues(alpha: focused ? 0.7 : 0.5),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
         Row(

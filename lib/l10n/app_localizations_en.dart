@@ -117,6 +117,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageChinese => '中 文';
 
   @override
+  String get navHome => 'HOME';
+
+  @override
+  String get navSearch => 'SEARCH';
+
+  @override
+  String get navPublish => 'POST';
+
+  @override
+  String get navChats => 'CHATS';
+
+  @override
+  String get navProfile => 'MINE';
+
+  @override
+  String get feedTabAll => 'All';
+
+  @override
+  String get feedTabNearby => 'Nearby';
+
+  @override
   String get contentViolation => 'Content contains inappropriate information';
 
   @override

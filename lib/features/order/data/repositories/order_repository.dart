@@ -9,7 +9,13 @@ import '../../../moment/data/models/moment_model.dart' show Page;
 import '../models/order_model.dart';
 
 abstract interface class OrderRepository {
-  Future<OrderDto> create(int momentId, {String? buyerNote});
+  Future<OrderDto> create(
+    int momentId, {
+    String? buyerNote,
+    String? shippingName,
+    String? shippingPhone,
+    String? shippingAddress,
+  });
   Future<OrderDto> getById(int id);
   Future<Page<OrderDto>> listMine(
     OrderSide side, {
@@ -27,11 +33,20 @@ class OrderRepositoryImpl implements OrderRepository {
   final ApiClient _api;
 
   @override
-  Future<OrderDto> create(int momentId, {String? buyerNote}) async {
+  Future<OrderDto> create(
+    int momentId, {
+    String? buyerNote,
+    String? shippingName,
+    String? shippingPhone,
+    String? shippingAddress,
+  }) async {
     try {
       final res = await _api.dio.post('/api/v1/orders', data: {
         'momentId': momentId,
         if (buyerNote != null) 'buyerNote': buyerNote,
+        if (shippingName != null) 'shippingName': shippingName,
+        if (shippingPhone != null) 'shippingPhone': shippingPhone,
+        if (shippingAddress != null) 'shippingAddress': shippingAddress,
       });
       return OrderDto.fromJson(res.data as Map<String, dynamic>);
     } on DioException catch (e) {

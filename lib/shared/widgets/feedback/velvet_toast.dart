@@ -27,6 +27,8 @@ class VelvetToast {
     bool isError = false,
     Duration duration = const Duration(seconds: 3),
   }) {
+    // 空消息 noop · userMessageOf 对 unauthorized 返回 '' 时的 silent 通道
+    if (message.trim().isEmpty) return;
     final overlay = Overlay.of(context);
     late final OverlayEntry entry;
     entry = OverlayEntry(

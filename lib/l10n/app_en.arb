@@ -155,6 +155,35 @@
     "description": "Language selection · Chinese label (always shown in Chinese, intentionally untranslated)."
   },
 
+  "navHome": "HOME",
+  "@navHome": {
+    "description": "Bottom nav bar label for Home / Feed tab."
+  },
+  "navSearch": "SEARCH",
+  "@navSearch": {
+    "description": "Bottom nav bar label for Search tab."
+  },
+  "navPublish": "POST",
+  "@navPublish": {
+    "description": "Bottom nav bar label for Publish tab."
+  },
+  "navChats": "CHATS",
+  "@navChats": {
+    "description": "Bottom nav bar label for Chats tab."
+  },
+  "navProfile": "MINE",
+  "@navProfile": {
+    "description": "Bottom nav bar label for Profile / My tab."
+  },
+  "feedTabAll": "All",
+  "@feedTabAll": {
+    "description": "Feed sub-tab for all moments."
+  },
+  "feedTabNearby": "Nearby",
+  "@feedTabNearby": {
+    "description": "Feed sub-tab for nearby moments."
+  },
+
   "contentViolation": "Content contains inappropriate information",
   "@contentViolation": {
     "description": "Moderation rejection message shown on publish."

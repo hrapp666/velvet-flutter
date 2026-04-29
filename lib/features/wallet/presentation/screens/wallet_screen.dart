@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/theme/design_tokens.dart';
+import '../../../../shared/widgets/editorial/page_fleuron.dart';
 import '../../../../shared/widgets/error_state/error_state.dart';
 import '../../../../shared/widgets/micro/spring_tap.dart';
 import '../../../../shared/widgets/skeleton/wallet_skeleton.dart';
@@ -63,7 +64,8 @@ class WalletScreen extends ConsumerWidget {
                 ),
                 error: (e, _) => const SliverToBoxAdapter(child: SizedBox.shrink()),
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: Vt.s96)),
+              const SliverToBoxAdapter(child: PageFleuron(caption: 'Velvet · Wallet')),
+              const SliverToBoxAdapter(child: SizedBox(height: Vt.s24)),
             ],
           ),
         ),
@@ -103,10 +105,13 @@ class WalletScreen extends ConsumerWidget {
       margin: const EdgeInsets.fromLTRB(Vt.s24, Vt.s16, Vt.s24, Vt.s32),
       padding: const EdgeInsets.all(Vt.s32),
       decoration: BoxDecoration(
-        gradient: const RadialGradient(
+        gradient: RadialGradient(
           center: Alignment.topCenter,
           radius: 1.2,
-          colors: [Color(0x22C9A961), Color(0x08000000)],
+          colors: [
+            Vt.gold.withValues(alpha: 0.133),
+            Colors.black.withValues(alpha: 0.031),
+          ],
         ),
         border: Border.all(color: Vt.borderMedium),
       ),
@@ -132,7 +137,10 @@ class WalletScreen extends ConsumerWidget {
             '¥${w.balanceYuan.toStringAsFixed(2)}',
             style: Vt.displayLg.copyWith(
               color: Vt.gold, letterSpacing: -1,
-              shadows: const [Shadow(color: Color(0x80C9A961), blurRadius: 30)],
+              shadows: [
+                Shadow(
+                    color: Vt.gold.withValues(alpha: 0.5), blurRadius: 30),
+              ],
             ),
           ),
           const SizedBox(height: Vt.s20),

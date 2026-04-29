@@ -40,6 +40,8 @@ class NotificationRepositoryImpl implements NotificationRepository {
       final data = res.data as Map<String, dynamic>;
       return (data['count'] as num?)?.toInt() ?? 0;
     } on DioException {
+      // 静默原因：未读数是非关键 polling 路径 · 网络抖动降级为 0 优于 throw
+      // 防止顶部小红点崩成红色错误图标 · 下次 poll 会自动恢复真实值
       return 0;
     }
   }

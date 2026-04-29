@@ -2,6 +2,8 @@
 // MomentProvider · 动态状态管理
 // ============================================================================
 
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -177,7 +179,7 @@ class FeedNotifier extends AutoDisposeAsyncNotifier<List<MomentModel>> {
       await ref.read(momentRepositoryProvider).toggleLike(momentId);
     } on Object catch (_) {
       // 静默原因：乐观更新已先行，失败回滚 = 拉整页重建，不阻塞用户
-      refresh();
+      unawaited(refresh());
     }
   }
 }

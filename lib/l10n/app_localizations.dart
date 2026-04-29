@@ -308,6 +308,48 @@ abstract class AppLocalizations {
   /// **'中 文'**
   String get languageChinese;
 
+  /// Bottom nav bar label for Home / Feed tab.
+  ///
+  /// In en, this message translates to:
+  /// **'HOME'**
+  String get navHome;
+
+  /// Bottom nav bar label for Search tab.
+  ///
+  /// In en, this message translates to:
+  /// **'SEARCH'**
+  String get navSearch;
+
+  /// Bottom nav bar label for Publish tab.
+  ///
+  /// In en, this message translates to:
+  /// **'POST'**
+  String get navPublish;
+
+  /// Bottom nav bar label for Chats tab.
+  ///
+  /// In en, this message translates to:
+  /// **'CHATS'**
+  String get navChats;
+
+  /// Bottom nav bar label for Profile / My tab.
+  ///
+  /// In en, this message translates to:
+  /// **'MINE'**
+  String get navProfile;
+
+  /// Feed sub-tab for all moments.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get feedTabAll;
+
+  /// Feed sub-tab for nearby moments.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby'**
+  String get feedTabNearby;
+
   /// Moderation rejection message shown on publish.
   ///
   /// In en, this message translates to:

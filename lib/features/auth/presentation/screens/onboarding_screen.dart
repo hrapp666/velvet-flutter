@@ -37,21 +37,21 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     _Slide(
       roman: 'I',
       display: 'PRIVÉ',
-      cn: '私   藏',
+      cn: '私 藏',
       eyebrow: 'WHAT LINGERS',
       body: '那些被你摩挲过的故事 ·\n柜底的光 · 抽屉里的温度 ·\n先留给你自己。',
     ),
     _Slide(
       roman: 'II',
       display: 'DÉRIVE',
-      cn: '流   转',
+      cn: '流 转',
       eyebrow: 'LET IT DRIFT',
       body: '挂出它 · 不是卖 · 是让它\n在夜里 · 自己找到\n懂的人。',
     ),
     _Slide(
       roman: 'III',
       display: 'NUIT',
-      cn: '夜   里',
+      cn: '夜 里',
       eyebrow: 'THE SAME NIGHT',
       body: '不喧哗 · 不比价 ·\n懂的人会在同一个夜里 ·\n安静地找到你。',
     ),
@@ -231,73 +231,73 @@ class _SlideView extends StatelessWidget {
                 const Center(child: VelvetGlyph(size: 48)),
                 const SizedBox(height: Vt.s16),
               ],
-            // 罗马数字 · 金色细边
-            Text(
-              slide.roman,
-              style: Vt.displayHero.copyWith(
-                fontSize: Vt.tlg,
-                color: Vt.gold,
-                letterSpacing: 6,
-                fontStyle: FontStyle.italic,
-                height: 1.0,
-              ),
-            ),
-            const SizedBox(height: Vt.s8),
-            // 金色短 hairline
-            const _GoldHairline(width: 48),
-            const SizedBox(height: Vt.s32),
-            // Eyebrow 小英文
-            Text(
-              slide.eyebrow,
-              style: Vt.label.copyWith(
-                color: Vt.textSecondary,
-                letterSpacing: 4,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-            const SizedBox(height: Vt.s16),
-            // 法文大字 · gold gradient shader
-            ShaderMask(
-              shaderCallback: (rect) => const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: Vt.gradientGoldLogo,
-                stops: Vt.gradientGoldLogoStops,
-              ).createShader(rect),
-              child: Text(
-                slide.display,
+              // 罗马数字 · 金色细边
+              Text(
+                slide.roman,
                 style: Vt.displayHero.copyWith(
-                  color: Colors.white,
+                  fontSize: Vt.tlg,
+                  color: Vt.gold,
+                  letterSpacing: 6,
+                  fontStyle: FontStyle.italic,
                   height: 1.0,
-                  letterSpacing: 4,
-                  shadows: const [
-                    Shadow(color: Vt.shadowGold40, blurRadius: 48),
-                    Shadow(color: Vt.shadowGold25, blurRadius: 12),
-                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: Vt.s16),
-            // 中文副标
-            Text(
-              slide.cn,
-              style: Vt.cnDisplay.copyWith(
-                fontSize: Vt.tlg,
-                letterSpacing: 8,
-                color: Vt.gold.withValues(alpha: 0.82),
+              const SizedBox(height: Vt.s8),
+              // 金色短 hairline
+              const _GoldHairline(width: 48),
+              const SizedBox(height: Vt.s32),
+              // Eyebrow 小英文
+              Text(
+                slide.eyebrow,
+                style: Vt.label.copyWith(
+                  color: Vt.textSecondary,
+                  letterSpacing: 4,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
-            ),
-            const SizedBox(height: Vt.s40),
-            // Body
-            Text(
-              slide.body,
-              style: Vt.bodyLg.copyWith(
-                color: Vt.textSecondary,
-                height: 1.9,
-                fontWeight: FontWeight.w300,
-                fontStyle: FontStyle.italic,
+              const SizedBox(height: Vt.s16),
+              // 法文大字 · gold gradient shader
+              ShaderMask(
+                shaderCallback: (rect) => const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: Vt.gradientGoldLogo,
+                  stops: Vt.gradientGoldLogoStops,
+                ).createShader(rect),
+                child: Text(
+                  slide.display,
+                  style: Vt.displayHero.copyWith(
+                    color: Colors.white,
+                    height: 1.0,
+                    letterSpacing: 4,
+                    shadows: const [
+                      Shadow(color: Vt.shadowGold40, blurRadius: 48),
+                      Shadow(color: Vt.shadowGold25, blurRadius: 12),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(height: Vt.s16),
+              // 中文副标
+              Text(
+                slide.cn,
+                style: Vt.cnDisplay.copyWith(
+                  fontSize: Vt.tlg,
+                  letterSpacing: 8,
+                  color: Vt.gold.withValues(alpha: 0.82),
+                ),
+              ),
+              const SizedBox(height: Vt.s40),
+              // Body
+              Text(
+                slide.body,
+                style: Vt.bodyLg.copyWith(
+                  color: Vt.textSecondary,
+                  height: 1.9,
+                  fontWeight: FontWeight.w300,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
             ],
           ),
         ),
@@ -442,19 +442,30 @@ class _PrimaryCta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // v5 editorial: 0 圆角 + 1px gold border + gold→ivory 渐变光晕（对齐 login CTA）
     return SpringTap(
       onTap: onTap,
       glow: true,
       child: Container(
-        height: 56,
+        height: 64,
         width: double.infinity,
-        decoration: Vt.ctaSakura,
+        decoration: BoxDecoration(
+          color: Vt.gold.withValues(alpha: 0.06),
+          border: Border.all(color: Vt.gold),
+          boxShadow: [
+            BoxShadow(
+              color: Vt.gold.withValues(alpha: 0.35),
+              blurRadius: 32,
+              spreadRadius: -8,
+            ),
+          ],
+        ),
         alignment: Alignment.center,
         child: Text(
           label,
           style: Vt.button.copyWith(
-            color: Vt.textPrimary,
-            letterSpacing: 2,
+            color: Vt.gold,
+            letterSpacing: 4,
           ),
         ),
       ),
