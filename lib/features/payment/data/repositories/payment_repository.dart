@@ -14,6 +14,14 @@ abstract interface class PaymentRepository {
     required PaymentProvider provider,
   });
   Future<void> mockMarkPaid(int orderId);
+
+  /// iOS StoreKit 付款成功后上传 receipt 给后端做二次校验。
+  /// receipt 通常是 `purchaseDetails.verificationData.serverVerificationData`。
+  Future<void> verifyAppleReceipt({
+    required int orderId,
+    required String receipt,
+    String? transactionId,
+  });
 }
 
 class PaymentRepositoryImpl implements PaymentRepository {
@@ -52,6 +60,23 @@ class PaymentRepositoryImpl implements PaymentRepository {
       await _api.dio.post('/api/v1/payments/mock-paid/$orderId');
     } on DioException catch (e) {
       throw _toError(e, '标记付款失败');
+    }
+  }
+
+  @override
+  Future<void> verifyAppleReceipt({
+    required int orderId,
+    required String receipt,
+    String? transactionId,
+  }) async {
+    try {
+      await _api.dio.post('/api/v1/payments/verify-apple-receipt', data: {
+        'orderId': orderId,
+        'receipt': receipt,
+        'transactionId': transactionId,
+      });
+    } on DioException catch (e) {
+      throw _toError(e, 'Apple 收据校验失败');
     }
   }
 

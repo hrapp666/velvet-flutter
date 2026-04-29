@@ -3,6 +3,7 @@
 // ============================================================================
 
 enum PaymentProvider {
+  apple('APPLE_IAP', 'Apple Pay'),
   wechat('WECHAT', '微信支付'),
   alipay('ALIPAY', '支付宝'),
   mock('MOCK', '沙盒模拟');

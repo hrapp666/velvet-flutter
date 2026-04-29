@@ -2,9 +2,13 @@
 // PaymentSheet · 选择付款方式的 bottom sheet
 // ============================================================================
 
-import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'dart:async';
+import 'dart:io' show Platform;
+
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../../../../core/api/api_client.dart';
 import '../../../../shared/theme/design_tokens.dart';
@@ -39,19 +43,22 @@ class _PaymentSheetBodyState extends ConsumerState<_PaymentSheetBody> {
   PaymentProvider? _selected;
   bool _submitting = false;
 
+  /// iOS 上架要求：所有数字内容购买必须走 Apple IAP，禁止显示其他通道
+  /// Android / Web 维持原有 wechat / alipay / mock 选项
+  bool get _isIos => !kIsWeb && Platform.isIOS;
+
   /// 计算可见的支付方式:
-  ///   - 优先用 server 配置(`paymentConfigProvider`)
-  ///   - server 未返回时:dev 含 mock,release 不含 mock
+  ///   - iOS：仅 APPLE_IAP（App Store 审核合规 · Guideline 3.1.1）
+  ///   - Android / Web：优先 server 配置；release 屏蔽 mock
   List<PaymentProvider> _visibleProviders(PaymentConfig? cfg) {
-    if (cfg != null && cfg.providers.isNotEmpty) {
-      // release 兜底:server 误推 mock 也屏蔽
-      return kReleaseMode
-          ? cfg.providers
-              .where((p) => p != PaymentProvider.mock)
-              .toList(growable: false)
-          : cfg.providers;
+    if (_isIos) {
+      return const [PaymentProvider.apple];
     }
-    return PaymentProvider.values
+    final base = (cfg != null && cfg.providers.isNotEmpty)
+        ? cfg.providers
+        : PaymentProvider.values;
+    return base
+        .where((p) => p != PaymentProvider.apple) // 非 iOS 隐藏 Apple
         .where((p) => !kReleaseMode || p != PaymentProvider.mock)
         .toList(growable: false);
   }
@@ -218,6 +225,12 @@ class _PaymentSheetBodyState extends ConsumerState<_PaymentSheetBody> {
                 style: Vt.cnBody.copyWith(color: Vt.textPrimary),
               ),
             ),
+            if (p == PaymentProvider.apple)
+              Text('iOS 唯 一',
+                  style: Vt.label.copyWith(
+                    color: Vt.gold, fontSize: Vt.t2xs,
+                    fontStyle: FontStyle.italic,
+                  )),
             if (p == PaymentProvider.wechat)
               Text('推 荐',
                   style: Vt.label.copyWith(
@@ -238,6 +251,8 @@ class _PaymentSheetBodyState extends ConsumerState<_PaymentSheetBody> {
 
   String _iconFor(PaymentProvider p) {
     switch (p) {
+      case PaymentProvider.apple:
+        return 'A';
       case PaymentProvider.wechat:
         return '微';
       case PaymentProvider.alipay:
@@ -253,11 +268,13 @@ class _PaymentSheetBodyState extends ConsumerState<_PaymentSheetBody> {
     setState(() => _submitting = true);
     try {
       final repo = ref.read(paymentRepositoryProvider);
-      await repo.createPayment(
+      final created = await repo.createPayment(
         orderId: widget.order.id,
         provider: selected,
       );
-      if (selected == PaymentProvider.mock) {
+      if (selected == PaymentProvider.apple) {
+        await _runAppleIap(orderId: widget.order.id, payload: created.payload);
+      } else if (selected == PaymentProvider.mock) {
         await repo.mockMarkPaid(widget.order.id);
       }
       if (!mounted) return;
@@ -274,4 +291,98 @@ class _PaymentSheetBodyState extends ConsumerState<_PaymentSheetBody> {
       if (mounted) setState(() => _submitting = false);
     }
   }
+
+  /// 拉起 StoreKit 付款 sheet · 完成后上传 receipt 给后端校验。
+  /// payload 来自后端 createPayment 返回的 productId JSON。
+  Future<void> _runAppleIap({
+    required int orderId,
+    required String? payload,
+  }) async {
+    final iap = InAppPurchase.instance;
+    if (!await iap.isAvailable()) {
+      throw const _AppleIapException('App Store 不可用，请稍后再试');
+    }
+    final productId = _extractProductId(payload);
+    if (productId == null) {
+      throw const _AppleIapException('商品标识缺失，请联系客服');
+    }
+    final response = await iap.queryProductDetails({productId});
+    if (response.notFoundIDs.isNotEmpty || response.productDetails.isEmpty) {
+      throw const _AppleIapException('商品未上架，请稍后再试');
+    }
+
+    // 监听 purchaseStream → 完成后上传 receipt
+    final completer = Completer<void>();
+    StreamSubscription<List<PurchaseDetails>>? sub;
+    sub = iap.purchaseStream.listen(
+      (purchases) async {
+        for (final p in purchases) {
+          if (p.status == PurchaseStatus.purchased ||
+              p.status == PurchaseStatus.restored) {
+            try {
+              await ref.read(paymentRepositoryProvider).verifyAppleReceipt(
+                    orderId: orderId,
+                    receipt: p.verificationData.serverVerificationData,
+                    transactionId: p.purchaseID,
+                  );
+              if (p.pendingCompletePurchase) {
+                await iap.completePurchase(p);
+              }
+              if (!completer.isCompleted) completer.complete();
+            } on Object catch (e) {
+              if (!completer.isCompleted) completer.completeError(e);
+            }
+          } else if (p.status == PurchaseStatus.error) {
+            if (!completer.isCompleted) {
+              completer.completeError(_AppleIapException(
+                  p.error?.message ?? 'StoreKit 付款失败'));
+            }
+          } else if (p.status == PurchaseStatus.canceled) {
+            if (!completer.isCompleted) {
+              completer.completeError(const _AppleIapException('付款已取消'));
+            }
+          }
+        }
+      },
+      onError: (Object e, _) {
+        if (!completer.isCompleted) completer.completeError(e);
+      },
+    );
+
+    try {
+      final purchaseParam = PurchaseParam(
+        productDetails: response.productDetails.first,
+        applicationUserName: _extractApplicationUsername(payload),
+      );
+      // 数字商品（订单挂载）走 consumable
+      final ok = await iap.buyConsumable(purchaseParam: purchaseParam);
+      if (!ok) {
+        throw const _AppleIapException('无法发起付款');
+      }
+      await completer.future.timeout(const Duration(minutes: 3));
+    } finally {
+      await sub.cancel();
+    }
+  }
+
+  String? _extractProductId(String? payload) =>
+      _extractJsonString(payload, 'productId');
+
+  String? _extractApplicationUsername(String? payload) =>
+      _extractJsonString(payload, 'applicationUsername');
+
+  /// 简易 JSON 字段抽取 · 后端返回的 payload 是固定结构平铺 string，
+  /// 不引入 dart:convert 依赖避免上层不必要的 widget 重建
+  String? _extractJsonString(String? payload, String key) {
+    if (payload == null || payload.isEmpty) return null;
+    final pattern = RegExp('"$key"\\s*:\\s*"([^"]+)"');
+    return pattern.firstMatch(payload)?.group(1);
+  }
+}
+
+class _AppleIapException implements Exception {
+  const _AppleIapException(this.message);
+  final String message;
+  @override
+  String toString() => message;
 }
