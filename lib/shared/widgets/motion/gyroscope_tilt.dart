@@ -80,6 +80,11 @@ class GyroscopeTilt extends StatefulWidget {
 class _GyroscopeTiltState extends State<GyroscopeTilt> {
   double _tiltX = 0.0;
   double _tiltY = 0.0;
+  // Baseline：第一帧 sensor 事件捕获的重力方向作为零点
+  // 否则启动时 _tiltY 从 0 突然滑到重力分量值（±0.8），
+  // logo 会被 rotateY 旋转 14° → 视觉上"倒着闪一下"（启动血泪教训 2026-04-29）
+  double? _baselineX;
+  double? _baselineY;
   StreamSubscription<AccelerometerEvent>? _sub;
 
   @override
@@ -94,15 +99,21 @@ class _GyroscopeTiltState extends State<GyroscopeTilt> {
 
   void _onAccelerometer(AccelerometerEvent event) {
     if (!mounted) return;
-    // accelerometer x/y 单位 m/s²；静止平放时 ≈ 0；垂直立起时 ≈ ±9.8
-    // 除以 10 → 大致 normalize 到 ±1（稍微宽一点，让极端倾角也能达到 maxTilt）
+    // accelerometer x/y 单位 m/s²；含重力分量；静止竖屏时 y ≈ ±9.8
+    // 除以 10 → 归一化到 ±1
     final rawX = (event.x / 10.0).clamp(-1.0, 1.0);
     final rawY = (event.y / 10.0).clamp(-1.0, 1.0);
+    // 第一帧设置 baseline = 当前重力方向，后续只读相对偏移
+    // 这样静止时 tilt 永远 = 0，不会因重力让 logo 启动时倾斜
+    _baselineX ??= rawX;
+    _baselineY ??= rawY;
+    final relX = (rawX - _baselineX!).clamp(-1.0, 1.0);
+    final relY = (rawY - _baselineY!).clamp(-1.0, 1.0);
     // 低通滤波：output = output * (1 - α) + input * α
     final alpha = widget.smoothFactor;
     setState(() {
-      _tiltX = _tiltX * (1 - alpha) + rawX * alpha;
-      _tiltY = _tiltY * (1 - alpha) + rawY * alpha;
+      _tiltX = _tiltX * (1 - alpha) + relX * alpha;
+      _tiltY = _tiltY * (1 - alpha) + relY * alpha;
     });
   }
 
