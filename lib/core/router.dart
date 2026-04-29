@@ -87,15 +87,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', pageBuilder: (_, __) => _noAnim(const LoginScreen())),
       GoRoute(path: '/register', pageBuilder: (_, __) => _noAnim(const RegisterScreen())),
 
-      // ─── 主框架 ───
-      ShellRoute(
-        builder: (context, state, child) => MainScaffold(child: child),
-        routes: [
-          GoRoute(path: '/feed', pageBuilder: (_, __) => _noAnim(const FeedScreen())),
-          GoRoute(path: '/search', pageBuilder: (_, __) => _noAnim(const SearchScreen())),
-          GoRoute(path: '/publish', pageBuilder: (_, __) => _noAnim(const CreateMomentScreen())),
-          GoRoute(path: '/chats', pageBuilder: (_, __) => _noAnim(const ChatListScreen())),
-          GoRoute(path: '/profile', pageBuilder: (_, __) => _noAnim(const ProfileScreen())),
+      // ─── 主框架 · StatefulShellRoute 保活每个 tab 状态 ───
+      // 解决"切 tab 重新 fetch / 加载中闪"的根因（ShellRoute 每次切都重建 child）
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            MainScaffold(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(path: '/feed', pageBuilder: (_, __) => _noAnim(const FeedScreen())),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(path: '/search', pageBuilder: (_, __) => _noAnim(const SearchScreen())),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(path: '/publish', pageBuilder: (_, __) => _noAnim(const CreateMomentScreen())),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(path: '/chats', pageBuilder: (_, __) => _noAnim(const ChatListScreen())),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(path: '/profile', pageBuilder: (_, __) => _noAnim(const ProfileScreen())),
+            ],
+          ),
         ],
       ),
 

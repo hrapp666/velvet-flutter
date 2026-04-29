@@ -24,25 +24,16 @@ import '../services/haptic_service.dart';
 import '../theme/design_tokens.dart';
 
 class MainScaffold extends ConsumerWidget {
-  final Widget child;
-  const MainScaffold({super.key, required this.child});
+  final StatefulNavigationShell navigationShell;
+  const MainScaffold({super.key, required this.navigationShell});
 
-  static const _paths = ['/feed', '/search', '/publish', '/chats', '/profile'];
   static const _glyphs = ['⌂', '⌕', '+', '❦', '◎'];
   static const _centerIndex = 2;
   static const _dotIndices = {3, 4};
 
-  int _indexFromLocation(String location) {
-    for (int i = 0; i < _paths.length; i++) {
-      if (location.startsWith(_paths[i])) return i;
-    }
-    return 0;
-  }
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final location = GoRouterState.of(context).uri.toString();
-    final selectedIndex = _indexFromLocation(location);
+    final selectedIndex = navigationShell.currentIndex;
     final l10n = AppLocalizations.of(context);
 
     final labels = [
@@ -54,9 +45,8 @@ class MainScaffold extends ConsumerWidget {
     ];
 
     final tabs = List.generate(
-      _paths.length,
+      _glyphs.length,
       (i) => _TabConfig(
-        path: _paths[i],
         glyph: _glyphs[i],
         label: labels[i],
         isCenter: i == _centerIndex,
@@ -67,7 +57,7 @@ class MainScaffold extends ConsumerWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       extendBody: true,
-      body: child,
+      body: navigationShell,
       bottomNavigationBar: _VelvetTabbar(
         tabs: tabs,
         selectedIndex: selectedIndex,
@@ -76,7 +66,12 @@ class MainScaffold extends ConsumerWidget {
           unawaited(tab.isCenter
               ? HapticService.instance.heavy()
               : HapticService.instance.light());
-          context.go(tab.path);
+          // initialLocation:true 仅在重复点击当前 tab 时回根，
+          // 切换其他 tab 时保留该 branch 的内部导航栈
+          navigationShell.goBranch(
+            i,
+            initialLocation: i == selectedIndex,
+          );
         },
       ),
     );
@@ -84,13 +79,11 @@ class MainScaffold extends ConsumerWidget {
 }
 
 class _TabConfig {
-  final String path;
   final String glyph;
   final String label;
   final bool isCenter;
   final bool hasDot;
   const _TabConfig({
-    required this.path,
     required this.glyph,
     required this.label,
     this.isCenter = false,
