@@ -175,7 +175,7 @@ flutter build ipa --release \
 
 需要：
 - Apple Developer 账号
-- Bundle ID `com.velvet.velvet`（与后端 `APPLE_BUNDLE_ID` 一致）
+- Bundle ID `com.hrapp.velvet`（与后端 `APPLE_BUNDLE_ID` 一致）
 - Apple Sign-In capability 已开
 
 ---
