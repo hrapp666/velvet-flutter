@@ -182,6 +182,52 @@ class FeedNotifier extends AutoDisposeAsyncNotifier<List<MomentModel>> {
       unawaited(refresh());
     }
   }
+
+  /// 本地立即更新收藏状态（乐观更新），后台调 API
+  /// H5 端已统一 like/favorite 语义为收藏 · feed 心形 = favorite
+  Future<void> toggleFavorite(int momentId) async {
+    final current = state.value;
+    if (current == null) return;
+
+    // 乐观更新
+    state = AsyncValue.data(current.map((m) {
+      if (m.id != momentId) return m;
+      final newFavorited = !m.favorited;
+      return MomentModel(
+        id: m.id,
+        userId: m.userId,
+        userNickname: m.userNickname,
+        userAvatarUrl: m.userAvatarUrl,
+        title: m.title,
+        content: m.content,
+        coverUrl: m.coverUrl,
+        mediaUrls: m.mediaUrls,
+        hasItem: m.hasItem,
+        itemPriceCents: m.itemPriceCents,
+        itemAttributes: m.itemAttributes,
+        tags: m.tags,
+        location: m.location,
+        visibility: m.visibility,
+        status: m.status,
+        viewCount: m.viewCount,
+        likeCount: m.likeCount,
+        favoriteCount: m.favoriteCount + (newFavorited ? 1 : -1),
+        commentCount: m.commentCount,
+        chatCount: m.chatCount,
+        liked: m.liked,
+        favorited: newFavorited,
+        createdAt: m.createdAt,
+      );
+    }).toList());
+
+    // 后台调 API · 失败回滚 + 让收藏列表重新加载
+    try {
+      await ref.read(momentRepositoryProvider).toggleFavorite(momentId);
+    } on Object catch (_) {
+      // 静默原因：乐观更新已先行，失败回滚 = 拉整页重建，不阻塞用户
+      unawaited(refresh());
+    }
+  }
 }
 
 // ── 详情 Provider ────────────────────────────────────

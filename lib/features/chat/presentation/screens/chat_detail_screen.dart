@@ -16,7 +16,6 @@ import '../../../../shared/services/haptic_service.dart';
 import '../../../../shared/theme/design_tokens.dart';
 import '../../../../shared/widgets/feedback/velvet_toast.dart';
 import '../../../../shared/widgets/micro/spring_tap.dart';
-import '../../../../shared/widgets/motion/scroll_reveal.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../safety/safety_dialogs.dart';
 import '../../data/models/chat_models.dart';
@@ -52,12 +51,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _wsState = ChatSocket.instance.currentState;
     // 启动 WS（如果还没连）
     unawaited(ChatSocket.instance.connect());
-    // 订阅实时消息
+    // 订阅实时消息 · append-only 不触发 REST reload
+    // 关键修复:之前用 ref.invalidate 导致每条 push 全量重载 + ScrollReveal
+    // 重新初始化 50 个 AnimationController → 卡死。改为直接 append。
     _wsSub = ChatSocket.instance.messages.listen((msg) {
-      // 只处理当前会话
       if (msg.conversationId == widget.conversationId && mounted) {
-        // 让 messagesProvider 重新加载
-        ref.invalidate(messagesProvider(widget.conversationId));
+        ref
+            .read(messagesProvider(widget.conversationId).notifier)
+            .addRemoteMessage(msg);
       }
     });
     // 订阅连接状态 — UI 暴露 reconnecting / failed
@@ -188,13 +189,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       return;
     }
     setState(() => _sending = true);
+    // 先清输入框 — 乐观插入瞬间消息已经在气泡列表显示
+    // 不能等 await sendInExisting 返回才 clear · 否则气泡有了但输入框还留着字
+    _inputCtrl.clear();
     try {
       await ref
           .read(messagesProvider(widget.conversationId).notifier)
           .sendInExisting(otherId, text);
-      _inputCtrl.clear();
     } on Object catch (e) {
       if (mounted) {
+        // 失败 → 把文字还给输入框 · 让主人能直接重发(微信/iMessage 同款体验)
+        _inputCtrl.text = text;
+        _inputCtrl.selection = TextSelection.collapsed(offset: text.length);
         VelvetToast.show(context, '发送失败：$e', isError: true);
       }
     } finally {
@@ -278,12 +284,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                         horizontal: 20, vertical: 16),
                     itemCount: value.length,
                     itemBuilder: (context, i) {
+                      // reverse:true · value[0] = 最新 · 渲染在底部
                       final msg = value[i];
                       final isMe = myId != null && msg.senderId == myId;
-                      // 每个 bubble 淡入 · 无 stagger (reverse=true, 新消息在 i=0)
-                      return ScrollReveal(
-                        duration: const Duration(milliseconds: 280),
-                        fromOffsetY: 12,
+                      // 关键修复:移除 ScrollReveal 包装 · 之前每次 list rebuild
+                      // 50 个 bubble 同时 init AnimationController → 主线程冻结
+                      // 用 ValueKey(msg.id) 让 ListView 按 id 复用 element
+                      return KeyedSubtree(
+                        key: ValueKey<int>(msg.id),
                         child: _Bubble(msg: msg, isMe: isMe),
                       );
                     },

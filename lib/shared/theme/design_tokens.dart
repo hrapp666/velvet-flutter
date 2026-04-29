@@ -340,7 +340,8 @@ class Vt {
 
   static TextStyle get displayMd => GoogleFonts.cormorantGaramond(
         fontSize: t2xl,               // 38
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w300,  // 飘逸版 · light italic 衬线
+        fontStyle: FontStyle.italic,
         letterSpacing: 3.0,
         height: 1.02,
         color: textPrimary,
@@ -364,10 +365,11 @@ class Vt {
       );
 
   // v13: heading/body 改用 Cormorant Garamond + Noto Serif SC fallback
-  // 中文场景自动 fallback 到 Noto Serif SC 衬线宋体（跟 H5 一致）
+  // v27: 飘逸版 — 全标题降到 w300 + italic（CormorantGaramond-LightItalic）
   static TextStyle get headingLg => GoogleFonts.cormorantGaramond(
         fontSize: txl,                // 28
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w300,
+        fontStyle: FontStyle.italic,
         letterSpacing: 0.5,
         height: 1.15,
         color: textPrimary,
@@ -375,7 +377,8 @@ class Vt {
 
   static TextStyle get headingMd => GoogleFonts.cormorantGaramond(
         fontSize: tlg,                // 21
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w300,
+        fontStyle: FontStyle.italic,
         letterSpacing: 0.4,
         height: 1.2,
         color: textPrimary,
@@ -383,7 +386,8 @@ class Vt {
 
   static TextStyle get headingSm => GoogleFonts.cormorantGaramond(
         fontSize: tmd,                // 16
-        fontWeight: FontWeight.w500,
+        fontWeight: FontWeight.w300,
+        fontStyle: FontStyle.italic,
         letterSpacing: 0.3,
         height: 1.3,
         color: textPrimary,
@@ -440,13 +444,14 @@ class Vt {
       );
 
   // ==========================================================================
-  // 中文专用 TextStyle (Noto Serif SC 衬线宋体)
-  // v14: 全部 weight 200/300 (瘦细优雅) + 大字距 (奢华呼吸感)
-  // 永不使用 w400+ — 那是普通宋体，要的是"瘦金体"般的精致
+  // 中文专用 TextStyle (ZCOOL XiaoWei 瘦体显示字)
+  // 2026-04-29 修复:之前 w200/w300 触发 Android 字形 fallback 系统宋体
+  // (回字糊成一团) → 强制 w400 匹配 google_fonts/ZCOOLXiaoWei-Regular.ttf 唯一权重
+  // ZCOOL XiaoWei Regular 本身就是设计款瘦体显示字 · 不是普通宋体
   // ==========================================================================
   static TextStyle get cnDisplay => GoogleFonts.zcoolXiaoWei(
         fontSize: tlg,                // 21
-        fontWeight: FontWeight.w200,
+        fontWeight: FontWeight.w400,
         letterSpacing: 12.0,
         height: 1.3,
         color: gold,
@@ -454,7 +459,7 @@ class Vt {
 
   static TextStyle get cnHeading => GoogleFonts.zcoolXiaoWei(
         fontSize: tmd,                // 16
-        fontWeight: FontWeight.w300,
+        fontWeight: FontWeight.w400,
         letterSpacing: 8.0,
         height: 1.4,
         color: gold,
@@ -462,7 +467,7 @@ class Vt {
 
   static TextStyle get cnBody => GoogleFonts.zcoolXiaoWei(
         fontSize: tsm,                // 14
-        fontWeight: FontWeight.w300,
+        fontWeight: FontWeight.w400,
         letterSpacing: 2.0,
         height: 1.95,
         color: textPrimary,
@@ -470,7 +475,7 @@ class Vt {
 
   static TextStyle get cnLabel => GoogleFonts.zcoolXiaoWei(
         fontSize: txs,                // 12
-        fontWeight: FontWeight.w300,
+        fontWeight: FontWeight.w400,
         letterSpacing: 7.0,
         height: 1.5,
         color: gold,
@@ -478,7 +483,7 @@ class Vt {
 
   static TextStyle get cnButton => GoogleFonts.zcoolXiaoWei(
         fontSize: tmd,                // 16
-        fontWeight: FontWeight.w300,
+        fontWeight: FontWeight.w400,
         letterSpacing: 12.0,
         height: 1.0,
         color: gold,
@@ -486,7 +491,7 @@ class Vt {
 
   static TextStyle get cnCaption => GoogleFonts.zcoolXiaoWei(
         fontSize: txs,                // 12
-        fontWeight: FontWeight.w300,
+        fontWeight: FontWeight.w400,
         letterSpacing: 4.0,
         height: 1.6,
         color: textSecondary,

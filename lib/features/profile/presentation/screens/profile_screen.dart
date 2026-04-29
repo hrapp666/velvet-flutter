@@ -25,7 +25,6 @@ import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/services/haptic_service.dart';
 import '../../../../shared/theme/design_tokens.dart';
 import '../../../../shared/theme/locale_provider.dart';
-import '../../../../shared/theme/theme_provider.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../safety/safety_dialogs.dart';
@@ -396,11 +395,6 @@ class _ProfileBody extends ConsumerWidget {
             onTap: () => context.push('/orders'),
             isFirst: true,
           ),
-          // wallet 暂隐 (App Store 合规) — 钱包页含微信/支付宝收款 · 触发 IAP 强制审核
-          // _EditorialMenuItem(
-          //   label: '我 的 钱 包',
-          //   onTap: () => context.push('/wallet'),
-          // ),
           _EditorialMenuItem(
             label: '商 家 认 证',
             onTap: () => context.push('/merchant/apply'),
@@ -444,12 +438,8 @@ class _ProfileBody extends ConsumerWidget {
 
           const SizedBox(height: Vt.s32),
 
-          // 外观 / 语言切换 - 维持原有功能
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Vt.s24),
-            child: const _AppearanceSection(),
-          ),
-          const SizedBox(height: Vt.s20),
+          // v25: Velvet 视觉系统专为黑色 void 设计 · 明亮版未完整适配 → 暂时下掉
+          // 外观切换 UI（保留 themeProvider 以便未来恢复）
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Vt.s24),
             child: const _LanguageSection(),
@@ -1043,44 +1033,9 @@ class _ProfileError extends ConsumerWidget {
 }
 
 // ============================================================================
-// 外观 / 语言切换 — 保留原有功能 (v25 · C2 · I1)
+// 语言切换 (v25 · C2 · I1)
+// 外观切换已下掉 — Velvet 视觉系统只适配黑色 void · 明亮版回归后再恢复
 // ============================================================================
-
-class _AppearanceSection extends ConsumerWidget {
-  const _AppearanceSection();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final current = ref.watch(themeProvider);
-    final l10n = AppLocalizations.of(context);
-    final title = l10n?.themeSectionTitle ?? 'APPEARANCE';
-
-    final options = [
-      (mode: ThemeMode.dark, label: l10n?.themeDark ?? '暗 黑'),
-      (mode: ThemeMode.light, label: l10n?.themeLight ?? '明 亮'),
-      (mode: ThemeMode.system, label: l10n?.themeSystem ?? '跟 随'),
-    ];
-
-    return _SettingSection(
-      title: title,
-      child: Row(
-        children: options.map((opt) {
-          final selected = current == opt.mode;
-          return Expanded(
-            child: _SettingChip(
-              label: opt.label,
-              selected: selected,
-              onTap: () {
-                unawaited(HapticService.instance.medium());
-                ref.read(themeProvider.notifier).setMode(opt.mode);
-              },
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
 
 class _LanguageSection extends ConsumerWidget {
   const _LanguageSection();

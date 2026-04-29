@@ -27,7 +27,6 @@ import '../features/profile/presentation/screens/about_screen.dart';
 import '../features/profile/presentation/screens/profile_edit_screen.dart';
 import '../features/profile/presentation/screens/profile_screen.dart';
 import '../features/profile/presentation/screens/user_public_screen.dart';
-import '../features/wallet/presentation/screens/wallet_screen.dart';
 import '../shared/theme/design_tokens.dart';
 import '../shared/widgets/main_scaffold.dart';
 import '../shared/widgets/motion/cinematic_page.dart';
@@ -142,13 +141,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           );
         },
-      ),
-      GoRoute(
-        path: '/wallet',
-        pageBuilder: (_, state) => CinematicPage(
-          key: state.pageKey,
-          child: const WalletScreen(),
-        ),
       ),
       GoRoute(
         path: '/orders',

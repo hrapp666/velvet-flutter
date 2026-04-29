@@ -47,6 +47,7 @@ class ApiClient {
       ),
     );
     dio.interceptors.add(_AuthInterceptor());
+    dio.interceptors.add(_RetryInterceptor(dio));
     dio.interceptors.add(_ErrorInterceptor(dio));
     return dio;
   }
@@ -87,6 +88,51 @@ class _AuthInterceptor extends Interceptor {
       options.headers['Authorization'] = 'Bearer $token';
     }
     handler.next(options);
+  }
+}
+
+/// 瞬时网络错误自动重试 · 透明恢复手机→VPS 链路抖动
+///
+/// 只重试幂等请求(GET / HEAD) + 明确 extra['__retryable']=true 的写请求。
+/// 触发条件:connectTimeout / sendTimeout / receiveTimeout / connectionError。
+/// 重试 1 次,200ms 延迟。仍失败 → 走 _ErrorInterceptor 弹"网络较慢"。
+class _RetryInterceptor extends Interceptor {
+  _RetryInterceptor(this._dio);
+  final Dio _dio;
+
+  static const _retryFlag = '__retriedOnce';
+
+  bool _isTransient(DioExceptionType t) =>
+      t == DioExceptionType.connectionTimeout ||
+      t == DioExceptionType.sendTimeout ||
+      t == DioExceptionType.receiveTimeout ||
+      t == DioExceptionType.connectionError;
+
+  bool _isIdempotent(RequestOptions o) {
+    final m = o.method.toUpperCase();
+    if (m == 'GET' || m == 'HEAD') return true;
+    return o.extra['__retryable'] == true;
+  }
+
+  @override
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    final opts = err.requestOptions;
+    if (opts.extra[_retryFlag] == true ||
+        !_isTransient(err.type) ||
+        !_isIdempotent(opts)) {
+      return handler.next(err);
+    }
+    opts.extra[_retryFlag] = true;
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    try {
+      final res = await _dio.fetch<dynamic>(opts);
+      handler.resolve(res);
+    } on DioException catch (e) {
+      handler.next(e);
+    }
   }
 }
 
@@ -138,10 +184,26 @@ class _ErrorInterceptor extends Interceptor {
       }
       // refresh 没拿到新 token · 区分两种情况：
       // - hardFailure: refresh token 缺失 / 后端返 401 → 真的过期了，登出
-      // - 否则（网络错 / 5xx / 超时）→ 保留 token，本次请求失败但用户不踢出
+      // - 否则（网络错 / 5xx / 超时）→ 保留 token，本次请求当作网络失败处理
       if (outcome.hardFailure) {
         await ApiClient.clearToken();
         ApiClient.onSessionExpired?.call();
+      } else {
+        // transientError: refresh 因为网络/5xx 没成功 · 不能让原始 401 冒上去
+        // 否则 currentUser() 会吃到 unauthorized → ProfileScreen 渲染"请先登录"
+        // 改成 network 错误 · UI 显示"网络较慢" · 用户保持登录态 · 下次自动重试
+        handler.reject(
+          DioException(
+            requestOptions: err.requestOptions,
+            error: const AppException(
+              type: AppErrorType.network,
+              message: '网络较慢，请稍后再试',
+            ),
+            response: err.response,
+            type: err.type,
+          ),
+        );
+        return;
       }
     } else if (isAuthError && (isRefreshCall || alreadyRetried)) {
       // refresh 端点本身 401，或重试后仍 401 = 真过期，登出

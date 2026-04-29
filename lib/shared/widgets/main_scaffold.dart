@@ -241,7 +241,7 @@ class _TabButton extends StatelessWidget {
                 AnimatedSlide(
                   duration: Vt.normal,
                   curve: Curves.easeOutCubic,
-                  offset: active ? const Offset(0, -0.143) : Offset.zero, // -3/21
+                  offset: active ? const Offset(0, -0.115) : Offset.zero, // -3/26
                   child: AnimatedScale(
                     duration: Vt.normal,
                     curve: Curves.easeOutCubic,
@@ -249,7 +249,7 @@ class _TabButton extends StatelessWidget {
                     child: AnimatedDefaultTextStyle(
                       duration: Vt.normal,
                       style: GoogleFonts.cormorantGaramond(
-                        fontSize: 21,
+                        fontSize: 26,
                         height: 1.0,
                         fontWeight: FontWeight.w400,
                         color: active
@@ -270,15 +270,15 @@ class _TabButton extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 4),
-                // 中文标签 · 11px ZCOOL · letter-spacing 0.22em · uppercase
+                const SizedBox(height: 5),
+                // 中文标签 · 12px ZCOOL · letter-spacing 0.22em · uppercase
                 AnimatedDefaultTextStyle(
                   duration: Vt.normal,
                   style: GoogleFonts.zcoolXiaoWei(
-                    fontSize: 11,
+                    fontSize: 12,
                     height: 1.0,
                     fontWeight: FontWeight.w300,
-                    letterSpacing: 11 * 0.22, // 0.22em
+                    letterSpacing: 12 * 0.22, // 0.22em
                     color: active
                         ? Vt.gold
                         : const Color(0x8CA08C64), // rgba(160,140,100,.55)
@@ -453,14 +453,14 @@ class _CenterPublishTabState extends State<_CenterPublishTab>
           ),
           // 标签 · margin-top:32px 让位浮起按钮
           Padding(
-            padding: const EdgeInsets.only(top: 32 + 8),
+            padding: const EdgeInsets.only(top: 32 + 9),
             child: AnimatedDefaultTextStyle(
               duration: Vt.normal,
               style: GoogleFonts.zcoolXiaoWei(
-                fontSize: 11,
+                fontSize: 12,
                 height: 1.0,
                 fontWeight: FontWeight.w300,
-                letterSpacing: 11 * 0.22,
+                letterSpacing: 12 * 0.22,
                 color: widget.active
                     ? Vt.gold
                     : const Color(0xB3C9A961), // gold-70

@@ -345,10 +345,10 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             location: m.location ?? '',
             createdAt: m.createdAt,
             imageUrl: m.mediaUrls.isNotEmpty ? m.mediaUrls.first : null,
-            liked: m.liked,
+            liked: m.favorited,
             distanceLabel: isNearby ? m.distanceLabel : null,
             onTap: () => context.push('/moment/${m.id}'),
-            onLike: () => ref.read(feedProvider.notifier).toggleLike(m.id),
+            onLike: () => ref.read(feedProvider.notifier).toggleFavorite(m.id),
           ),
         );
       },

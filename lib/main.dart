@@ -54,16 +54,18 @@ class VelvetApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mode = ref.watch(themeProvider);
+    // ignore: unused_local_variable
+    final mode = ref.watch(themeProvider); // 仍订阅以便未来恢复
     final locale = ref.watch(localeProvider);
     final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
       title: 'Velvet',
       debugShowCheckedModeBanner: false,
-      theme: buildLightTheme(),
+      // v25: Velvet 视觉系统专为黑色 void 设计 · 明亮版未完整适配 → 强制 dark
+      theme: buildDarkTheme(),
       darkTheme: buildDarkTheme(),
-      themeMode: mode,
+      themeMode: ThemeMode.dark,
       locale: locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,

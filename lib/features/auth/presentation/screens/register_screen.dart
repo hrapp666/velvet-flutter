@@ -7,11 +7,14 @@
 // ============================================================================
 
 import 'dart:async';
+import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../../../core/api/api_client.dart';
 import '../../../../shared/services/haptic_service.dart';
@@ -53,6 +56,65 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _accountFocus.addListener(() => setState(() {}));
     _nicknameFocus.addListener(() => setState(() {}));
     _passwordFocus.addListener(() => setState(() {}));
+  }
+
+  /// 仅 iOS 真机/模拟器显示 Apple Sign-In · web/Android 隐藏
+  bool get _showAppleSignIn => !kIsWeb && Platform.isIOS;
+
+  Future<void> _handleAppleLogin() async {
+    if (_loading) return;
+    unawaited(HapticService.instance.heavy());
+    setState(() {
+      _loading = true;
+      _errorText = null;
+    });
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+      final identityToken = credential.identityToken;
+      if (identityToken == null || identityToken.isEmpty) {
+        throw const AppException(
+          type: AppErrorType.unauthorized,
+          message: 'Apple 未返回身份凭证',
+        );
+      }
+      // Apple 仅首次返回 fullName · 拼为昵称兜底（首次注册场景尤其重要）
+      String? nickname;
+      final given = credential.givenName;
+      final family = credential.familyName;
+      if ((given != null && given.isNotEmpty) ||
+          (family != null && family.isNotEmpty)) {
+        nickname = '${family ?? ''}${given ?? ''}'.trim();
+        if (nickname.isEmpty) nickname = null;
+      }
+      await ref.read(authNotifierProvider.notifier).loginWithApple(
+            identityToken: identityToken,
+            nickname: nickname,
+          );
+      if (!mounted) return;
+      unawaited(HapticService.instance.success());
+      unawaited(ChatSocket.instance.connect());
+      context.go('/feed');
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (!mounted) return;
+      if (e.code == AuthorizationErrorCode.canceled) return;
+      unawaited(HapticService.instance.error());
+      setState(() => _errorText = 'Apple 登录失败：${e.message}');
+    } on AppException catch (e) {
+      if (!mounted) return;
+      unawaited(HapticService.instance.error());
+      setState(() => _errorText = e.message);
+    } on Object catch (e) {
+      if (!mounted) return;
+      unawaited(HapticService.instance.error());
+      setState(() => _errorText = 'Apple 登录失败：$e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _pickBirthday() async {
@@ -587,6 +649,93 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                               ),
                       ),
                     ),
+                    if (_showAppleSignIn) ...[
+                      const SizedBox(height: 28),
+                      // 钻石分隔（与 LoginScreen 同款）
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              height: 1,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.transparent,
+                                    Vt.gold.withValues(alpha: 0.28),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 18),
+                            child: Text(
+                              '或',
+                              style: Vt.cnLabel.copyWith(
+                                fontSize: Vt.tsm,
+                                letterSpacing: 0.5,
+                                color: Vt.gold.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Container(
+                              height: 1,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Vt.gold.withValues(alpha: 0.28),
+                                    Colors.transparent,
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+                      // Apple Sign-In · 与 LoginScreen 完全同款 chiaroscuro
+                      SpringTap(
+                        onTap: _loading ? null : _handleAppleLogin,
+                        glow: !_loading,
+                        haptic: false,
+                        child: Container(
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: Vt.gold.withValues(alpha: 0.04),
+                            border: Border.all(
+                              color: Vt.gold.withValues(alpha: 0.85),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.apple,
+                                size: 22,
+                                color: Vt.gold,
+                                shadows: [
+                                  Shadow(
+                                    color: Vt.gold.withValues(alpha: 0.45),
+                                    blurRadius: 14,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(width: 14),
+                              Text(
+                                '使 用  Apple  继 续',
+                                style: Vt.cnButton.copyWith(
+                                  fontSize: Vt.tmd,
+                                  letterSpacing: 0.5,
+                                  color: Vt.gold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     Center(
                       child: Text(

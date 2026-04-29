@@ -33,6 +33,7 @@ import '../../../safety/safety_dialogs.dart';
 import '../../data/models/moment_model.dart';
 import '../../data/repositories/comment_repository.dart';
 import '../providers/moment_provider.dart';
+import 'favorites_screen.dart' show myFavoritesProvider;
 
 class MomentDetailScreen extends ConsumerStatefulWidget {
   final int momentId;
@@ -81,34 +82,13 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
       if (!mounted) return;
       setState(() => _favoritedOverride = favorited);
       ref.invalidate(momentDetailProvider(widget.momentId));
+      // 主人意图：点了爱心 → 收藏列表能立即看到
+      // autoDispose 的 myFavoritesProvider 不会自动响应 toggle，必须手动失效
+      ref.invalidate(myFavoritesProvider);
     } on Object catch (e) {
       if (!mounted) return;
       setState(() => _favoritedOverride = current);
-      // userMessageOf 对 unauthorized 返回空串 · VelvetToast.show 对空串 noop
-      // 不再把 AppException.toString() 拼进 toast → 不再泄露内部错误对象
       VelvetToast.show(context, userMessageOf(e, fallback: '收藏失败'), isError: true);
-    }
-  }
-
-  // null = 跟随服务端 moment.liked · 非 null = 乐观本地覆盖
-  bool? _likedOverride;
-
-  Future<void> _toggleLike() async {
-    unawaited(HapticService.instance.medium());
-    final current = _likedOverride ??
-        ref.read(momentDetailProvider(widget.momentId)).valueOrNull?.liked ??
-        false;
-    setState(() => _likedOverride = !current);
-    try {
-      final repo = ref.read(momentRepositoryProvider);
-      final liked = await repo.toggleLike(widget.momentId);
-      if (!mounted) return;
-      setState(() => _likedOverride = liked);
-      ref.invalidate(momentDetailProvider(widget.momentId));
-    } on Object catch (_) {
-      // 静默原因：点赞非关键路径，失败回滚到原值，detail 下次刷新自动恢复
-      if (!mounted) return;
-      setState(() => _likedOverride = current);
     }
   }
 
@@ -316,19 +296,6 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
                         onTap: () => context.pop(),
                       ),
                       const Spacer(),
-                      Builder(builder: (_) {
-                        final favorited = _favoritedOverride ??
-                            momentAsync.valueOrNull?.favorited ??
-                            false;
-                        return _GlassIconBtn(
-                          icon: favorited
-                              ? Icons.bookmark_rounded
-                              : Icons.bookmark_outline_rounded,
-                          active: favorited,
-                          onTap: _toggleFavorite,
-                        );
-                      }),
-                      const SizedBox(width: 8),
                       _GlassIconBtn(
                         icon: Icons.ios_share_rounded,
                         onTap: () {
@@ -371,11 +338,12 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
             bottom: 0,
             child: _BottomCta(
               bottomPadding: padding.bottom,
-              liked: _likedOverride ??
-                  momentAsync.valueOrNull?.liked ??
+              // 爱心 = 收藏（主人决定：合并 like 和 favorite，只留收藏语义）
+              liked: _favoritedOverride ??
+                  momentAsync.valueOrNull?.favorited ??
                   false,
               hasItem: momentAsync.valueOrNull?.hasItem ?? false,
-              onLike: _toggleLike,
+              onLike: _toggleFavorite,
               onChat: () {
                 final m = momentAsync.valueOrNull;
                 if (m == null) return;
@@ -703,7 +671,6 @@ class _DetailContent extends StatelessWidget {
               children: [
                 _MetaItem(num: m.viewCount.toString(), label: '浏 览'),
                 _MetaItem(num: m.favoriteCount.toString(), label: '收 藏'),
-                _MetaItem(num: m.likeCount.toString(), label: '点 赞'),
                 _MetaItem(num: m.commentCount.toString(), label: '评 论'),
               ],
             ),

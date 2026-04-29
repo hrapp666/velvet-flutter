@@ -87,7 +87,11 @@ class ChatRepositoryImpl implements ChatRepository {
   @override
   Future<void> markRead(int conversationId) async {
     try {
-      await _api.dio.post('/api/v1/chat/conversations/$conversationId/read');
+      // markRead 幂等 → 标记可重试 · 瞬时网络抖动透明恢复
+      await _api.dio.post(
+        '/api/v1/chat/conversations/$conversationId/read',
+        options: Options(extra: const {'__retryable': true}),
+      );
     } on DioException catch (e) {
       throw _toAppError(e, '标记已读失败');
     }

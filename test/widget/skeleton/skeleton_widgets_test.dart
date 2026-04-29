@@ -13,7 +13,6 @@ import 'package:velvet/shared/widgets/skeleton/feed_skeleton.dart';
 import 'package:velvet/shared/widgets/skeleton/orders_skeleton.dart';
 import 'package:velvet/shared/widgets/skeleton/search_skeleton.dart';
 import 'package:velvet/shared/widgets/skeleton/skeleton_box.dart';
-import 'package:velvet/shared/widgets/skeleton/wallet_skeleton.dart';
 
 Widget _harness(Widget child) {
   return MaterialApp(
@@ -82,17 +81,6 @@ void main() {
       expect(find.byType(OrdersSkeleton), findsOneWidget);
       // 5 个卡 · 每个有 thumbnail + 2 text + 2 tag = 5 thumbnails
       expect(find.byType(SkeletonBox), findsAtLeastNWidgets(5));
-    });
-  });
-
-  group('WalletSkeleton', () {
-    testWidgets('渲染 hero + 4 quick action + 4 流水', (tester) async {
-      await tester.pumpWidget(_harness(const WalletSkeleton()));
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(find.byType(WalletSkeleton), findsOneWidget);
-      // 至少 1 hero balance + 4 quick action box + 4 transaction icon
-      expect(find.byType(SkeletonBox), findsAtLeastNWidgets(8));
     });
   });
 
