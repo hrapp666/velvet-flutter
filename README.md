@@ -50,12 +50,12 @@ flutter build apk --release \
 
 ## API 后端切换
 
-默认连 `https://agent.ylctkx9s.work`（黄哥 VPS），见 `lib/core/api/api_client.dart:18`：
+默认连 `https://api.rvqu4vaz.work`（AWS ap-east-1 正式后端），见 `lib/core/api/api_client.dart:18`：
 
 ```dart
 static const String baseUrl = String.fromEnvironment(
   'API_BASE_URL',
-  defaultValue: 'https://agent.ylctkx9s.work',
+  defaultValue: 'https://api.rvqu4vaz.work',
 );
 ```
 

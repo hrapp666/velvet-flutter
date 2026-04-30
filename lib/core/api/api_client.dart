@@ -14,10 +14,10 @@ class ApiClient {
   /// Velvet backend API base URL
   ///
   /// 构建时可用 --dart-define=API_BASE_URL=https://your-api.com 覆盖
-  /// 默认走主人正式域名 · 不再使用一次性 trycloudflare URL
+  /// 默认走 AWS 正式域名 · 不再使用一次性 trycloudflare URL
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://agent.ylctkx9s.work',
+    defaultValue: 'https://api.rvqu4vaz.work',
   );
 
   /// 全局会话失效回调 · 由 AuthNotifier 在 build() 中注册。
