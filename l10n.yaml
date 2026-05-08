@@ -17,7 +17,6 @@ template-arb-file: app_en.arb
 output-localization-file: app_localizations.dart
 output-class: AppLocalizations
 output-dir: lib/l10n
-synthetic-package: false
 # nullable-getter: true  → AppLocalizations.of(context) 返回 AppLocalizations?
 # 调用方使用 null-safe 访问 (l10n?.tabAll ?? fallback),避免 delegate 未挂载或
 # 某些 isolate 内渲染时崩溃。手写版本也返回 nullable · 二者 API 一致。
