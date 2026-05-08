@@ -154,7 +154,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               child: Row(
                 children: [
                   GestureDetector(
-                    onTap: () => context.pop(),
+                    onTap: () {
+                      if (context.canPop()) {
+                        context.pop();
+                      } else {
+                        context.go('/feed');
+                      }
+                    },
                     behavior: HitTestBehavior.opaque,
                     child: const SizedBox(
                       width: 44,

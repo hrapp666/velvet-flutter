@@ -187,7 +187,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
               controller: _scrollCtrl,
               physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
               slivers: [
-                SliverToBoxAdapter(child: SizedBox(height: padding.top + 96)),
+                SliverToBoxAdapter(child: SizedBox(height: padding.top + 67)),
                 const SliverToBoxAdapter(child: SizedBox(height: 56)),
 
                 // Feed 内容（按 tab 路由）
@@ -221,11 +221,11 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             child: _GlassHeader(topPadding: padding.top),
           ),
 
-          // ─── Tab 选择行 ───
+          // ─── Tab 选择行 · 紧贴 header 底以建立连贯单元 ───
           Positioned(
             left: 0,
             right: 0,
-            top: padding.top + 96,
+            top: padding.top + 67,
             child: _TabRow(
               selectedIndex: _selectedTab,
               onChanged: _onTabChanged,
@@ -278,15 +278,26 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
           const SliverToBoxAdapter(child: FeedSkeleton()),
         ];
       }
+      // 同城坐标 banner · 让用户看见定位是真实生效的(不再"摆设")
+      final locationBanner = SliverToBoxAdapter(
+        child: _NearbyLocationBanner(
+          lat: _userLat!,
+          lng: _userLng!,
+          radiusKm: 20,
+          count: nearbyValue.length,
+          onRelocate: () => _requestLocation(force: true),
+        ),
+      );
       if (nearbyValue.isEmpty) {
         return [
+          locationBanner,
           SliverFillRemaining(
             hasScrollBody: false,
             child: _NearbyEmptyState(),
           ),
         ];
       }
-      return [_buildMasonry(nearbyValue, isNearby: true)];
+      return [locationBanner, _buildMasonry(nearbyValue, isNearby: true)];
     }
 
     // 普通 tab
@@ -462,6 +473,93 @@ class _NearbyEmptyState extends StatelessWidget {
             style: Vt.bodySm.copyWith(color: Vt.textTertiary),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// 同城定位 banner · 显示真实坐标 + 半径 + 数量 · 让"同城"不再是摆设
+class _NearbyLocationBanner extends StatelessWidget {
+  final double lat;
+  final double lng;
+  final double radiusKm;
+  final int count;
+  final VoidCallback onRelocate;
+
+  const _NearbyLocationBanner({
+    required this.lat,
+    required this.lng,
+    required this.radiusKm,
+    required this.count,
+    required this.onRelocate,
+  });
+
+  String _fmt(double v) {
+    final hemi = v >= 0 ? '°' : '°';
+    return '${v.abs().toStringAsFixed(2)}$hemi';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final latLabel =
+        '${_fmt(lat)} ${lat >= 0 ? 'N' : 'S'}  ·  ${_fmt(lng)} ${lng >= 0 ? 'E' : 'W'}';
+    return Padding(
+      padding:
+          const EdgeInsets.fromLTRB(Vt.s24, Vt.s12, Vt.s24, Vt.s8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+            horizontal: Vt.s16, vertical: Vt.s12),
+        decoration: BoxDecoration(
+          color: Vt.gold.withValues(alpha: 0.04),
+          border: Border.all(color: Vt.gold.withValues(alpha: 0.22)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.my_location_rounded,
+                size: 14, color: Vt.gold.withValues(alpha: 0.85)),
+            const SizedBox(width: Vt.s12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    latLabel,
+                    style: Vt.label.copyWith(
+                      color: Vt.gold,
+                      letterSpacing: 1.5,
+                      fontSize: Vt.t2xs,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${radiusKm.toStringAsFixed(0)} km 内 · 找 到 $count 件',
+                    style: Vt.cnLabel.copyWith(
+                      color: Vt.textSecondary,
+                      letterSpacing: 2.5,
+                      fontSize: Vt.t2xs,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            GestureDetector(
+              onTap: onRelocate,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Vt.s8),
+                child: Text(
+                  '重 新 定 位',
+                  style: Vt.cnLabel.copyWith(
+                    color: Vt.gold,
+                    letterSpacing: 2,
+                    fontSize: Vt.t2xs,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -30,6 +30,7 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
   List<MomentModel> _moments = [];
   bool _loading = true;
   bool _following = false;
+  bool _isSelf = false;
   String? _error;
 
   @override
@@ -53,10 +54,15 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
           .read(momentRepositoryProvider)
           .listByUser(widget.userId, page: 0, size: 30);
 
+      // 自己的主页 → 不显示"关注 / 私下聊"按钮 + 文案改"我 的 发 布"
+      final me = await ref.read(currentUserProvider.future);
+      final isSelf = me?.id == widget.userId;
+
       if (!mounted) return;
       setState(() {
         _user = u;
         _moments = momentsRes.content;
+        _isSelf = isSelf;
         _loading = false;
       });
     } on DioException catch (e) {
@@ -247,6 +253,7 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
               user: _user!,
               moments: _moments,
               following: _following,
+              isSelf: _isSelf,
               padding: padding,
               onFollow: _toggleFollow,
               onMessage: () => VelvetToast.show(context, '可 从 具 体 动 态 页 发 私 信'),
@@ -290,7 +297,7 @@ class _UserPublicScreenState extends ConsumerState<UserPublicScreen> {
                         ),
                       ),
                       const Spacer(),
-                      if (_user != null)
+                      if (_user != null && !_isSelf)
                         GestureDetector(
                           onTap: () => _showSafetyMenu(_user!),
                           behavior: HitTestBehavior.opaque,
@@ -324,6 +331,7 @@ class _Body extends StatelessWidget {
   final UserProfile user;
   final List<MomentModel> moments;
   final bool following;
+  final bool isSelf;
   final EdgeInsets padding;
   final VoidCallback onFollow;
   final VoidCallback onMessage;
@@ -332,6 +340,7 @@ class _Body extends StatelessWidget {
     required this.user,
     required this.moments,
     required this.following,
+    required this.isSelf,
     required this.padding,
     required this.onFollow,
     required this.onMessage,
@@ -480,77 +489,107 @@ class _Body extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Vt.s32),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Vt.s32),
-            child: Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: onFollow,
-                    child: Container(
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: following
-                            ? Vt.gold.withValues(alpha: 0.18)
-                            : Vt.gold.withValues(alpha: 0.06),
-                        border: Border.all(color: Vt.gold),
-                        boxShadow: following
-                            ? null
-                            : [
-                                BoxShadow(
-                                  color: Vt.gold.withValues(alpha: 0.32),
-                                  blurRadius: 24,
-                                  spreadRadius: -8,
-                                ),
-                              ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          following ? '已 关 注' : '关 注',
-                          style: Vt.cnButton.copyWith(
-                            letterSpacing: 8,
-                            color: Vt.gold,
+          if (!isSelf)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Vt.s32),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: onFollow,
+                      child: Container(
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: following
+                              ? Vt.gold.withValues(alpha: 0.18)
+                              : Vt.gold.withValues(alpha: 0.06),
+                          border: Border.all(color: Vt.gold),
+                          boxShadow: following
+                              ? null
+                              : [
+                                  BoxShadow(
+                                    color: Vt.gold.withValues(alpha: 0.32),
+                                    blurRadius: 24,
+                                    spreadRadius: -8,
+                                  ),
+                                ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            following ? '已 关 注' : '关 注',
+                            style: Vt.cnButton.copyWith(
+                              letterSpacing: 8,
+                              color: Vt.gold,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: Vt.s12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: onMessage,
-                    child: Container(
-                      height: 52,
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Vt.gold.withValues(alpha: 0.32),
+                  const SizedBox(width: Vt.s12),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: onMessage,
+                      child: Container(
+                        height: 52,
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Vt.gold.withValues(alpha: 0.32),
+                          ),
                         ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '私 下 聊',
-                          style: Vt.cnButton.copyWith(
-                            fontSize: Vt.tsm,
-                            letterSpacing: 6,
-                            color: Vt.textSecondary,
+                        child: Center(
+                          child: Text(
+                            '私 下 聊',
+                            style: Vt.cnButton.copyWith(
+                              fontSize: Vt.tsm,
+                              letterSpacing: 6,
+                              color: Vt.textSecondary,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          if (isSelf)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Vt.s32),
+              child: GestureDetector(
+                onTap: () => context.push('/publish'),
+                child: Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: Vt.gold.withValues(alpha: 0.06),
+                    border: Border.all(color: Vt.gold),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Vt.gold.withValues(alpha: 0.32),
+                        blurRadius: 24,
+                        spreadRadius: -8,
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      '+  发  布  新  动  态',
+                      style: Vt.cnButton.copyWith(
+                        letterSpacing: 6,
+                        color: Vt.gold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           const SizedBox(height: Vt.s48),
-          // 她的发布
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: Vt.s32),
             child: Row(
               children: [
                 Text(
-                  '她 的 发 布',
+                  isSelf ? '我 的 发 布' : '她 的 发 布',
                   style: Vt.cnHeading.copyWith(
                     fontSize: Vt.tmd,
                     letterSpacing: 6,
@@ -594,14 +633,31 @@ class _Body extends StatelessWidget {
                 horizontal: Vt.s32,
                 vertical: Vt.s48,
               ),
-              child: Text(
-                '— 尚 未 发 布 —',
-                textAlign: TextAlign.center,
-                style: Vt.cnHeading.copyWith(
-                  fontSize: Vt.tsm,
-                  letterSpacing: 6,
-                  color: Vt.textTertiary,
-                ),
+              child: Column(
+                children: [
+                  Text(
+                    isSelf ? '— 还 没 有 故 事 —' : '— 尚 未 发 布 —',
+                    textAlign: TextAlign.center,
+                    style: Vt.cnHeading.copyWith(
+                      fontSize: Vt.tsm,
+                      letterSpacing: 6,
+                      color: Vt.textTertiary,
+                    ),
+                  ),
+                  if (isSelf) ...[
+                    const SizedBox(height: Vt.s12),
+                    Text(
+                      'tap + to hang your first',
+                      textAlign: TextAlign.center,
+                      style: Vt.label.copyWith(
+                        color: Vt.textTertiary,
+                        letterSpacing: 2,
+                        fontStyle: FontStyle.italic,
+                        fontSize: Vt.t2xs,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
         ],

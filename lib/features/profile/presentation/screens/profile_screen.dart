@@ -141,15 +141,14 @@ class _ProfileHeader extends StatelessWidget {
               }
             },
             behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: Vt.s4, vertical: Vt.s4),
-              child: Text(
-                '返 回',
-                style: Vt.cnLabel.copyWith(
-                  fontSize: Vt.tsm,
-                  letterSpacing: 0.5,
+            child: const SizedBox(
+              width: 44,
+              height: 44,
+              child: Center(
+                child: Icon(
+                  Icons.arrow_back_ios_new_rounded,
                   color: Vt.gold,
+                  size: 16,
                 ),
               ),
             ),

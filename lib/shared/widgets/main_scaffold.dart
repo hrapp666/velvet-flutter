@@ -242,7 +242,7 @@ class _TabButton extends StatelessWidget {
                     child: AnimatedDefaultTextStyle(
                       duration: Vt.normal,
                       style: GoogleFonts.cormorantGaramond(
-                        fontSize: 26,
+                        fontSize: 32,
                         height: 1.0,
                         fontWeight: FontWeight.w400,
                         color: active
@@ -268,10 +268,10 @@ class _TabButton extends StatelessWidget {
                 AnimatedDefaultTextStyle(
                   duration: Vt.normal,
                   style: GoogleFonts.zcoolXiaoWei(
-                    fontSize: 12,
+                    fontSize: 13,
                     height: 1.0,
                     fontWeight: FontWeight.w300,
-                    letterSpacing: 12 * 0.22, // 0.22em
+                    letterSpacing: 13 * 0.22, // 0.22em
                     color: active
                         ? Vt.gold
                         : const Color(0x8CA08C64), // rgba(160,140,100,.55)
@@ -426,7 +426,7 @@ class _CenterPublishTabState extends State<_CenterPublishTab>
                       child: Text(
                         widget.config.glyph,
                         style: GoogleFonts.cormorantGaramond(
-                          fontSize: 32,
+                          fontSize: 36,
                           height: 1.0,
                           fontWeight: FontWeight.w300,
                           color: Vt.bgVoid,
@@ -444,10 +444,10 @@ class _CenterPublishTabState extends State<_CenterPublishTab>
             child: AnimatedDefaultTextStyle(
               duration: Vt.normal,
               style: GoogleFonts.zcoolXiaoWei(
-                fontSize: 12,
+                fontSize: 13,
                 height: 1.0,
                 fontWeight: FontWeight.w300,
-                letterSpacing: 12 * 0.22,
+                letterSpacing: 13 * 0.22,
                 color: widget.active
                     ? Vt.gold
                     : const Color(0xB3C9A961), // gold-70
