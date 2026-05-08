@@ -70,3 +70,4 @@ test/.test_coverage.dart
 # Misc
 *.bak
 *.swp
+test/golden/failures/

@@ -72,13 +72,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
     });
 
-    testWidgets('VelvetGlyph size = 140', (tester) async {
+    testWidgets('VelvetGlyph size = 132', (tester) async {
       await tester.pumpWidget(_harness());
       await tester.pump(const Duration(milliseconds: 300));
 
       final box = tester.getSize(find.byType(VelvetGlyph));
-      expect(box.width, 140);
-      expect(box.height, 140);
+      expect(box.width, 132);
+      expect(box.height, 132);
 
       await tester.pump(const Duration(milliseconds: 2600));
       await tester.pump(const Duration(milliseconds: 200));
