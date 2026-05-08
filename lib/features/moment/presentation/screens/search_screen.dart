@@ -471,7 +471,6 @@ class _ResultTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cover = moment.mediaUrls.isNotEmpty ? moment.mediaUrls.first : null;
-    final price = (moment.itemPriceCents ?? 0) / 100;
 
     return GestureDetector(
       onTap: () => context.push('/moment/${moment.id}'),
@@ -531,38 +530,6 @@ class _ResultTile extends StatelessWidget {
                       letterSpacing: 1.5,
                     ),
                   ),
-                  if (moment.hasItem && moment.itemPriceCents != null) ...[
-                    const SizedBox(height: Vt.s8),
-                    ShaderMask(
-                      shaderCallback: (rect) => const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: Vt.gradientGold4,
-                      ).createShader(rect),
-                      child: Text.rich(
-                        TextSpan(children: [
-                          TextSpan(
-                            text: '¥ ',
-                            style: Vt.price.copyWith(
-                              fontSize: Vt.tsm,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          TextSpan(
-                            text: price.toStringAsFixed(0),
-                            style: Vt.price.copyWith(
-                              fontSize: Vt.txl,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white,
-                              letterSpacing: 1,
-                              height: 1,
-                            ),
-                          ),
-                        ]),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),

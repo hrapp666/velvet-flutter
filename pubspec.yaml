@@ -1,7 +1,7 @@
 name: velvet
 description: "Velvet · Touch what was touched. 私藏，流转。"
 publish_to: "none"
-version: 0.1.0+10
+version: 0.26.0+26
 
 environment:
   sdk: ">=3.5.0 <4.0.0"
@@ -50,8 +50,8 @@ dependencies:
   # Apple Sign-In · iOS 上架必须 · 后端 /api/v1/auth/apple 验签
   sign_in_with_apple: ^6.1.4
 
-  # Apple In-App Purchase · iOS 唯一支付通道 · 上架必须
-  in_app_purchase: ^3.2.0
+  # v26 苹果合规：本版本删除所有交易功能，纯分享模式 · 不再依赖 IAP
+  # in_app_purchase: ^3.2.0  (removed in v26)
 
   # 运动传感器（陀螺仪 / 加速计 · splash 3D tilt）
   sensors_plus: ^6.1.0

@@ -384,21 +384,15 @@ class _CenterPublishTabState extends State<_CenterPublishTab>
                     height: 56,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      // radial 5 档：30% 28% center
+                      // radial 5 档：30% 28% center · 复用 design token gradientGoldGlow
                       gradient: const RadialGradient(
                         center: Alignment(-0.4, -0.44), // (30%-50%, 28%-50%)
                         radius: 0.95,
-                        colors: [
-                          Color(0xFFFDFAF2),
-                          Color(0xFFEDD088),
-                          Color(0xFFC9A961),
-                          Color(0xFF8C7536),
-                          Color(0xFF5A4820),
-                        ],
+                        colors: Vt.gradientGoldGlow,
                         stops: [0.0, 0.30, 0.62, 0.85, 1.0],
                       ),
                       border: Border.all(
-                        color: const Color(0xB3F8E6AA), // rgba(248,230,170,.7)
+                        color: Vt.goldBorderHalo,
                         width: 1,
                       ),
                       boxShadow: [

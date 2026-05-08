@@ -76,12 +76,17 @@ class ChatListScreen extends ConsumerWidget {
             onRefresh: () =>
                 ref.read(conversationListProvider.notifier).refresh(),
             child: switch (convsAsync) {
-              AsyncData(:final value) when value.isEmpty => Padding(
+              // RefreshIndicator 需要 child 是 Scrollable · 空态用 ListView 包裹才能下拉刷新
+              AsyncData(:final value) when value.isEmpty => ListView(
+                  physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics()),
                   padding: EdgeInsets.only(top: padding.top + 120),
-                  child: const EmptyState(
-                    title: '— 还 没 有 私 语 —',
-                    subtitle: '懂的人 · 自然会来找你',
-                  ),
+                  children: const [
+                    EmptyState(
+                      title: '— 还 没 有 私 语 —',
+                      subtitle: '懂的人 · 自然会来找你',
+                    ),
+                  ],
                 ),
               AsyncData(:final value) => ListView.builder(
                   padding: EdgeInsets.fromLTRB(

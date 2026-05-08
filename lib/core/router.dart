@@ -14,7 +14,6 @@ import '../features/auth/presentation/screens/splash_screen.dart';
 import '../features/chat/data/models/chat_models.dart';
 import '../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../features/chat/presentation/screens/chat_list_screen.dart';
-import '../features/merchant/presentation/screens/merchant_apply_screen.dart';
 import '../features/moment/presentation/screens/create_moment_screen.dart';
 import '../features/moment/presentation/screens/favorites_screen.dart';
 import '../features/moment/presentation/screens/feed_screen.dart';
@@ -22,7 +21,6 @@ import '../features/moment/presentation/screens/moment_detail_screen.dart';
 import '../features/moment/presentation/screens/search_screen.dart';
 import '../features/notification/presentation/screens/notification_screen.dart';
 import '../features/admin/presentation/screens/admin_screen.dart';
-import '../features/order/presentation/screens/orders_screen.dart';
 import '../features/profile/presentation/screens/about_screen.dart';
 import '../features/profile/presentation/screens/profile_edit_screen.dart';
 import '../features/profile/presentation/screens/profile_screen.dart';
@@ -77,6 +75,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           authState is AsyncData<UserProfile?> && authState.value == null;
       if (isLoggedOut) {
         return '/login';
+      }
+
+      // 4. /admin 路径必须 ADMIN 角色 · 普通用户访问跳回首页
+      if (loc == '/admin' || loc.startsWith('/admin/')) {
+        final user = authState is AsyncData<UserProfile?>
+            ? authState.value
+            : null;
+        if (user == null || !user.isAdmin) {
+          return '/feed';
+        }
       }
       return null;
     },
@@ -163,17 +171,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ),
           );
         },
-      ),
-      GoRoute(
-        path: '/orders',
-        pageBuilder: (_, state) => CinematicPage(
-          key: state.pageKey,
-          child: const OrdersScreen(),
-        ),
-      ),
-      GoRoute(
-        path: '/merchant/apply',
-        pageBuilder: (_, state) => CinematicPage(key: state.pageKey, child: const MerchantApplyScreen()),
       ),
       GoRoute(
         path: '/about',

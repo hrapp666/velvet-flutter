@@ -201,10 +201,10 @@ class _ProfileBody extends ConsumerWidget {
           const Center(child: _AvatarRing(letter: 'V')),
           const SizedBox(height: Vt.s20),
 
-          // 会 员（H5 .profile-roman = 中文衬线 letter-spacing 0.4em）
+          // 私 藏（v26 苹果合规：删除付费"会员"概念，改为氛围型副标题）
           Center(
             child: Text(
-              '会 员',
+              '私 藏',
               style: Vt.cnLabel.copyWith(
                 color: Vt.gold,
                 letterSpacing: Vt.tsm * 0.4,
@@ -275,48 +275,6 @@ class _ProfileBody extends ConsumerWidget {
             ),
           ),
 
-          // 商家认证状态徽章（保留业务逻辑）
-          if (user.isMerchant) ...[
-            const SizedBox(height: Vt.s16),
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: Vt.s12, vertical: Vt.s4),
-                decoration: BoxDecoration(
-                  color: Vt.gold.withValues(alpha: 0.08),
-                  border: Border.all(color: Vt.gold),
-                ),
-                child: Text(
-                  '认 证 商 家',
-                  style: Vt.cnLabel.copyWith(
-                    color: Vt.gold,
-                    fontSize: Vt.tsm,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ),
-          ] else if (user.merchantStatus == 'PENDING') ...[
-            const SizedBox(height: Vt.s16),
-            Center(
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: Vt.s12, vertical: Vt.s4),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                      color: Vt.gold.withValues(alpha: 0.5)),
-                ),
-                child: Text(
-                  '认 证 审 核 中',
-                  style: Vt.cnLabel.copyWith(
-                    color: Vt.gold.withValues(alpha: 0.7),
-                    fontSize: Vt.tsm,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ),
-          ],
           const SizedBox(height: Vt.s32),
 
           // ornament-rich：leaf · ln · diamond · ln · leaf
@@ -391,17 +349,9 @@ class _ProfileBody extends ConsumerWidget {
 
           // editorial 菜单列表
           _EditorialMenuItem(
-            label: '我 的 订 单',
-            onTap: () => context.push('/orders'),
-            isFirst: true,
-          ),
-          _EditorialMenuItem(
-            label: '商 家 认 证',
-            onTap: () => context.push('/merchant/apply'),
-          ),
-          _EditorialMenuItem(
             label: '我 的 收 藏',
             onTap: () => context.push('/favorites'),
+            isFirst: true,
           ),
           _EditorialMenuItem(
             label: '我 的 发 布',

@@ -621,7 +621,7 @@ class _Bubble extends StatelessWidget {
                                 spreadRadius: -6,
                               ),
                               const BoxShadow(
-                                color: Color(0xB3000000),
+                                color: Vt.shadowDeep,
                                 blurRadius: 16,
                                 offset: Offset(0, 4),
                                 spreadRadius: -4,
@@ -629,7 +629,7 @@ class _Bubble extends StatelessWidget {
                             ]
                           : const [
                               BoxShadow(
-                                color: Color(0x80000000),
+                                color: Vt.shadowDrop,
                                 blurRadius: 12,
                                 offset: Offset(0, 2),
                               ),
@@ -644,7 +644,7 @@ class _Bubble extends StatelessWidget {
                             // H5: 对方 rgba(232,214,178,.9) · 自己 #FAF4E6
                             color: isMe
                                 ? Vt.goldIvory
-                                : const Color(0xE6E8D6B2),
+                                : Vt.textChatOther,
                             height: 1.95,
                             letterSpacing: 0.3,
                             shadows: isMe

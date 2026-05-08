@@ -984,15 +984,6 @@ class _MomentRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: Vt.s8),
-                  if (moment.hasItem && moment.itemPriceCents != null)
-                    Text(
-                      '¥ ${(moment.itemPriceCents! / 100).toStringAsFixed(0)}',
-                      style: Vt.price.copyWith(
-                        fontSize: Vt.tlg,
-                        letterSpacing: 1,
-                      ),
-                    ),
                 ],
               ),
             ),

@@ -53,10 +53,17 @@ class FavoritesScreen extends ConsumerWidget {
                       const Duration(milliseconds: 300));
                 },
                 child: switch (async) {
-                  AsyncData(:final value) when value.isEmpty =>
-                    const EmptyState(
-                      title: '— 还 没 有 收 藏 —',
-                      subtitle: 'tap ♡ to keep what moves you',
+                  // RefreshIndicator 需要 child 是 Scrollable · 空态用 ListView 包裹才能下拉刷新
+                  AsyncData(:final value) when value.isEmpty => ListView(
+                      physics: const AlwaysScrollableScrollPhysics(
+                          parent: BouncingScrollPhysics()),
+                      padding: const EdgeInsets.only(top: Vt.s64),
+                      children: const [
+                        EmptyState(
+                          title: '— 还 没 有 收 藏 —',
+                          subtitle: 'tap ♡ to keep what moves you',
+                        ),
+                      ],
                     ),
                   AsyncData(:final value) => _FavGrid(items: value),
                   AsyncError(:final error) => ErrorState(
@@ -182,7 +189,6 @@ class _FavCard extends StatelessWidget {
     final cover = m.mediaUrls.isNotEmpty
         ? m.mediaUrls.first
         : 'https://picsum.photos/seed/velvet${m.id}/600/800';
-    final hasPrice = (m.hasItem == true) && (m.itemPriceCents != null);
     return GestureDetector(
       onTap: () => context.push('/moment/${m.id}'),
       behavior: HitTestBehavior.opaque,
@@ -269,38 +275,17 @@ class _FavCard extends StatelessWidget {
                           height: 1.45,
                         ),
                       ),
-                      if (hasPrice) ...[
-                        const SizedBox(height: Vt.s8),
-                        ShaderMask(
-                          shaderCallback: (rect) => const LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: Vt.gradientGold4,
-                          ).createShader(rect),
-                          child: Text(
-                            '¥ ${(m.itemPriceCents! / 100).toStringAsFixed(0)}',
-                            style: Vt.price.copyWith(
-                              color: Colors.white,
-                              fontSize: Vt.tlg,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 0.5,
-                              height: 1,
-                            ),
-                          ),
+                      const SizedBox(height: Vt.s4),
+                      Text(
+                        m.userNickname,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Vt.label.copyWith(
+                          color: Vt.gold.withValues(alpha: 0.7),
+                          fontStyle: FontStyle.italic,
+                          letterSpacing: 1.5,
                         ),
-                      ] else ...[
-                        const SizedBox(height: Vt.s4),
-                        Text(
-                          m.userNickname,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Vt.label.copyWith(
-                            color: Vt.gold.withValues(alpha: 0.7),
-                            fontStyle: FontStyle.italic,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ],
+                      ),
                     ],
                   ),
                 ),

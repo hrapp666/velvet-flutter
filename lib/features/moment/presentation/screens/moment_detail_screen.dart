@@ -3,9 +3,9 @@
 // ----------------------------------------------------------------------------
 // 视觉策略：
 //   - 顶部：全屏沉浸式封面（占屏 60%）+ 暗角 vignette + 顶部毛玻璃返回栏
-//   - 中部：浮起卡片（向上滑出）— 包含标题、价格、描述、属性 chip
-//   - 卖家信息卡：头像 + 名字 + 信誉 + 关注按钮
-//   - 底部固定 CTA：全宽樱花粉胶囊 "私下聊聊"（带粉色生物发光）
+//   - 中部：浮起卡片（向上滑出）— 包含标题、描述、属性 chip（v26 苹果合规：纯分享，无价格）
+//   - 分享者信息卡：头像 + 名字 + 信誉 + 关注按钮
+//   - 底部固定 CTA：全宽金色胶囊 "私 下 聊 聊"（带金色生物发光）
 //   - 右下角浮动：收藏 / 分享 / 举报 三连
 // ============================================================================
 
@@ -25,10 +25,7 @@ import '../../../../shared/theme/design_tokens.dart';
 import '../../../../shared/widgets/ambient/grain_overlay.dart';
 import '../../../../shared/widgets/feedback/velvet_toast.dart';
 import '../../../../shared/widgets/micro/spring_tap.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../chat/data/models/chat_models.dart';
-import '../../../order/presentation/widgets/address_sheet.dart';
-import '../../../payment/presentation/widgets/payment_sheet.dart';
 import '../../../safety/safety_dialogs.dart';
 import '../../data/models/moment_model.dart';
 import '../../data/repositories/comment_repository.dart';
@@ -90,30 +87,6 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
       setState(() => _favoritedOverride = current);
       VelvetToast.show(context, userMessageOf(e, fallback: '收藏失败'), isError: true);
     }
-  }
-
-  Future<void> _handleBuy(MomentModel m) async {
-    // 对齐 H5 app.js placeOrder() 三道前置校验
-    final user = ref.read(currentUserProvider).valueOrNull;
-    if (user == null) {
-      VelvetToast.show(context, '请先登录', isError: true);
-      return;
-    }
-    if (!m.hasItem || (m.itemPriceCents ?? 0) <= 0) {
-      VelvetToast.show(context, '此动态未挂售', isError: true);
-      return;
-    }
-    if (user.id == m.userId) {
-      VelvetToast.show(context, '不能购买自己的物品', isError: true);
-      return;
-    }
-
-    unawaited(HapticService.instance.medium());
-    final order = await showAddressSheet(context, momentId: m.id);
-    if (!mounted || order == null) return;
-
-    // 下单成功 · 顺势打开 PaymentSheet (H5 submitAddrAndOrder 完成即 openPaySheet)
-    await showPaymentSheet(context, order);
   }
 
   Widget _coverPlaceholder() {
@@ -342,7 +315,6 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
               liked: _favoritedOverride ??
                   momentAsync.valueOrNull?.favorited ??
                   false,
-              hasItem: momentAsync.valueOrNull?.hasItem ?? false,
               onLike: _toggleFavorite,
               onChat: () {
                 final m = momentAsync.valueOrNull;
@@ -357,11 +329,6 @@ class _MomentDetailScreenState extends ConsumerState<MomentDetailScreen>
                   otherUserAvatarUrl: m.userAvatarUrl,
                   unread: 0,
                 ));
-              },
-              onBuy: () {
-                final m = momentAsync.valueOrNull;
-                if (m == null) return;
-                unawaited(_handleBuy(m));
               },
             ),
           ),
@@ -523,7 +490,6 @@ class _DetailContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final price = (m.itemPriceCents ?? 0) / 100;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: Vt.s24),
       child: Column(
@@ -604,40 +570,6 @@ class _DetailContent extends StatelessWidget {
             ),
           ),
           const SizedBox(height: Vt.s24),
-
-          // 价格（如果有）
-          if (m.hasItem && m.itemPriceCents != null) ...[
-            ShaderMask(
-              shaderCallback: (rect) => const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: Vt.gradientGold4,
-              ).createShader(rect),
-              child: Text.rich(
-                TextSpan(children: [
-                  TextSpan(
-                    text: '¥ ',
-                    style: Vt.priceLg.copyWith(
-                      fontSize: Vt.tlg,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.white,
-                    ),
-                  ),
-                  TextSpan(
-                    text: price.toStringAsFixed(0),
-                    style: Vt.priceLg.copyWith(
-                      fontSize: Vt.t3xl,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 2,
-                      color: Colors.white,
-                      height: 1,
-                    ),
-                  ),
-                ]),
-              ),
-            ),
-            const SizedBox(height: Vt.s32),
-          ],
 
           // 描述（带引号装饰）
           if (m.content.isNotEmpty)
@@ -880,17 +812,13 @@ class GoogleFontsLocal {
 class _BottomCta extends StatelessWidget {
   final double bottomPadding;
   final bool liked;
-  final bool hasItem;
   final VoidCallback onLike;
   final VoidCallback onChat;
-  final VoidCallback onBuy;
   const _BottomCta({
     required this.bottomPadding,
     required this.liked,
-    required this.hasItem,
     required this.onLike,
     required this.onChat,
-    required this.onBuy,
   });
 
   @override
@@ -946,114 +874,51 @@ class _BottomCta extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: Vt.s12),
-              // hasItem: 副 CTA "问 一 问" (玻璃) + 主 CTA "立 即 拍 下" (金)
-              // !hasItem: 主 CTA "私 下 聊 聊" (金) 全宽
-              if (hasItem) ...[
-                Expanded(
-                  child: SpringTap(
-                    onTap: onChat,
-                    child: Container(
-                      height: 56,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(Vt.rPill),
-                        color: Vt.glassFill,
-                        border: Border.all(
-                          color: Vt.gold.withValues(alpha: 0.4),
-                        ),
+              // 主 CTA "私 下 聊 聊" (金) 全宽 — v26 苹果合规：移除支付链路，统一私聊
+              Expanded(
+                child: SpringTap(
+                  onTap: onChat,
+                  glow: true,
+                  child: Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(Vt.rPill),
+                      gradient: const LinearGradient(
+                        colors: [Vt.gold, Vt.goldDark],
                       ),
-                      child: Center(
-                        child: Text(
-                          '问 一 问',
-                          style: Vt.button.copyWith(
-                            color: Vt.gold,
-                            letterSpacing: 2.0,
-                          ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Vt.gold.withValues(alpha: 0.6),
+                          blurRadius: 32,
+                          spreadRadius: -4,
                         ),
-                      ),
+                        BoxShadow(
+                          color: Vt.gold.withValues(alpha: 0.3),
+                          blurRadius: 12,
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-                const SizedBox(width: Vt.s12),
-                Expanded(
-                  child: SpringTap(
-                    onTap: onBuy,
-                    glow: true,
-                    child: Container(
-                      height: 56,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(Vt.rPill),
-                        gradient: const LinearGradient(
-                          colors: [Vt.gold, Vt.goldDark],
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.chat_bubble_outline_rounded,
+                          color: Colors.white,
+                          size: 18,
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Vt.gold.withValues(alpha: 0.6),
-                            blurRadius: 32,
-                            spreadRadius: -4,
-                          ),
-                          BoxShadow(
-                            color: Vt.gold.withValues(alpha: 0.3),
-                            blurRadius: 12,
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          '立 即 拍 下',
+                        const SizedBox(width: 8),
+                        Text(
+                          '私 下 聊 聊',
                           style: Vt.button.copyWith(
                             color: Colors.white,
                             letterSpacing: 2.0,
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
-              ] else
-                Expanded(
-                  child: SpringTap(
-                    onTap: onChat,
-                    glow: true,
-                    child: Container(
-                      height: 56,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(Vt.rPill),
-                        gradient: const LinearGradient(
-                          colors: [Vt.gold, Vt.goldDark],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Vt.gold.withValues(alpha: 0.6),
-                            blurRadius: 32,
-                            spreadRadius: -4,
-                          ),
-                          BoxShadow(
-                            color: Vt.gold.withValues(alpha: 0.3),
-                            blurRadius: 12,
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.chat_bubble_outline_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '私 下 聊 聊',
-                            style: Vt.button.copyWith(
-                              color: Colors.white,
-                              letterSpacing: 2.0,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              ),
             ],
           ),
         ),
@@ -1245,8 +1110,33 @@ class _CommentsSectionState extends ConsumerState<_CommentsSection> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: Vt.s24),
                   child: Center(
-                    child: Text('— 暂时听不见私语 —',
-                        style: Vt.bodySm.copyWith(color: Vt.textTertiary)),
+                    child: Column(
+                      children: [
+                        Text('— 暂时听不见私语 —',
+                            style: Vt.bodySm.copyWith(color: Vt.textTertiary)),
+                        const SizedBox(height: Vt.s12),
+                        // 重试按钮 · invalidate 会触发 commentsProvider 重新拉取
+                        TextButton(
+                          onPressed: () => ref.invalidate(
+                              commentsProvider(widget.momentId)),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Vt.gold,
+                            minimumSize: const Size(88, 36),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: Vt.s16, vertical: Vt.s8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(Vt.rPill),
+                              side: BorderSide(
+                                  color: Vt.gold.withValues(alpha: 0.5),
+                                  width: 0.6),
+                            ),
+                          ),
+                          child: Text('重 试',
+                              style: Vt.bodySm.copyWith(
+                                  color: Vt.gold, letterSpacing: 1.2)),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

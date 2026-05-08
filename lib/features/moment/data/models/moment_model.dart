@@ -137,8 +137,8 @@ class CreateMomentBody {
         'content': content,
         if (coverUrl != null) 'coverUrl': coverUrl,
         'mediaUrls': mediaUrls,
-        'hasItem': hasItem,
-        if (itemPriceCents != null) 'itemPriceCents': itemPriceCents,
+        // v26 苹果合规：纯分享模式 · 强制不发送 hasItem/itemPriceCents
+        'hasItem': false,
         'itemAttributes': itemAttributes,
         'tags': tags,
         if (location != null) 'location': location,

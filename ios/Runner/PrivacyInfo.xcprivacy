@@ -82,19 +82,7 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- 支付信息(订单金额 / 佣金 / 钱包余额) -->
-		<dict>
-			<key>NSPrivacyCollectedDataType</key>
-			<string>NSPrivacyCollectedDataTypePurchaseHistory</string>
-			<key>NSPrivacyCollectedDataTypeLinked</key>
-			<true/>
-			<key>NSPrivacyCollectedDataTypeTracking</key>
-			<false/>
-			<key>NSPrivacyCollectedDataTypePurposes</key>
-			<array>
-				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
-			</array>
-		</dict>
+		<!-- v26 苹果合规：移除支付/订单功能后此条不再适用 -->
 		<!-- 崩溃诊断(未来接入 Sentry 时用) -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>

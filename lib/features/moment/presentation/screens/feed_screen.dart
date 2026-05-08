@@ -4,7 +4,7 @@
 // 视觉策略：
 //   - Pinterest masonry 双列瀑布流（变高卡片）
 //   - 顶部毛玻璃 sticky header (Velvet logo + 搜索 + 通知 + 我)
-//   - 卡片：图 + vignette + 价格(Marcellus SC) + 卖家 (Manrope) + 心动数
+//   - 卡片：图 + vignette + 分享者 (Manrope) + 心动数（v26 苹果合规：纯分享，无价格）
 //   - 标签 chip 行：全部 / 关注 / 同城 / 最新
 //   - 底部 FAB：发布按钮（樱花粉发光）
 //   - 整体黑天鹅绒底 + 1% 酒红
@@ -338,7 +338,6 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             content: cardContent,
             sellerName: m.userNickname,
             sellerAvatar: m.userAvatarUrl ?? '',
-            priceCents: m.itemPriceCents ?? 0,
             likeCount: m.likeCount,
             indexInFeed: i,
             coverColor: _coverFor(m.id),

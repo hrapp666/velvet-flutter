@@ -13,9 +13,10 @@
 //   - 0 圆角 · 全页面无 BorderRadius
 // ----------------------------------------------------------------------------
 // 字段保留（被 feed_screen / favorites 复用）:
-//   momentId / title / sellerName / sellerAvatar / priceCents / likeCount
+//   momentId / title / sellerName / sellerAvatar / likeCount
 //   coverHeight (废弃 · 改 4/5 aspect) / coverColor / location / onTap
 //   imageUrl / liked / onLike / distanceLabel
+// v26 苹果合规：移除 priceCents 字段 + 价格 ShaderMask（纯分享，无价格展示）
 // ============================================================================
 
 import 'dart:async';
@@ -33,7 +34,6 @@ class MomentCard extends StatefulWidget {
   final String content;
   final String sellerName;
   final String sellerAvatar;
-  final int priceCents;
   final int likeCount;
   final int indexInFeed; // 0-based · 用于 N° 001 罗马数字水印
   final Color coverColor;
@@ -56,7 +56,6 @@ class MomentCard extends StatefulWidget {
     required this.content,
     required this.sellerName,
     required this.sellerAvatar,
-    required this.priceCents,
     required this.likeCount,
     required this.indexInFeed,
     required this.coverColor,
@@ -86,8 +85,6 @@ class _MomentCardState extends State<MomentCard> {
 
   @override
   Widget build(BuildContext context) {
-    final hasPrice = widget.priceCents > 0;
-    final price = widget.priceCents / 100;
     final roman = _romanNumerals[widget.indexInFeed % _romanNumerals.length];
 
     return GestureDetector(
@@ -217,46 +214,6 @@ class _MomentCardState extends State<MomentCard> {
                     ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: Vt.s32),
-                ],
-
-                // ── 巨型 price · 4 档金色 ShaderMask ──
-                if (hasPrice) ...[
-                  ShaderMask(
-                    shaderCallback: (rect) => const LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Vt.goldIvory,
-                        Vt.goldHighlight,
-                        Vt.gold,
-                        Vt.goldDark,
-                      ],
-                      stops: [0.0, 0.22, 0.6, 1.0],
-                    ).createShader(rect),
-                    child: Text.rich(
-                      TextSpan(children: [
-                        TextSpan(
-                          text: '¥ ',
-                          style: Vt.price.copyWith(
-                            fontSize: Vt.tmd,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.white,
-                          ),
-                        ),
-                        TextSpan(
-                          text: price.toStringAsFixed(0),
-                          style: Vt.price.copyWith(
-                            fontSize: 56,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: -1,
-                            height: 1,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ]),
-                    ),
                   ),
                   const SizedBox(height: Vt.s32),
                 ],

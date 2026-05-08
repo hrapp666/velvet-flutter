@@ -108,6 +108,32 @@ class Vt {
   /// 4 档金渐变（标题 / 强调文字 shader）
   static const List<Color> gradientGold4 = [goldIvory, goldLight, gold, goldDark];
 
+  /// FAB 发光圆球 5 档径向渐变（main_scaffold 中央 publish 按钮）
+  /// 中心象牙白 → 外缘深咖金，配合 box-shadow 模拟 H5 logo 旋转辉光
+  static const Color goldHotspot = Color(0xFFEDD088);  // 高光过渡（goldHighlight 与 goldLight 之间）
+  static const Color goldUmber = Color(0xFF5A4820);    // 深咖（goldDark 之下一档）
+  static const List<Color> gradientGoldGlow = [
+    goldIvory,
+    goldHotspot,
+    gold,
+    goldDark,
+    goldUmber,
+  ];
+
+  /// FAB border 半透明象牙金（rgba(248,230,170,.7)）
+  static const Color goldBorderHalo = Color(0xB3F8E6AA);
+
+  /// 半透明黑遮罩 / 阴影 token（chat bubble · vignette · backdrop）
+  static const Color shadowDeep = Color(0xB3000000);   // 70% black · me bubble drop
+  static const Color shadowDrop = Color(0x80000000);   // 50% black · other bubble shadow
+  static const Color shadowLight = Color(0x66000000);  // 40% black · auth vignette bottom
+
+  /// 注册页底部 ellipse · 90% 深 void
+  static const Color vignetteAuthDeep = Color(0xE6080400);
+
+  /// chat 对方气泡正文色（rgba(232,214,178,.9) · H5 §3530）
+  static const Color textChatOther = Color(0xE6E8D6B2);
+
   /// 自己消息气泡 3 档暗金渐变（chat detail · "me" bubble）
   /// 对照 H5 styles.css line 3530-3534:
   ///   linear-gradient(160deg,

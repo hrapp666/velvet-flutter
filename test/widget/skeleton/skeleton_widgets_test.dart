@@ -10,7 +10,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:velvet/shared/widgets/skeleton/chat_list_skeleton.dart';
 import 'package:velvet/shared/widgets/skeleton/feed_skeleton.dart';
-import 'package:velvet/shared/widgets/skeleton/orders_skeleton.dart';
 import 'package:velvet/shared/widgets/skeleton/search_skeleton.dart';
 import 'package:velvet/shared/widgets/skeleton/skeleton_box.dart';
 
@@ -70,17 +69,6 @@ void main() {
 
       expect(find.byType(ChatListSkeleton), findsOneWidget);
       expect(find.byType(SkeletonAvatar), findsNWidgets(6));
-    });
-  });
-
-  group('OrdersSkeleton', () {
-    testWidgets('渲染 5 个订单卡', (tester) async {
-      await tester.pumpWidget(_harness(const OrdersSkeleton()));
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(find.byType(OrdersSkeleton), findsOneWidget);
-      // 5 个卡 · 每个有 thumbnail + 2 text + 2 tag = 5 thumbnails
-      expect(find.byType(SkeletonBox), findsAtLeastNWidgets(5));
     });
   });
 

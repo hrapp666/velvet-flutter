@@ -1,13 +1,12 @@
 // ============================================================================
-// CreateMomentScreen · 发布动态页
+// CreateMomentScreen · 发布动态页（v26 苹果合规：纯分享，无支付）
 // ----------------------------------------------------------------------------
 // 视觉策略：
-//   - 顶部：返回 X + 标题"私 藏 上 架" + 右上发布按钮（金色 outline + 文字）
+//   - 顶部：返回 X + 标题"分 享 好 物" + 右上发布按钮（金色 outline + 文字）
 //   - 媒体网格：3 列方块，左上角"+"添加，已添加图右上 X 删除
 //   - 标题字段：单行 + 光标金色
 //   - 描述字段：多行 + 自适应高度
-//   - 价格 + 同城开关（金色 toggle）
-//   - 标签：chip 选择器
+//   - 同城开关（金色 toggle）+ 标签 chip 选择器
 //   - 全部使用 Vt 系统
 // ============================================================================
 
@@ -38,12 +37,10 @@ class CreateMomentScreen extends ConsumerStatefulWidget {
 class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
   final _titleCtrl = TextEditingController();
   final _contentCtrl = TextEditingController();
-  final _priceCtrl = TextEditingController();
   final _locationCtrl = TextEditingController();
 
   final List<String> _selectedTags = [];
   final List<String> _mediaUrls = []; // 真实 finalUrl 列表
-  bool _isForSale = true;
   bool _localOnly = false;
   bool _publishing = false;
   bool _uploading = false;
@@ -56,7 +53,7 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
   String? _geoError;
 
   static const _availableTags = [
-    '诚信交易', '面交', '同城', '可议', '不议', '全新', '九成新',
+    '好物推荐', '线下体验', '同城', '拍摄分享', '首次亮相', '全新', '九成新',
     '私藏', '只给懂的人', '稀缺', '故事款', '原主自用',
   ];
 
@@ -64,7 +61,6 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
   void dispose() {
     _titleCtrl.dispose();
     _contentCtrl.dispose();
-    _priceCtrl.dispose();
     _locationCtrl.dispose();
     super.dispose();
   }
@@ -191,15 +187,10 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
     }
     setState(() => _publishing = true);
     try {
-      final priceText = _priceCtrl.text.trim();
-      final priceCents =
-          (_isForSale && priceText.isNotEmpty) ? (int.tryParse(priceText) ?? 0) * 100 : null;
-
+      // v26 苹果合规 · 移除挂售逻辑 · 全部以分享为主，hasItem 永远 false
       final body = CreateMomentBody(
         title: _titleCtrl.text.trim().isEmpty ? null : _titleCtrl.text.trim(),
         content: content,
-        hasItem: _isForSale && priceCents != null && priceCents > 0,
-        itemPriceCents: priceCents,
         tags: List<String>.from(_selectedTags),
         mediaUrls: List<String>.from(_mediaUrls), // 真实 mediaUrls 链接
         location: _localOnly ? _locationCtrl.text.trim() : null,
@@ -235,6 +226,8 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
   @override
   Widget build(BuildContext context) {
     final padding = MediaQuery.paddingOf(context);
+    // 键盘高度 · TextField 在中下部，键盘弹出时需让滚动区底部留足空间避免遮挡
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
 
     return Scaffold(
       backgroundColor: Vt.bgPrimary,
@@ -258,9 +251,10 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
               children: [
                 GestureDetector(
                   onTap: () => context.pop(),
+                  behavior: HitTestBehavior.opaque,
                   child: Container(
-                    width: 36,
-                    height: 36,
+                    width: 44,
+                    height: 44,
                     alignment: Alignment.center,
                     child: const Icon(Icons.close_rounded, color: Vt.textPrimary),
                   ),
@@ -291,7 +285,7 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                 const SizedBox(width: Vt.s12),
                 Expanded(
                   child: Text(
-                    '上 架 一 件',
+                    '分 享 好 物',
                     style: Vt.headingSm.copyWith(
                       color: Vt.gold.withValues(alpha: 0.82),
                       letterSpacing: 3,
@@ -327,7 +321,7 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                             ),
                           )
                         : Text(
-                            '立 即 上 架',
+                            '立 即 分 享',
                             style: Vt.button.copyWith(
                               color: Colors.white,
                               fontSize: Vt.tsm,
@@ -347,7 +341,8 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                 left: Vt.s20,
                 right: Vt.s20,
                 top: Vt.s24,
-                bottom: padding.bottom + Vt.s40,
+                // 键盘弹出时把键盘高度算进底部 padding · 避免输入框被遮挡
+                bottom: padding.bottom + Vt.s40 + keyboard,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -400,72 +395,7 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                     maxLength: 2000,
                   ),
 
-                  const SizedBox(height: Vt.s16),
-
-                  // ─── 是否售卖 ───
-                  _ToggleRow(
-                    label: '挂出价格',
-                    value: _isForSale,
-                    onChanged: (v) => setState(() => _isForSale = v),
-                  ),
-
-                  if (_isForSale) ...[
-                    const SizedBox(height: Vt.s16),
-                    _SectionLabel(label: '期望价格'),
-                    const SizedBox(height: Vt.s8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text('¥', style: Vt.price.copyWith(fontSize: Vt.tlg)),
-                        const SizedBox(width: Vt.s8),
-                        Expanded(
-                          child: TextField(
-                            controller: _priceCtrl,
-                            keyboardType: TextInputType.number,
-                            style: Vt.priceLg,
-                            cursorColor: Vt.gold,
-                            decoration: InputDecoration(
-                              hintText: '0',
-                              hintStyle: Vt.priceLg.copyWith(color: Vt.textTertiary),
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Container(height: 1, color: Vt.borderHairline),
-                    const SizedBox(height: Vt.s12),
-                    // ─── 平台抽佣 6% · 担保交易 ───
-                    ValueListenableBuilder<TextEditingValue>(
-                      valueListenable: _priceCtrl,
-                      builder: (_, value, __) {
-                        final price = double.tryParse(value.text) ?? 0;
-                        final fee = price * 0.06;
-                        return Row(
-                          children: [
-                            Text(
-                              '平台抽佣 6% · 担保交易',
-                              style: Vt.bodySm.copyWith(
-                                color: Vt.textTertiary,
-                                letterSpacing: 0.4,
-                              ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              price > 0 ? '¥ ${fee.toStringAsFixed(2)}' : '— —',
-                              style: Vt.bodySm.copyWith(
-                                color: Vt.gold,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ],
-
-                  const SizedBox(height: Vt.s32),
+                  const SizedBox(height: Vt.s24),
 
                   // ─── 仅同城 ───
                   _ToggleRow(
@@ -566,7 +496,7 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                         const SizedBox(width: Vt.s8),
                         Expanded(
                           child: Text(
-                            '买家在平台付款 · 平台担保 · 卖家发货后放款\n禁止私下交易 · 禁止留下任何第三方联系方式',
+                            '只 分 享 好 物 · 不 涉 及 任 何 交 易\n请 勿 在 描 述 中 留 下 第 三 方 联 系 方 式',
                             style: Vt.bodySm.copyWith(
                               color: Vt.textSecondary,
                               height: 1.6,

@@ -297,7 +297,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       center: Alignment(0, 0.95),
                       radius: 1.1,
                       colors: [
-                        Color(0xE6080400),
+                        Vt.vignetteAuthDeep,
                         Colors.transparent,
                       ],
                       stops: [0.0, 0.50],
@@ -336,7 +336,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       colors: [
                         Colors.transparent,
                         Colors.transparent,
-                        Color(0x66000000),
+                        Vt.shadowLight,
                       ],
                       stops: [0.0, 0.7, 1.0],
                     ),
