@@ -51,7 +51,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('PRIVÉ'), findsOneWidget);
-      expect(find.text('私   藏'), findsOneWidget);
+      expect(find.text('私 藏'), findsOneWidget);
       expect(find.text('I'), findsOneWidget);
       expect(find.text('继续 · NEXT'), findsOneWidget);
       expect(find.text('开始 · BEGIN'), findsNothing);
