@@ -210,12 +210,13 @@ class _FavCard extends StatelessWidget {
                 // ─── 4/5 cover ───
                 AspectRatio(
                   aspectRatio: 4 / 5,
-                  child: Hero(
-                    tag: 'moment-cover-${m.id}',
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        ColoredBox(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Hero 只包图片本身 · 与 moment_detail 对齐 · 防 flight 期子树形变闪图
+                      Hero(
+                        tag: 'moment-cover-${m.id}',
+                        child: ColoredBox(
                           color: Vt.bgVoid,
                           child: CachedNetworkImage(
                             imageUrl: cover,
@@ -226,35 +227,35 @@ class _FavCard extends StatelessWidget {
                                 ColoredBox(color: Vt.bgElevated),
                           ),
                         ),
-                        // 暗角
-                        IgnorePointer(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                stops: const [0.55, 1.0],
-                                colors: [
-                                  Colors.transparent,
-                                  Vt.bgVoid.withValues(alpha: 0.55),
-                                ],
-                              ),
+                      ),
+                      // 暗角
+                      IgnorePointer(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              stops: const [0.55, 1.0],
+                              colors: [
+                                Colors.transparent,
+                                Vt.bgVoid.withValues(alpha: 0.55),
+                              ],
                             ),
                           ),
                         ),
-                        // inset gold hairline
-                        IgnorePointer(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Vt.gold.withValues(alpha: 0.18),
-                                width: 1,
-                              ),
+                      ),
+                      // inset gold hairline
+                      IgnorePointer(
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: Vt.gold.withValues(alpha: 0.18),
+                              width: 1,
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 // ─── meta ───

@@ -21,7 +21,6 @@ import 'package:velvet/features/chat/data/services/chat_socket.dart';
 import 'package:velvet/shared/theme/design_tokens.dart';
 import 'package:velvet/shared/widgets/ambient/grain_overlay.dart';
 import 'package:velvet/shared/widgets/brand/velvet_glyph.dart';
-import 'package:velvet/shared/widgets/motion/gyroscope_tilt.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -199,21 +198,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     ),
                     const SizedBox(height: 24),
 
-                    // VelvetGlyph3D · 保留陀螺仪 + shimmer (Flutter brand mark)
+                    // VelvetGlyph · 仅 shimmer · splash 期间不挂陀螺仪
+                    // (启动瞬间 sensor 事件抖动会让 V 字"反向闪"一下,
+                    // 陀螺仪交互留给 onboarding / feed 这种长期可见处)
                     _FadeIn(
                       delay: 500,
                       ctrl: _ctrl,
-                      child: GyroscopeTilt(
-                        builder: (_, tiltX, tiltY) => AnimatedBuilder(
-                          animation: _glyphShimmer,
-                          builder: (_, __) => VelvetGlyph3D(
-                            tiltX: tiltX,
-                            tiltY: tiltY,
-                            glyph: VelvetGlyph(
-                              size: 132,
-                              shimmerProgress: _glyphShimmer.value,
-                            ),
-                          ),
+                      child: AnimatedBuilder(
+                        animation: _glyphShimmer,
+                        builder: (_, __) => VelvetGlyph(
+                          size: 132,
+                          shimmerProgress: _glyphShimmer.value,
                         ),
                       ),
                     ),
