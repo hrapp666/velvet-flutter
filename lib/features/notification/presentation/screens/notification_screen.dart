@@ -304,19 +304,28 @@ class _NotifHeader extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   // VELVET mark
-                  Text(
-                    'VELVET',
-                    style: Vt.headingLg.copyWith(
-                      fontWeight: FontWeight.w500,
-                      fontSize: Vt.txl,
-                      letterSpacing: 8,
-                      color: Vt.goldLight,
-                      shadows: [
-                        Shadow(
-                          color: Vt.gold.withValues(alpha: 0.55),
-                          blurRadius: 28,
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'VELVET',
+                        maxLines: 1,
+                        softWrap: false,
+                        style: Vt.headingLg.copyWith(
+                          fontWeight: FontWeight.w500,
+                          fontSize: Vt.txl,
+                          fontStyle: FontStyle.normal,
+                          letterSpacing: 4.5,
+                          color: Vt.goldLight,
+                          shadows: [
+                            Shadow(
+                              color: Vt.gold.withValues(alpha: 0.22),
+                              blurRadius: 12,
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                   Container(
@@ -334,6 +343,15 @@ class _NotifHeader extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
+                  Text(
+                    'No.MMXXVI',
+                    style: Vt.label.copyWith(
+                      color: Vt.gold.withValues(alpha: 0.55),
+                      fontStyle: FontStyle.italic,
+                      letterSpacing: 1.6,
+                      fontSize: Vt.t2xs,
+                    ),
+                  ),
                 ],
               ),
               Positioned(

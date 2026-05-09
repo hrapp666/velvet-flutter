@@ -246,18 +246,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           colors: Vt.gradientGoldLogo,
                           stops: Vt.gradientGoldLogoStops,
                         ).createShader(rect),
-                        child: Text(
-                          'VELVET',
-                          textAlign: TextAlign.center,
-                          style: Vt.displayHero.copyWith(
-                            color: Colors.white,
-                            letterSpacing: 10,
-                            shadows: [
-                              Shadow(
-                                color: Vt.gold.withValues(alpha: 0.42),
-                                blurRadius: 56,
-                              ),
-                            ],
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'VELVET',
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: Vt.displayHero.copyWith(
+                              color: Colors.white,
+                              letterSpacing: 8,
+                              shadows: [
+                                Shadow(
+                                  color: Vt.gold.withValues(alpha: 0.22),
+                                  blurRadius: 28,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

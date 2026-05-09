@@ -519,16 +519,18 @@ class _DetailContent extends StatelessWidget {
           const SizedBox(height: Vt.s24),
 
           // 主标题
+          // v31: Cormorant italic 在 CJK 字符上 fallback 链失效（合成 italic 触发渲染异常）
+          //      → 改 ZCOOLXiaoWei 中文优先 · fontStyle: normal · 中文稳定渲染
           Text(
             m.title?.isNotEmpty == true ? m.title! : '无 题',
             textAlign: TextAlign.center,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: Vt.displayMd.copyWith(
+            style: Vt.cnDisplay.copyWith(
               fontSize: Vt.t2xl,
-              fontWeight: FontWeight.w500,
-              letterSpacing: -0.3,
-              height: 1.1,
+              fontWeight: FontWeight.w400,
+              letterSpacing: 4.0,
+              height: 1.2,
               color: Vt.textGoldSoft,
               shadows: [
                 Shadow(
@@ -636,13 +638,15 @@ class _DetailContent extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: Vt.s8),
+                // v31: Cormorant italic 中文渲染异常 → 改 ZCOOLXiaoWei 中文优先
                 Text(
                   m.userNickname,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Vt.headingLg.copyWith(
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 1.5,
+                  style: Vt.cnHeading.copyWith(
+                    fontSize: Vt.tlg,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 4.0,
                     color: Vt.textGoldSoft,
                     decoration: TextDecoration.underline,
                     decorationColor: Vt.gold.withValues(alpha: 0.4),
@@ -720,9 +724,10 @@ class _MetaItem extends StatelessWidget {
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: Vt.label.copyWith(
+          // v31: Chinese label · 改 cnLabel 中文优先
+          style: Vt.cnLabel.copyWith(
             color: Vt.textSecondary,
-            letterSpacing: 2,
+            letterSpacing: 4,
           ),
         ),
       ],
@@ -1053,9 +1058,11 @@ class _CommentsSectionState extends ConsumerState<_CommentsSection> {
           // 标题：私 语 ─── NOTES
           Row(
             children: [
+              // v31: 私语 中文优先
               Text(
                 '私 语',
-                style: Vt.headingSm.copyWith(
+                style: Vt.cnHeading.copyWith(
+                  fontSize: Vt.tmd,
                   color: Vt.gold,
                   letterSpacing: 6,
                 ),
@@ -1091,14 +1098,15 @@ class _CommentsSectionState extends ConsumerState<_CommentsSection> {
                   child: Center(
                     child: Column(
                       children: [
+                        // v31: empty state 中文优先
                         Text(
                           '还没有人留下私语',
-                          style: Vt.bodyMd.copyWith(color: Vt.textSecondary),
+                          style: Vt.cnBody.copyWith(color: Vt.textSecondary),
                         ),
                         const SizedBox(height: Vt.s8),
                         Text(
                           '第一句 · 由你写下',
-                          style: Vt.bodySm.copyWith(color: Vt.textTertiary),
+                          style: Vt.cnCaption.copyWith(color: Vt.textTertiary),
                         ),
                       ],
                     ),
@@ -1112,8 +1120,9 @@ class _CommentsSectionState extends ConsumerState<_CommentsSection> {
                   child: Center(
                     child: Column(
                       children: [
+                        // v31: error 中文优先
                         Text('— 暂时听不见私语 —',
-                            style: Vt.bodySm.copyWith(color: Vt.textTertiary)),
+                            style: Vt.cnCaption.copyWith(color: Vt.textTertiary)),
                         const SizedBox(height: Vt.s12),
                         // 重试按钮 · invalidate 会触发 commentsProvider 重新拉取
                         TextButton(
@@ -1131,9 +1140,12 @@ class _CommentsSectionState extends ConsumerState<_CommentsSection> {
                                   width: 0.6),
                             ),
                           ),
+                          // v31: 中文按钮 cnButton
                           child: Text('重 试',
-                              style: Vt.bodySm.copyWith(
-                                  color: Vt.gold, letterSpacing: 1.2)),
+                              style: Vt.cnButton.copyWith(
+                                  fontSize: Vt.tsm,
+                                  color: Vt.gold,
+                                  letterSpacing: 4)),
                         ),
                       ],
                     ),
@@ -1177,12 +1189,18 @@ class _CommentsSectionState extends ConsumerState<_CommentsSection> {
                     maxLines: 3,
                     minLines: 1,
                     maxLength: 500,
-                    style: Vt.bodyMd.copyWith(color: Vt.textPrimary),
+                    // v31: 输入框 + hint 中文优先
+                    style: Vt.cnBody.copyWith(
+                      fontSize: Vt.tsm,
+                      color: Vt.textPrimary,
+                      letterSpacing: 1.2,
+                    ),
                     decoration: InputDecoration(
                       hintText: '写下你的私语…',
-                      hintStyle: Vt.bodyMd.copyWith(
+                      hintStyle: Vt.cnBody.copyWith(
+                        fontSize: Vt.tsm,
                         color: Vt.gold.withValues(alpha: 0.4),
-                        fontStyle: FontStyle.italic,
+                        letterSpacing: 1.2,
                       ),
                       border: InputBorder.none,
                       isDense: true,
@@ -1249,12 +1267,13 @@ class _CommentTile extends StatelessWidget {
         children: [
           Row(
             children: [
+              // v31: 评论用户名 中文优先
               Text(
                 comment.userNickname,
-                style: Vt.bodyMd.copyWith(
+                style: Vt.cnHeading.copyWith(
+                  fontSize: Vt.tsm,
                   color: Vt.gold,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 1,
+                  letterSpacing: 2,
                 ),
               ),
               const SizedBox(width: Vt.s8),
@@ -1277,11 +1296,14 @@ class _CommentTile extends StatelessWidget {
             ],
           ),
           const SizedBox(height: Vt.s8),
+          // v31: 评论正文 中文优先
           Text(
             comment.content,
-            style: Vt.bodyMd.copyWith(
+            style: Vt.cnBody.copyWith(
+              fontSize: Vt.tsm,
               color: Vt.textPrimary,
-              height: 1.7,
+              height: 1.85,
+              letterSpacing: 1.2,
             ),
           ),
         ],

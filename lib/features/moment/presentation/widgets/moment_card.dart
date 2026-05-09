@@ -43,11 +43,26 @@ class MomentCard extends StatefulWidget {
 
   /// 真接 API 后新增
   final String? imageUrl;
+
+  /// 多图（v28）· 非空时优先于 imageUrl，渲染为 PageView 横滑
+  final List<String> mediaUrls;
   final bool liked;
   final VoidCallback? onLike;
 
   /// 同城 / 附近模式下显示的距离标签（如 "1.2km"），为 null 时不显示
   final String? distanceLabel;
+
+  /// 好物分享标签（穿搭 / 数码 / 家居 / 美妆 / 美食 等），最多渲染前 3 个
+  final List<String> tags;
+
+  /// 点击"聊聊"回调（交友核心入口），为 null 则不渲染按钮
+  final VoidCallback? onChat;
+
+  /// 审核状态徽标（v26 苹果合规：先审后发）
+  /// PUBLISHED / null → 不显示
+  /// PENDING_REVIEW → 显示"审核中"
+  /// REJECTED → 显示"未通过"
+  final String? moderationStatus;
 
   const MomentCard({
     super.key,
@@ -66,6 +81,10 @@ class MomentCard extends StatefulWidget {
     this.liked = false,
     this.onLike,
     this.distanceLabel,
+    this.tags = const [],
+    this.onChat,
+    this.moderationStatus,
+    this.mediaUrls = const [],
   });
 
   @override
@@ -180,19 +199,24 @@ class _MomentCardState extends State<MomentCard> {
                 // ── 封面 4/5 aspect · 0 圆角 · inset hairline ──
                 _Cover(
                   momentId: widget.momentId,
-                  imageUrl: widget.imageUrl,
+                  imageUrls: widget.mediaUrls.isNotEmpty
+                      ? widget.mediaUrls
+                      : (widget.imageUrl != null && widget.imageUrl!.isNotEmpty
+                          ? [widget.imageUrl!]
+                          : const []),
                   coverColor: widget.coverColor,
+                  moderationStatus: widget.moderationStatus,
                 ),
                 const SizedBox(height: Vt.s40),
 
-                // ── 巨型 title · Cormorant w500 ──
+                // ── 巨型 title · v31 ZCOOLXiaoWei 中文优先 ──
                 Text(
                   widget.title.isNotEmpty ? widget.title : '无 题',
-                  style: Vt.displayMd.copyWith(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -0.6,
-                    height: 1.06,
+                  style: Vt.cnDisplay.copyWith(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 4,
+                    height: 1.2,
                     color: Vt.textPrimary,
                   ),
                   maxLines: 3,
@@ -200,20 +224,31 @@ class _MomentCardState extends State<MomentCard> {
                 ),
                 const SizedBox(height: Vt.s24),
 
-                // ── lead · italic w300 · 描述 ──
+                // ── lead · v31 中文 cnBody · 描述 ──
                 if (widget.content.isNotEmpty) ...[
                   Text(
                     widget.content,
-                    style: Vt.bodyMd.copyWith(
-                      fontStyle: FontStyle.italic,
-                      fontWeight: FontWeight.w300,
+                    style: Vt.cnBody.copyWith(
                       fontSize: Vt.tmd,
                       height: 1.85,
-                      letterSpacing: 0.4,
+                      letterSpacing: 1.4,
                       color: Vt.textSecondary,
                     ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: Vt.s24),
+                ],
+
+                // ── tags chip 行 · 好物分享类目 · 最多 3 个 ──
+                if (widget.tags.isNotEmpty) ...[
+                  Wrap(
+                    spacing: Vt.s8,
+                    runSpacing: Vt.s8,
+                    children: widget.tags
+                        .take(3)
+                        .map((t) => _TagChip(label: t))
+                        .toList(),
                   ),
                   const SizedBox(height: Vt.s32),
                 ],
@@ -242,12 +277,13 @@ class _MomentCardState extends State<MomentCard> {
                               ),
                             ),
                             const SizedBox(height: 4),
+                            // v31: 卖家昵称（中文）→ cnHeading
                             Text(
                               widget.sellerName,
-                              style: Vt.bodySm.copyWith(
-                                fontStyle: FontStyle.italic,
+                              style: Vt.cnHeading.copyWith(
+                                fontSize: Vt.tsm,
                                 color: Vt.textPrimary,
-                                letterSpacing: 0.5,
+                                letterSpacing: 2,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -255,6 +291,42 @@ class _MomentCardState extends State<MomentCard> {
                           ],
                         ),
                       ),
+                      // chat-btn · 交友核心入口（点击发起私聊）
+                      if (widget.onChat != null)
+                        SpringTap(
+                          onTap: () {
+                            unawaited(HapticService.instance.light());
+                            widget.onChat!();
+                          },
+                          pressedScale: 0.85,
+                          behavior: HitTestBehavior.opaque,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: Vt.s8,
+                              vertical: Vt.s8,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.chat_bubble_outline_rounded,
+                                  size: 14,
+                                  color: Vt.textTertiary,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '聊 聊',
+                                  style: Vt.label.copyWith(
+                                    fontSize: Vt.txs,
+                                    color: Vt.textTertiary,
+                                    fontStyle: FontStyle.italic,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       // heart-btn
                       SpringTap(
                         onTap: widget.onLike,
@@ -444,16 +516,33 @@ class _MetaRow extends StatelessWidget {
 
 // ============================================================================
 // _Cover · Hero + 4/5 aspect + inset hairline + vignette
+// v28: 多图支持 — PageView 横滑 + 圆点 indicator + N/M 角标
 // ============================================================================
-class _Cover extends StatelessWidget {
+class _Cover extends StatefulWidget {
   final int momentId;
-  final String? imageUrl;
+  final List<String> imageUrls;
   final Color coverColor;
+  final String? moderationStatus;
   const _Cover({
     required this.momentId,
-    required this.imageUrl,
+    required this.imageUrls,
     required this.coverColor,
+    this.moderationStatus,
   });
+
+  @override
+  State<_Cover> createState() => _CoverState();
+}
+
+class _CoverState extends State<_Cover> {
+  final PageController _pageCtrl = PageController();
+  int _index = 0;
+
+  @override
+  void dispose() {
+    _pageCtrl.dispose();
+    super.dispose();
+  }
 
   Widget _placeholder() {
     return Container(
@@ -462,8 +551,8 @@ class _Cover extends StatelessWidget {
           center: const Alignment(-0.4, -0.6),
           radius: 1.2,
           colors: [
-            coverColor,
-            coverColor.withValues(alpha: 0.6),
+            widget.coverColor,
+            widget.coverColor.withValues(alpha: 0.6),
             Vt.bgVoid,
           ],
         ),
@@ -490,28 +579,42 @@ class _Cover extends StatelessWidget {
     );
   }
 
+  Widget _imageAt(int i) {
+    final url = widget.imageUrls[i];
+    if (url.isEmpty) return _placeholder();
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => _placeholder(),
+      errorWidget: (_, __, ___) => _placeholder(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final url = imageUrl;
-    final hasImg = url != null && url.isNotEmpty;
+    final urls = widget.imageUrls;
+    final count = urls.length;
+    final hasMulti = count > 1;
+
     return AspectRatio(
       aspectRatio: 4 / 5,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // 黑底封面
           ColoredBox(
             color: Vt.bgVoid,
             child: Hero(
-              tag: 'moment-cover-$momentId',
-              child: hasImg
-                  ? CachedNetworkImage(
-                      imageUrl: url,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => _placeholder(),
-                      errorWidget: (_, __, ___) => _placeholder(),
-                    )
-                  : _placeholder(),
+              tag: 'moment-cover-${widget.momentId}',
+              child: count == 0
+                  ? _placeholder()
+                  : (hasMulti
+                      ? PageView.builder(
+                          controller: _pageCtrl,
+                          itemCount: count,
+                          onPageChanged: (i) => setState(() => _index = i),
+                          itemBuilder: (_, i) => _imageAt(i),
+                        )
+                      : _imageAt(0)),
             ),
           ),
           // 顶部 + 底部双 vignette
@@ -543,7 +646,143 @@ class _Cover extends StatelessWidget {
               ),
             ),
           ),
+          // 多图右上角 N/M 角标
+          if (hasMulti)
+            Positioned(
+              top: Vt.s12,
+              left: Vt.s12,
+              child: IgnorePointer(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: Vt.s8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Vt.bgVoid.withValues(alpha: 0.62),
+                    borderRadius: BorderRadius.circular(Vt.rPill),
+                    border: Border.all(
+                      color: Vt.gold.withValues(alpha: 0.4),
+                      width: 0.6,
+                    ),
+                  ),
+                  child: Text(
+                    '${_index + 1} / $count',
+                    style: Vt.label.copyWith(
+                      color: Vt.gold,
+                      fontSize: Vt.t2xs,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          // 多图底部居中圆点 indicator
+          if (hasMulti)
+            Positioned(
+              bottom: Vt.s12,
+              left: 0,
+              right: 0,
+              child: IgnorePointer(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(count, (i) {
+                    final active = i == _index;
+                    return AnimatedContainer(
+                      duration: Vt.fast,
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: active ? 16 : 5,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: active
+                            ? Vt.gold
+                            : Vt.textTertiary.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(Vt.rPill),
+                        boxShadow: active
+                            ? [
+                                BoxShadow(
+                                  color: Vt.gold.withValues(alpha: 0.5),
+                                  blurRadius: 6,
+                                ),
+                              ]
+                            : null,
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ),
+          // 审核状态徽标（v26 苹果合规：先审后发）
+          if (widget.moderationStatus == 'PENDING_REVIEW' ||
+              widget.moderationStatus == 'REJECTED')
+            Positioned(
+              top: Vt.s12,
+              right: Vt.s12,
+              child: _ModerationBadge(status: widget.moderationStatus!),
+            ),
         ],
+      ),
+    );
+  }
+}
+
+class _ModerationBadge extends StatelessWidget {
+  final String status;
+  const _ModerationBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final isPending = status == 'PENDING_REVIEW';
+    final label = isPending ? '审核中' : '未通过';
+    final accent = isPending ? Vt.gold : Vt.statusError;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Vt.bgVoid.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(Vt.rPill),
+        border: Border.all(
+          color: accent.withValues(alpha: 0.55),
+          width: 1,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Vt.s12,
+          vertical: Vt.s4,
+        ),
+        child: Text(
+          label,
+          style: Vt.label.copyWith(
+            color: accent,
+            fontSize: Vt.t2xs,
+            letterSpacing: 1.5,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// _TagChip · 好物分享类目 chip · feed 卡上轻量 inline · 与 moment_detail _Chip 同风格
+// ============================================================================
+class _TagChip extends StatelessWidget {
+  final String label;
+  const _TagChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Vt.bgElevated,
+        borderRadius: BorderRadius.circular(Vt.rXs),
+        border: Border.all(color: Vt.borderSubtle),
+      ),
+      child: Text(
+        label,
+        style: Vt.label.copyWith(
+          color: Vt.textSecondary,
+          fontSize: Vt.t2xs,
+          letterSpacing: 0.4,
+        ),
       ),
     );
   }
