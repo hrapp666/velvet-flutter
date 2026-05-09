@@ -315,11 +315,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       center: Alignment(0, -0.95),
                       radius: 1.2,
                       colors: [
-                        Vt.gold.withValues(alpha: 0.30),
-                        Vt.gold.withValues(alpha: 0.09),
+                        Vt.gold.withValues(alpha: 0.14),
+                        Vt.gold.withValues(alpha: 0.05),
                         Colors.transparent,
                       ],
-                      stops: const [0.0, 0.25, 0.50],
+                      stops: const [0.0, 0.25, 0.55],
                     ),
                   ),
                 ),
@@ -362,8 +362,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Vt.gold.withValues(alpha: 0.45),
-                        blurRadius: 14,
+                        color: Vt.gold.withValues(alpha: 0.18),
+                        blurRadius: 6,
                       ),
                     ],
                   ),
@@ -372,9 +372,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             ),
             SafeArea(
               // ClampingScrollPhysics: 禁止 iOS 弹性过度滚动 · 主人反馈"注册页竟然能滑动"
+              // v28: 全宽 + 内层 24 padding（去掉 36px 巨大留白）
               child: SingleChildScrollView(
                 physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(36, 56, 36, 56),
+                padding: const EdgeInsets.fromLTRB(24, 48, 24, 40),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -399,18 +400,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           colors: Vt.gradientGoldLogo,
                           stops: Vt.gradientGoldLogoStops,
                         ).createShader(rect),
-                        child: Text(
-                          'VELVET',
-                          textAlign: TextAlign.center,
-                          style: Vt.displayHero.copyWith(
-                            color: Colors.white,
-                            letterSpacing: 10,
-                            shadows: [
-                              Shadow(
-                                color: Vt.gold.withValues(alpha: 0.42),
-                                blurRadius: 56,
-                              ),
-                            ],
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            'VELVET',
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            softWrap: false,
+                            style: Vt.displayHero.copyWith(
+                              color: Colors.white,
+                              letterSpacing: 8,
+                              shadows: [
+                                Shadow(
+                                  color: Vt.gold.withValues(alpha: 0.22),
+                                  blurRadius: 28,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -444,8 +450,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Vt.gold.withValues(alpha: 0.5),
-                                    blurRadius: 8,
+                                    color: Vt.gold.withValues(alpha: 0.22),
+                                    blurRadius: 4,
                                   ),
                                 ],
                               ),
@@ -468,11 +474,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         '余 温 · 未 散',
                         style: Vt.cnHeading.copyWith(
                           fontSize: Vt.tmd,
-                          color: Vt.gold,
+                          color: Vt.gold.withValues(alpha: 0.92),
                           shadows: [
                             Shadow(
-                              color: Vt.gold.withValues(alpha: 0.45),
-                              blurRadius: 20,
+                              color: Vt.gold.withValues(alpha: 0.18),
+                              blurRadius: 8,
                             ),
                           ],
                         ),
@@ -620,15 +626,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       glow: !_loading,
                       haptic: false, // _handleRegister 内部有 haptic
                       child: Container(
-                        height: 64,
+                        height: 60,
                         decoration: BoxDecoration(
-                          color: Vt.gold.withValues(alpha: 0.06),
-                          border: Border.all(color: Vt.gold),
+                          color: Vt.gold.withValues(alpha: 0.04),
+                          border: Border.all(
+                            color: Vt.gold.withValues(alpha: 0.85),
+                          ),
                           boxShadow: [
                             BoxShadow(
-                              color: Vt.gold.withValues(alpha: 0.35),
-                              blurRadius: 32,
-                              spreadRadius: -8,
+                              color: Vt.gold.withValues(alpha: 0.18),
+                              blurRadius: 18,
+                              spreadRadius: -10,
                             ),
                           ],
                         ),
@@ -701,11 +709,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         glow: !_loading,
                         haptic: false,
                         child: Container(
-                          height: 64,
+                          height: 60,
                           decoration: BoxDecoration(
-                            color: Vt.gold.withValues(alpha: 0.04),
+                            color: Vt.gold.withValues(alpha: 0.03),
                             border: Border.all(
-                              color: Vt.gold.withValues(alpha: 0.85),
+                              color: Vt.gold.withValues(alpha: 0.55),
                             ),
                           ),
                           child: Row(
@@ -717,8 +725,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                 color: Vt.gold,
                                 shadows: [
                                   Shadow(
-                                    color: Vt.gold.withValues(alpha: 0.45),
-                                    blurRadius: 14,
+                                    color: Vt.gold.withValues(alpha: 0.22),
+                                    blurRadius: 8,
                                   ),
                                 ],
                               ),
@@ -784,7 +792,7 @@ class _LCorner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = Vt.gold.withValues(alpha: 0.30);
+    final color = Vt.gold.withValues(alpha: 0.16);
     final side = BorderSide(color: color, width: 1);
     final none = BorderSide.none;
     final isTop = corner == _Corner.topLeft || corner == _Corner.topRight;
@@ -838,8 +846,8 @@ class _ModeBtn extends StatelessWidget {
                 shadows: active
                     ? [
                         Shadow(
-                          color: Vt.gold.withValues(alpha: 0.5),
-                          blurRadius: 18,
+                          color: Vt.gold.withValues(alpha: 0.22),
+                          blurRadius: 8,
                         ),
                       ]
                     : null,
@@ -891,8 +899,8 @@ class _Diamond extends StatelessWidget {
           color: Vt.gold,
           boxShadow: [
             BoxShadow(
-              color: Vt.gold.withValues(alpha: 0.5),
-              blurRadius: 6,
+              color: Vt.gold.withValues(alpha: 0.22),
+              blurRadius: 3,
             ),
           ],
         ),

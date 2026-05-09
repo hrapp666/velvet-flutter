@@ -112,26 +112,50 @@ class _ProfileHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(Vt.s24, Vt.s20, Vt.s24, Vt.s16),
       child: Row(
         children: [
-          Text(
-            'VELVET',
-            style: GoogleFontsLogo.cormorant(
-              fontSize: Vt.tlg,
-              letterSpacing: 6,
-              color: Vt.textPrimary,
-            ),
-          ),
-          const SizedBox(width: Vt.s12),
-          Container(width: 1, height: 14, color: Vt.borderMedium),
-          const SizedBox(width: Vt.s12),
-          Text(
-            '我 的',
-            style: Vt.cnLabel.copyWith(
-              fontSize: Vt.tsm,
-              letterSpacing: 0.5,
-              color: Vt.textSecondary,
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'VELVET',
+                    style: GoogleFontsLogo.cormorant(
+                      fontSize: Vt.tlg,
+                      letterSpacing: 4.5,
+                      color: Vt.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: Vt.s12),
+                  Container(width: 1, height: 14, color: Vt.borderMedium),
+                  const SizedBox(width: Vt.s12),
+                  Text(
+                    '我 的',
+                    style: Vt.cnLabel.copyWith(
+                      fontSize: Vt.tsm,
+                      letterSpacing: 0.5,
+                      color: Vt.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           const Spacer(),
+          // 右上角 editorial 编号（与 chat_list / about 协调）
+          Padding(
+            padding: const EdgeInsets.only(right: Vt.s12),
+            child: Text(
+              'No.MMXXVI',
+              style: Vt.label.copyWith(
+                color: Vt.gold.withValues(alpha: 0.55),
+                fontStyle: FontStyle.italic,
+                letterSpacing: 1.6,
+                fontSize: Vt.t2xs,
+              ),
+            ),
+          ),
           GestureDetector(
             onTap: () {
               if (context.canPop()) {
@@ -325,7 +349,7 @@ class _ProfileBody extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: _StatCol(
-                          value: user.momentsCount.toString(), label: '发 布'),
+                          value: user.momentsCount.toString(), label: '种 草'),
                     ),
                     _VStatDivider(),
                     Expanded(
@@ -348,12 +372,12 @@ class _ProfileBody extends ConsumerWidget {
 
           // editorial 菜单列表
           _EditorialMenuItem(
-            label: '我 的 收 藏',
+            label: '我 的 想 要',
             onTap: () => context.push('/favorites'),
             isFirst: true,
           ),
           _EditorialMenuItem(
-            label: '我 的 发 布',
+            label: '我 的 种 草',
             onTap: () => context.push('/user/${user.id}'),
           ),
           _EditorialMenuItem(

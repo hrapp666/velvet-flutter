@@ -53,7 +53,7 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
   String? _geoError;
 
   static const _availableTags = [
-    '好物推荐', '线下体验', '同城', '拍摄分享', '首次亮相', '全新', '九成新',
+    '好物推荐', '线下体验', '拍摄分享', '首次亮相', '全新', '九成新',
     '私藏', '只给懂的人', '稀缺', '故事款', '原主自用',
   ];
 
@@ -207,8 +207,9 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
 
       if (!mounted) return;
       unawaited(HapticService.instance.success());
-      VelvetToast.show(context, '发布成功 ✦');
-      context.go('/feed');
+      // v26 苹果合规：先审后发，明确告知用户审核中
+      VelvetToast.show(context, '已提交，审核通过后展示 ✦');
+      context.go('/profile');
     } on AppException catch (e) {
       if (!mounted) return;
       unawaited(HapticService.instance.error());
@@ -250,7 +251,15 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
             child: Row(
               children: [
                 GestureDetector(
-                  onTap: () => context.pop(),
+                  onTap: () {
+                    unawaited(HapticService.instance.light());
+                    // bottom-tab 进 /create 时 stack 空 · pop 无效 → fallback 到 feed
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/feed');
+                    }
+                  },
                   behavior: HitTestBehavior.opaque,
                   child: Container(
                     width: 44,
@@ -260,19 +269,28 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                   ),
                 ),
                 const SizedBox(width: Vt.s12),
-                ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Vt.statusWaiting, Vt.gold],
-                    stops: [0, 0.8],
-                  ).createShader(bounds),
-                  child: Text(
-                    'VELVET',
-                    style: Vt.headingSm.copyWith(
-                      color: Colors.white,
-                      letterSpacing: 5,
-                      fontWeight: FontWeight.w500,
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Vt.statusWaiting, Vt.gold],
+                        stops: [0, 0.8],
+                      ).createShader(bounds),
+                      child: Text(
+                        'VELVET',
+                        maxLines: 1,
+                        softWrap: false,
+                        style: Vt.headingSm.copyWith(
+                          color: Colors.white,
+                          letterSpacing: 3.5,
+                          fontStyle: FontStyle.normal,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -395,49 +413,7 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                     maxLength: 2000,
                   ),
 
-                  const SizedBox(height: Vt.s24),
-
-                  // ─── 仅同城 ───
-                  _ToggleRow(
-                    label: '仅限同城',
-                    value: _localOnly,
-                    onChanged: _onLocalOnlyChanged,
-                  ),
-
-                  if (_localOnly) ...[
-                    const SizedBox(height: Vt.s16),
-                    _SectionLabel(label: '城市'),
-                    const SizedBox(height: Vt.s8),
-                    TextField(
-                      controller: _locationCtrl,
-                      style: Vt.bodyLg.copyWith(color: Vt.textPrimary),
-                      cursorColor: Vt.gold,
-                      decoration: InputDecoration(
-                        hintText: '选择城市',
-                        hintStyle: Vt.bodyLg.copyWith(color: Vt.textTertiary),
-                        prefixIcon: const Icon(
-                          Icons.location_on_outlined,
-                          color: Vt.gold,
-                          size: 18,
-                        ),
-                        prefixIconConstraints: const BoxConstraints(minWidth: 28),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    Container(height: 1, color: Vt.borderHairline),
-
-                    // ─ 地理坐标状态 (E1) ─
-                    const SizedBox(height: Vt.s12),
-                    _GeoStatusRow(
-                      lat: _publishLat,
-                      lng: _publishLng,
-                      locating: _locating,
-                      error: _geoError,
-                      onRetry: _pickGeoForPublish,
-                    ),
-                  ],
-
+                  // v32: 同城/定位入口下线（实测定位无效，先移除）
                   const SizedBox(height: Vt.s32),
 
                   // ─── 标签 ───

@@ -1040,6 +1040,11 @@ class _MomentRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (moment.status == 'PENDING_REVIEW' ||
+                      moment.status == 'REJECTED') ...[
+                    const SizedBox(height: Vt.s4),
+                    _statusChip(moment.status),
+                  ],
                 ],
               ),
             ),
@@ -1062,6 +1067,34 @@ class _MomentRow extends StatelessWidget {
           fontSize: Vt.tlg,
           fontWeight: FontWeight.w500,
           color: Vt.gold.withValues(alpha: 0.5),
+        ),
+      ),
+    );
+  }
+
+  Widget _statusChip(String status) {
+    final isPending = status == 'PENDING_REVIEW';
+    final label = isPending ? '审核中' : '未通过';
+    final accent = isPending ? Vt.gold : Vt.statusError;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Vt.s8,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(Vt.rPill),
+        border: Border.all(
+          color: accent.withValues(alpha: 0.45),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        label,
+        style: Vt.label.copyWith(
+          color: accent,
+          fontSize: Vt.t2xs,
+          letterSpacing: 1.2,
         ),
       ),
     );

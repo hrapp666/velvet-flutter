@@ -26,6 +26,7 @@ import '../../../../shared/widgets/empty_state/empty_state.dart';
 import '../../../../shared/widgets/error_state/error_state.dart';
 import '../../../../shared/widgets/motion/scroll_reveal.dart';
 import '../../../../shared/widgets/skeleton/feed_skeleton.dart';
+import '../../../chat/data/models/chat_models.dart';
 import '../../data/models/moment_model.dart';
 import '../providers/moment_provider.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -44,6 +45,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 
   // ── 同城 tab 状态 ─────────────────────────
   /// 用户当前位置（首次进同城 tab 时请求）
+  // 标记权限是否永久拒绝 · UI 据此展示"前往设置"按钮
+  bool _permanentlyDenied = false;
   double? _userLat;
   double? _userLng;
   bool _locatingInProgress = false;
@@ -89,6 +92,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     setState(() {
       _locatingInProgress = true;
       _locationError = null;
+      _permanentlyDenied = false;
     });
 
     try {
@@ -97,7 +101,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       if (!serviceEnabled) {
         if (!mounted) return;
         setState(() {
-          _locationError = '系 统 定 位 已 关 闭';
+          _locationError = '系 统 定 位 已 关 闭 · 前 往 系 统 设 置 开 启';
           _locatingInProgress = false;
         });
         return;
@@ -108,7 +112,16 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
       }
-      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
+      if (perm == LocationPermission.deniedForever) {
+        if (!mounted) return;
+        setState(() {
+          _locationError = '定 位 已 被 永 久 拒 绝 · 请 在 系 统 设 置 中 开 启';
+          _permanentlyDenied = true;
+          _locatingInProgress = false;
+        });
+        return;
+      }
+      if (perm == LocationPermission.denied) {
         if (!mounted) return;
         setState(() {
           _locationError = '需 要 定 位 权 限 才 能 看 同 城';
@@ -254,7 +267,11 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             child: _LocationGate(
               loading: _locatingInProgress,
               error: _locationError,
+              permanentlyDenied: _permanentlyDenied,
               onRetry: () => _requestLocation(force: true),
+              onOpenSettings: () async {
+                await Geolocator.openAppSettings();
+              },
             ),
           ),
         ];
@@ -355,10 +372,22 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
             location: m.location ?? '',
             createdAt: m.createdAt,
             imageUrl: m.mediaUrls.isNotEmpty ? m.mediaUrls.first : null,
+            mediaUrls: m.mediaUrls,
             liked: m.favorited,
             distanceLabel: isNearby ? m.distanceLabel : null,
+            tags: m.tags,
             onTap: () => context.push('/moment/${m.id}'),
             onLike: () => ref.read(feedProvider.notifier).toggleFavorite(m.id),
+            onChat: () => context.push(
+              '/chat/0',
+              extra: ConversationModel(
+                id: 0,
+                otherUserId: m.userId,
+                otherUserNickname: m.userNickname,
+                otherUserAvatarUrl: m.userAvatarUrl,
+                unread: 0,
+              ),
+            ),
           ),
         );
       },
@@ -372,11 +401,15 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
 class _LocationGate extends StatelessWidget {
   final bool loading;
   final String? error;
+  final bool permanentlyDenied;
   final VoidCallback onRetry;
+  final VoidCallback onOpenSettings;
   const _LocationGate({
     required this.loading,
     required this.error,
+    required this.permanentlyDenied,
     required this.onRetry,
+    required this.onOpenSettings,
   });
 
   @override
@@ -415,7 +448,55 @@ class _LocationGate extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
             const SizedBox(height: Vt.s32),
-            if (!loading)
+            if (loading)
+              SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 1.4,
+                  color: Vt.gold,
+                ),
+              )
+            else if (permanentlyDenied)
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: onOpenSettings,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: Vt.s32, vertical: Vt.s12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Vt.gold),
+                        color: Vt.gold.withValues(alpha: 0.08),
+                      ),
+                      child: Text(
+                        '前 往 系 统 设 置',
+                        style: Vt.cnButton.copyWith(
+                          color: Vt.gold,
+                          letterSpacing: 6,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: Vt.s12),
+                  GestureDetector(
+                    onTap: onRetry,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: Vt.s12, vertical: Vt.s8),
+                      child: Text(
+                        '已 在 设 置 中 开 启 · 重 试',
+                        style: Vt.bodySm.copyWith(
+                          color: Vt.gold.withValues(alpha: 0.7),
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else
               GestureDetector(
                 onTap: onRetry,
                 child: Container(
@@ -432,15 +513,6 @@ class _LocationGate extends StatelessWidget {
                       letterSpacing: 6,
                     ),
                   ),
-                ),
-              )
-            else
-              SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 1.4,
-                  color: Vt.gold,
                 ),
               ),
           ],
@@ -598,22 +670,32 @@ class _GlassHeader extends StatelessWidget {
             ),
           ),
           // H5 editorial: 顶部仅居中 VELVET wordmark + 装饰 fleuron · 不挂功能按钮
+          // v28: FittedBox 兜底极窄屏 · soft 行高保证 T 不撞下一行
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'VELVET',
-                textAlign: TextAlign.center,
-                style: Vt.displayMd.copyWith(
-                  fontSize: Vt.tlg,
-                  letterSpacing: 4.0,
-                  color: Vt.textPrimary,
-                  shadows: [
-                    Shadow(
-                      color: Vt.gold.withValues(alpha: 0.3),
-                      blurRadius: 12,
-                    ),
-                  ],
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  'VELVET',
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.visible,
+                  style: Vt.headingMd.copyWith(
+                    fontSize: Vt.tlg,
+                    fontStyle: FontStyle.normal,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 3.2,
+                    height: 1.0,
+                    color: Vt.textPrimary,
+                    shadows: [
+                      Shadow(
+                        color: Vt.gold.withValues(alpha: 0.3),
+                        blurRadius: 12,
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 4),
@@ -646,9 +728,9 @@ class _TabRow extends StatelessWidget {
     // H5 styles.css §1233-1283 .feed-subtabs：仅 2 个 tab
     // v25-I1: Labels driven by l10n so locale switch takes effect immediately.
     final l10n = AppLocalizations.of(context);
+    // v32: 同城 tab 因定位实测无效已下线 · 仅保留"全部"
     final _tabs = [
       l10n?.feedTabAll ?? '全部',
-      l10n?.feedTabNearby ?? '同城',
     ];
     return Container(
       height: 48,
