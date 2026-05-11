@@ -35,8 +35,10 @@ Future<void> main() async {
   ));
 
   // 锁竖屏 · Velvet 是约会类 app · 横屏破版
+  // iPad 允许 portraitDown（与 Info.plist iPad 配置一致）
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
   ]);
 
   runApp(

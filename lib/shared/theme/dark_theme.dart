@@ -13,7 +13,9 @@ ThemeData buildDarkTheme() {
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: Vt.bgPrimary,
+    // 切 tab 闪屏修复（2026-05-08）：所有 Scaffold 默认 bgVoid，与各 screen 显式
+    // 设置的 backgroundColor 完全一致 · 防止 push/pop/goBranch transition 露色差
+    scaffoldBackgroundColor: Vt.bgVoid,
     // UI18 · 强制禁用 Material 3 默认 ZoomPageTransitionsBuilder
     // Material 3 默认 Android push = scale 0.80→1.0 + fade · 这就是主人说的
     // "页面开始是小的然后一下又正常了". 全平台改成 FadeUpwards (纯 fade + 轻微

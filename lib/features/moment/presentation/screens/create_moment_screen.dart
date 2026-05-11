@@ -15,17 +15,16 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/api/api_client.dart';
 import '../../../../shared/services/haptic_service.dart';
 import '../../../../shared/theme/design_tokens.dart';
+import '../../../../shared/widgets/feedback/velvet_toast.dart';
 import '../../../../shared/widgets/micro/spring_tap.dart';
 import '../../data/models/moment_model.dart';
 import '../providers/moment_provider.dart';
-import '../../../../shared/widgets/feedback/velvet_toast.dart';
 
 class CreateMomentScreen extends ConsumerStatefulWidget {
   const CreateMomentScreen({super.key});
@@ -37,23 +36,14 @@ class CreateMomentScreen extends ConsumerStatefulWidget {
 class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
   final _titleCtrl = TextEditingController();
   final _contentCtrl = TextEditingController();
-  final _locationCtrl = TextEditingController();
 
   final List<String> _selectedTags = [];
   final List<String> _mediaUrls = []; // 真实 finalUrl 列表
-  bool _localOnly = false;
   bool _publishing = false;
   bool _uploading = false;
 
-  // ── 同城 / 地理坐标 (E1) ──
-  /// 用户实际坐标（toggle 同城后请求）
-  double? _publishLat;
-  double? _publishLng;
-  bool _locating = false;
-  String? _geoError;
-
   static const _availableTags = [
-    '好物推荐', '线下体验', '同城', '拍摄分享', '首次亮相', '全新', '九成新',
+    '好物推荐', '线下体验', '拍摄分享', '首次亮相', '全新', '九成新',
     '私藏', '只给懂的人', '稀缺', '故事款', '原主自用',
   ];
 
@@ -61,7 +51,6 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
   void dispose() {
     _titleCtrl.dispose();
     _contentCtrl.dispose();
-    _locationCtrl.dispose();
     super.dispose();
   }
 
@@ -110,74 +99,6 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
     });
   }
 
-  /// 请求定位（同城 toggle on 时自动调）
-  Future<void> _pickGeoForPublish() async {
-    if (_locating) return;
-    setState(() {
-      _locating = true;
-      _geoError = null;
-    });
-
-    try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        if (!mounted) return;
-        setState(() {
-          _geoError = '系 统 定 位 已 关 闭';
-          _locating = false;
-        });
-        return;
-      }
-
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-      }
-      if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-        if (!mounted) return;
-        setState(() {
-          _geoError = '需 要 定 位 权 限';
-          _locating = false;
-        });
-        return;
-      }
-
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-          timeLimit: Duration(seconds: 12),
-        ),
-      );
-      if (!mounted) return;
-      setState(() {
-        _publishLat = pos.latitude;
-        _publishLng = pos.longitude;
-        _locating = false;
-        _geoError = null;
-      });
-    } on Object catch (_) {
-      // 静默原因:Geolocator 抛 PlatformException 含平台细节 · 不向用户暴露
-      if (!mounted) return;
-      setState(() {
-        _geoError = '定 位 失 败 · 请 检 查 权 限';
-        _locating = false;
-      });
-    }
-  }
-
-  /// 同城 toggle 切换：on → 自动请求定位；off → 清空坐标
-  void _onLocalOnlyChanged(bool v) {
-    setState(() {
-      _localOnly = v;
-      if (!v) {
-        _publishLat = null;
-        _publishLng = null;
-        _geoError = null;
-      }
-    });
-    if (v) _pickGeoForPublish();
-  }
-
   Future<void> _publish() async {
     unawaited(HapticService.instance.heavy());
     final content = _contentCtrl.text.trim();
@@ -187,16 +108,12 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
     }
     setState(() => _publishing = true);
     try {
-      // v26 苹果合规 · 移除挂售逻辑 · 全部以分享为主，hasItem 永远 false
+      // v34 · 同城/定位入口已下线 · 仅保留纯文本+图片分享
       final body = CreateMomentBody(
         title: _titleCtrl.text.trim().isEmpty ? null : _titleCtrl.text.trim(),
         content: content,
         tags: List<String>.from(_selectedTags),
-        mediaUrls: List<String>.from(_mediaUrls), // 真实 mediaUrls 链接
-        location: _localOnly ? _locationCtrl.text.trim() : null,
-        // 同城 toggle on + 定位成功时一起 POST，让 nearby 能查
-        latitude: _localOnly ? _publishLat : null,
-        longitude: _localOnly ? _publishLng : null,
+        mediaUrls: List<String>.from(_mediaUrls),
       );
 
       final repo = ref.read(momentRepositoryProvider);
@@ -207,8 +124,9 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
 
       if (!mounted) return;
       unawaited(HapticService.instance.success());
-      VelvetToast.show(context, '发布成功 ✦');
-      context.go('/feed');
+      // v26 苹果合规：先审后发，明确告知用户审核中
+      VelvetToast.show(context, '已提交，审核通过后展示 ✦');
+      context.go('/profile');
     } on AppException catch (e) {
       if (!mounted) return;
       unawaited(HapticService.instance.error());
@@ -250,7 +168,15 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
             child: Row(
               children: [
                 GestureDetector(
-                  onTap: () => context.pop(),
+                  onTap: () {
+                    unawaited(HapticService.instance.light());
+                    // bottom-tab 进 /create 时 stack 空 · pop 无效 → fallback 到 feed
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/feed');
+                    }
+                  },
                   behavior: HitTestBehavior.opaque,
                   child: Container(
                     width: 44,
@@ -260,19 +186,28 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                   ),
                 ),
                 const SizedBox(width: Vt.s12),
-                ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Vt.statusWaiting, Vt.gold],
-                    stops: [0, 0.8],
-                  ).createShader(bounds),
-                  child: Text(
-                    'VELVET',
-                    style: Vt.headingSm.copyWith(
-                      color: Colors.white,
-                      letterSpacing: 5,
-                      fontWeight: FontWeight.w500,
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Vt.statusWaiting, Vt.gold],
+                        stops: [0, 0.8],
+                      ).createShader(bounds),
+                      child: Text(
+                        'VELVET',
+                        maxLines: 1,
+                        softWrap: false,
+                        style: Vt.headingSm.copyWith(
+                          color: Colors.white,
+                          letterSpacing: 3.5,
+                          fontStyle: FontStyle.normal,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -395,49 +330,7 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
                     maxLength: 2000,
                   ),
 
-                  const SizedBox(height: Vt.s24),
-
-                  // ─── 仅同城 ───
-                  _ToggleRow(
-                    label: '仅限同城',
-                    value: _localOnly,
-                    onChanged: _onLocalOnlyChanged,
-                  ),
-
-                  if (_localOnly) ...[
-                    const SizedBox(height: Vt.s16),
-                    _SectionLabel(label: '城市'),
-                    const SizedBox(height: Vt.s8),
-                    TextField(
-                      controller: _locationCtrl,
-                      style: Vt.bodyLg.copyWith(color: Vt.textPrimary),
-                      cursorColor: Vt.gold,
-                      decoration: InputDecoration(
-                        hintText: '选择城市',
-                        hintStyle: Vt.bodyLg.copyWith(color: Vt.textTertiary),
-                        prefixIcon: const Icon(
-                          Icons.location_on_outlined,
-                          color: Vt.gold,
-                          size: 18,
-                        ),
-                        prefixIconConstraints: const BoxConstraints(minWidth: 28),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                    Container(height: 1, color: Vt.borderHairline),
-
-                    // ─ 地理坐标状态 (E1) ─
-                    const SizedBox(height: Vt.s12),
-                    _GeoStatusRow(
-                      lat: _publishLat,
-                      lng: _publishLng,
-                      locating: _locating,
-                      error: _geoError,
-                      onRetry: _pickGeoForPublish,
-                    ),
-                  ],
-
+                  // v32: 同城/定位入口下线（实测定位无效，先移除）
                   const SizedBox(height: Vt.s32),
 
                   // ─── 标签 ───
@@ -528,209 +421,6 @@ class _SectionLabel extends StatelessWidget {
         color: Vt.gold,
         letterSpacing: 1.6,
         fontSize: Vt.t2xs,
-      ),
-    );
-  }
-}
-
-// ============================================================================
-// 同城坐标状态行 (E1) — 4 状态：定位中 / 已锁定 / 失败 / 未触发
-// 设计原则（Vt.* token 单一真相源 + 4 态都有视觉反馈）
-// ============================================================================
-class _GeoStatusRow extends StatelessWidget {
-  final double? lat;
-  final double? lng;
-  final bool locating;
-  final String? error;
-  final VoidCallback onRetry;
-
-  const _GeoStatusRow({
-    required this.lat,
-    required this.lng,
-    required this.locating,
-    required this.error,
-    required this.onRetry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // 状态优先级：locating > error > located > idle
-    final Widget body;
-    final Color borderColor;
-    // hoist field → local (Dart flow analysis 不能 promote widget field)
-    final localLat = lat;
-    final localLng = lng;
-    final localError = error;
-
-    if (locating) {
-      borderColor = Vt.gold.withValues(alpha: 0.5);
-      body = Row(
-        children: [
-          const SizedBox(
-            width: 14,
-            height: 14,
-            child: CircularProgressIndicator(strokeWidth: 1.4, color: Vt.gold),
-          ),
-          const SizedBox(width: Vt.s12),
-          Text(
-            '正 在 寻 你 …',
-            style: Vt.cnLabel.copyWith(
-              color: Vt.gold,
-              letterSpacing: 4,
-              fontSize: Vt.tsm,
-            ),
-          ),
-        ],
-      );
-    } else if (localError != null) {
-      borderColor = Vt.warn.withValues(alpha: 0.5);
-      body = Row(
-        children: [
-          Icon(Icons.error_outline_rounded, color: Vt.warn, size: 16),
-          const SizedBox(width: Vt.s8),
-          Expanded(
-            child: Text(
-              localError,
-              style: Vt.bodySm.copyWith(color: Vt.textSecondary),
-            ),
-          ),
-          GestureDetector(
-            onTap: onRetry,
-            child: Text(
-              '重 试',
-              style: Vt.cnLabel.copyWith(
-                color: Vt.gold,
-                letterSpacing: 3,
-                fontSize: Vt.txs,
-              ),
-            ),
-          ),
-        ],
-      );
-    } else if (localLat != null && localLng != null) {
-      borderColor = Vt.gold;
-      body = Row(
-        children: [
-          Icon(Icons.near_me_rounded, color: Vt.gold, size: 14),
-          const SizedBox(width: Vt.s8),
-          Expanded(
-            child: Text(
-              '已 锁 定 · ${localLat.toStringAsFixed(4)}, ${localLng.toStringAsFixed(4)}',
-              style: Vt.label.copyWith(
-                color: Vt.gold,
-                fontSize: Vt.txs,
-                letterSpacing: 1.2,
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: onRetry,
-            child: Icon(Icons.refresh_rounded,
-                color: Vt.gold.withValues(alpha: 0.6), size: 14),
-          ),
-        ],
-      );
-    } else {
-      borderColor = Vt.borderSubtle;
-      body = Row(
-        children: [
-          Icon(Icons.location_searching_rounded,
-              color: Vt.textTertiary, size: 14),
-          const SizedBox(width: Vt.s8),
-          Expanded(
-            child: Text(
-              '尚 未 标 记 位 置',
-              style: Vt.bodySm.copyWith(color: Vt.textTertiary),
-            ),
-          ),
-          GestureDetector(
-            onTap: onRetry,
-            child: Text(
-              '获 取',
-              style: Vt.cnLabel.copyWith(
-                color: Vt.gold,
-                letterSpacing: 3,
-                fontSize: Vt.txs,
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: Vt.s12, vertical: Vt.s12),
-      decoration: BoxDecoration(
-        color: Vt.bgElevated,
-        border: Border.all(color: borderColor, width: 0.8),
-      ),
-      child: body,
-    );
-  }
-}
-
-class _ToggleRow extends StatelessWidget {
-  final String label;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _ToggleRow({
-    required this.label,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => onChanged(!value),
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: Vt.s8),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(label, style: Vt.bodyLg.copyWith(color: Vt.textPrimary)),
-            ),
-            // 自定义金色 toggle
-            AnimatedContainer(
-              duration: Vt.fast,
-              width: 44,
-              height: 24,
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                color: value ? Vt.gold.withValues(alpha: 0.3) : Vt.bgElevated,
-                borderRadius: BorderRadius.circular(Vt.rPill),
-                border: Border.all(
-                  color: value ? Vt.gold : Vt.borderSubtle,
-                  width: 1,
-                ),
-              ),
-              child: AnimatedAlign(
-                duration: Vt.fast,
-                curve: Vt.curveDefault,
-                alignment: value ? Alignment.centerRight : Alignment.centerLeft,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: value ? Vt.gold : Vt.textTertiary,
-                    shape: BoxShape.circle,
-                    boxShadow: value
-                        ? [
-                            BoxShadow(
-                              color: Vt.gold.withValues(alpha: 0.5),
-                              blurRadius: 8,
-                            ),
-                          ]
-                        : null,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

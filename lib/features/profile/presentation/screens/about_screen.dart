@@ -27,19 +27,44 @@ class AboutScreen extends StatelessWidget {
                   GestureDetector(
                     onTap: () => Navigator.of(context).maybePop(),
                     behavior: HitTestBehavior.opaque,
-                    child: SizedBox(
+                    child: const SizedBox(
                       width: 40, height: 40,
                       child: Icon(Icons.arrow_back, color: Vt.gold, size: 18),
                     ),
                   ),
                   const SizedBox(width: Vt.s8),
-                  Text('VELVET', style: Vt.headingLg.copyWith(
-                    color: Vt.textPrimary, letterSpacing: 5,
-                  )),
-                  const SizedBox(width: Vt.s12),
-                  Container(width: 1, height: 16, color: Vt.borderMedium),
-                  const SizedBox(width: Vt.s12),
-                  Text('关 于', style: Vt.cnLabel.copyWith(color: Vt.textSecondary)),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('VELVET', style: Vt.headingLg.copyWith(
+                            color: Vt.textPrimary,
+                            fontStyle: FontStyle.normal,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 3.5,
+                            height: 1.0,
+                          )),
+                          const SizedBox(width: Vt.s12),
+                          Container(width: 1, height: 14, color: Vt.borderMedium),
+                          const SizedBox(width: Vt.s12),
+                          Text('关 于', style: Vt.cnLabel.copyWith(color: Vt.textSecondary)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'COLOPHON',
+                    style: Vt.label.copyWith(
+                      color: Vt.gold.withValues(alpha: 0.55),
+                      fontStyle: FontStyle.italic,
+                      letterSpacing: 2.4,
+                      fontSize: Vt.t2xs,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: Vt.s40),
@@ -56,16 +81,21 @@ class AboutScreen extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [Vt.statusWaiting, Vt.goldLight, Vt.gold],
                   ).createShader(bounds),
-                  child: Text(
-                    'VELVET',
-                    style: Vt.displayHero.copyWith(
-                      color: Colors.white,
-                      letterSpacing: 8,
-                      shadows: [
-                        Shadow(
-                            color: Vt.gold.withValues(alpha: 0.5),
-                            blurRadius: 40),
-                      ],
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'VELVET',
+                      maxLines: 1,
+                      softWrap: false,
+                      style: Vt.displayHero.copyWith(
+                        color: Colors.white,
+                        letterSpacing: 6,
+                        shadows: [
+                          Shadow(
+                              color: Vt.gold.withValues(alpha: 0.22),
+                              blurRadius: 18),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -168,7 +198,7 @@ class AboutScreen extends StatelessWidget {
                 color: Vt.gold,
                 shadows: [
                   Shadow(
-                      color: Vt.gold.withValues(alpha: 0.2), blurRadius: 12),
+                      color: Vt.gold.withValues(alpha: 0.1), blurRadius: 6),
                 ],
               )),
           const SizedBox(height: Vt.s16),

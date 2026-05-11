@@ -54,25 +54,44 @@ class MainScaffold extends ConsumerWidget {
       ),
     );
 
+    // iPad 适配：屏宽 >720 时把内容居中 + 限宽，两侧用 bgVoid 留白
+    // 不在小屏（iPhone）施加任何约束，保持原行为
+    const maxContentWidth = 720.0;
+
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      // 切 tab 闪屏修复：dark theme 默认 scaffoldBackgroundColor=bgPrimary(#0C0A06)
+      // 而所有 tab 子 screen 都用 bgVoid(#050402) → 切 tab 一瞬间父 scaffold
+      // 露出 bgPrimary 比 child 亮一档，肉眼可见闪烁。统一为 bgVoid。
+      backgroundColor: Vt.bgVoid,
       extendBody: true,
-      body: navigationShell,
-      bottomNavigationBar: _VelvetTabbar(
-        tabs: tabs,
-        selectedIndex: selectedIndex,
-        onTap: (i) {
-          final tab = tabs[i];
-          unawaited(tab.isCenter
-              ? HapticService.instance.heavy()
-              : HapticService.instance.light());
-          // initialLocation:true 仅在重复点击当前 tab 时回根，
-          // 切换其他 tab 时保留该 branch 的内部导航栈
-          navigationShell.goBranch(
-            i,
-            initialLocation: i == selectedIndex,
-          );
-        },
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: maxContentWidth),
+          child: navigationShell,
+        ),
+      ),
+      bottomNavigationBar: Align(
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: maxContentWidth),
+          child: _VelvetTabbar(
+            tabs: tabs,
+            selectedIndex: selectedIndex,
+            onTap: (i) {
+              final tab = tabs[i];
+              unawaited(tab.isCenter
+                  ? HapticService.instance.heavy()
+                  : HapticService.instance.light());
+              // initialLocation:true 仅在重复点击当前 tab 时回根，
+              // 切换其他 tab 时保留该 branch 的内部导航栈
+              navigationShell.goBranch(
+                i,
+                initialLocation: i == selectedIndex,
+              );
+            },
+          ),
+        ),
       ),
     );
   }
@@ -230,11 +249,12 @@ class _TabButton extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // icon · 21px serif · active 时金光 + translateY(-3) + scale(1.1)
+                // icon · 22px serif · active 时金光 + translateY(-2) + scale(1.1)
+                // v31: 32 → 22 适配 app 排版 · shadow blur 同比缩 (20→14, 40→28)
                 AnimatedSlide(
                   duration: Vt.normal,
                   curve: Curves.easeOutCubic,
-                  offset: active ? const Offset(0, -0.115) : Offset.zero, // -3/26
+                  offset: active ? const Offset(0, -0.09) : Offset.zero, // -2/22
                   child: AnimatedScale(
                     duration: Vt.normal,
                     curve: Curves.easeOutCubic,
@@ -242,7 +262,7 @@ class _TabButton extends StatelessWidget {
                     child: AnimatedDefaultTextStyle(
                       duration: Vt.normal,
                       style: GoogleFonts.cormorantGaramond(
-                        fontSize: 32,
+                        fontSize: 22,
                         height: 1.0,
                         fontWeight: FontWeight.w400,
                         color: active
@@ -252,10 +272,10 @@ class _TabButton extends StatelessWidget {
                             ? [
                                 Shadow(
                                     color: Vt.gold.withValues(alpha: 0.9),
-                                    blurRadius: 20),
+                                    blurRadius: 14),
                                 Shadow(
                                     color: Vt.gold.withValues(alpha: 0.5),
-                                    blurRadius: 40),
+                                    blurRadius: 28),
                               ]
                             : null,
                       ),
@@ -267,10 +287,11 @@ class _TabButton extends StatelessWidget {
                 // 中文标签 · 12px ZCOOL · letter-spacing 0.22em · uppercase
                 AnimatedDefaultTextStyle(
                   duration: Vt.normal,
-                  style: GoogleFonts.zcoolXiaoWei(
+                  style: TextStyle(
+                    fontFamily: 'ZCOOLXiaoWei',
                     fontSize: 13,
                     height: 1.0,
-                    fontWeight: FontWeight.w300,
+                    fontWeight: FontWeight.w400, // pubspec declare 唯一权重
                     letterSpacing: 13 * 0.22, // 0.22em
                     color: active
                         ? Vt.gold
@@ -443,10 +464,11 @@ class _CenterPublishTabState extends State<_CenterPublishTab>
             padding: const EdgeInsets.only(top: 32 + 9),
             child: AnimatedDefaultTextStyle(
               duration: Vt.normal,
-              style: GoogleFonts.zcoolXiaoWei(
+              style: TextStyle(
+                fontFamily: 'ZCOOLXiaoWei',
                 fontSize: 13,
                 height: 1.0,
-                fontWeight: FontWeight.w300,
+                fontWeight: FontWeight.w400, // pubspec declare 唯一权重
                 letterSpacing: 13 * 0.22,
                 color: widget.active
                     ? Vt.gold

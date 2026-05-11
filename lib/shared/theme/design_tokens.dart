@@ -345,6 +345,27 @@ class Vt {
   //   - 单一字重 500 主导（Lambo / Cursor / Linear 共识）
   // ==========================================================================
 
+  // v30 中文兜底链（修商品页全乱码 bug）
+  // 根因: google_fonts 运行时 register family，第一帧 fontFamilyFallback 找不到 ZCOOL XiaoWei
+  //       → 跳到系统字体 → 部分设备无 CJK fallback → 豆腐块/乱码
+  // 解法: pubspec fonts 直接 declare ZCOOLXiaoWei (无空格 family name)
+  //       fallback 第一位用这个 declared name → 启动即注册 → 稳定渲染
+  // 同时保留 'ZCOOL XiaoWei' (google_fonts 注册名) + 系统中文字体名兜底多重保险
+  static const List<String> _cnFallback = [
+    'ZCOOLXiaoWei',          // v30: pubspec fonts: 直接 declare 的 family · 最优先
+    'ZCOOL XiaoWei',         // google_fonts 包运行时 register 的 family · 次优
+    'Noto Sans CJK SC',
+    'Noto Serif CJK SC',
+    'Noto Sans SC',
+    'Source Han Sans CN',
+    'PingFang SC',
+    'Hiragino Sans GB',
+    'Microsoft YaHei',
+    'WenQuanYi Micro Hei',
+    'Heiti SC',
+    'sans-serif',
+  ];
+
   // Cormorant Garamond + Perfect Fourth 1.33 scale
   // 字重统一 w300 (Stripe/Notion feather-light 共识) — 只有 logo/display 保留 w500
   // VELVET logo 风格 — 经典衬线，上下字阶呼吸感强
@@ -354,7 +375,7 @@ class Vt {
         letterSpacing: 8.0,           // logo 风：字间距宽
         height: 0.96,
         color: textPrimary,
-      );
+      ).copyWith(fontFamilyFallback: _cnFallback);
 
   static TextStyle get displayLg => GoogleFonts.cormorantGaramond(
         fontSize: t3xl,               // 54
@@ -362,7 +383,7 @@ class Vt {
         letterSpacing: 6.0,
         height: 0.98,
         color: textPrimary,
-      );
+      ).copyWith(fontFamilyFallback: _cnFallback);
 
   static TextStyle get displayMd => GoogleFonts.cormorantGaramond(
         fontSize: t2xl,               // 38
@@ -371,7 +392,7 @@ class Vt {
         letterSpacing: 3.0,
         height: 1.02,
         color: textPrimary,
-      );
+      ).copyWith(fontFamilyFallback: _cnFallback);
 
   // 商品价格用 Marcellus（带衬线小型大写感）
   static TextStyle get price => GoogleFonts.marcellusSc(
@@ -380,7 +401,7 @@ class Vt {
         letterSpacing: 0.5,
         height: 1.0,
         color: gold,
-      );
+      ).copyWith(fontFamilyFallback: _cnFallback);
 
   static TextStyle get priceLg => GoogleFonts.marcellusSc(
         fontSize: t2xl,               // 38
@@ -388,7 +409,7 @@ class Vt {
         letterSpacing: 0.8,
         height: 1.0,
         color: gold,
-      );
+      ).copyWith(fontFamilyFallback: _cnFallback);
 
   // v13: heading/body 改用 Cormorant Garamond + Noto Serif SC fallback
   // v27: 飘逸版 — 全标题降到 w300 + italic（CormorantGaramond-LightItalic）
@@ -399,7 +420,7 @@ class Vt {
         letterSpacing: 0.5,
         height: 1.15,
         color: textPrimary,
-      );
+      ).copyWith(fontFamilyFallback: _cnFallback);
 
   static TextStyle get headingMd => GoogleFonts.cormorantGaramond(
         fontSize: tlg,                // 21
@@ -408,7 +429,7 @@ class Vt {
         letterSpacing: 0.4,
         height: 1.2,
         color: textPrimary,
-      );
+      ).copyWith(fontFamilyFallback: _cnFallback);
 
   static TextStyle get headingSm => GoogleFonts.cormorantGaramond(
         fontSize: tmd,                // 16
@@ -417,7 +438,7 @@ class Vt {
         letterSpacing: 0.3,
         height: 1.3,
         color: textPrimary,
-      );
+      ).copyWith(fontFamilyFallback: _cnFallback);
 
   static TextStyle get bodyLg => GoogleFonts.cormorantGaramond(
         fontSize: tmd,                // 16
@@ -425,7 +446,7 @@ class Vt {
         letterSpacing: 0.2,
         height: 1.6,
         color: textPrimary,
-      );
+      ).copyWith(fontFamilyFallback: _cnFallback);
 
   static TextStyle get bodyMd => GoogleFonts.cormorantGaramond(
         fontSize: tsm,                // 14
@@ -433,7 +454,7 @@ class Vt {
         letterSpacing: 0.2,
         height: 1.55,
         color: textSecondary,
-      );
+      ).copyWith(fontFamilyFallback: _cnFallback);
 
   static TextStyle get bodySm => GoogleFonts.cormorantGaramond(
         fontSize: txs,                // 12
@@ -441,7 +462,7 @@ class Vt {
         letterSpacing: 0.3,
         height: 1.5,
         color: textSecondary,
-      );
+      ).copyWith(fontFamilyFallback: _cnFallback);
 
   static TextStyle get label => GoogleFonts.cormorantGaramond(
         fontSize: txs,                // 12
@@ -450,7 +471,7 @@ class Vt {
         letterSpacing: 1.5,
         height: 1.4,
         color: textTertiary,
-      );
+      ).copyWith(fontFamilyFallback: _cnFallback);
 
   static TextStyle get button => GoogleFonts.cormorantGaramond(
         fontSize: tmd,                // 16
@@ -458,7 +479,7 @@ class Vt {
         letterSpacing: 4.0,
         height: 1.0,
         color: gold,
-      );
+      ).copyWith(fontFamilyFallback: _cnFallback);
 
   static TextStyle get caption => GoogleFonts.cormorantGaramond(
         fontSize: t2xs,               // 11
@@ -467,7 +488,7 @@ class Vt {
         letterSpacing: 2.5,
         height: 1.2,
         color: gold,
-      );
+      ).copyWith(fontFamilyFallback: _cnFallback);
 
   // ==========================================================================
   // 中文专用 TextStyle (ZCOOL XiaoWei 瘦体显示字)
@@ -475,7 +496,14 @@ class Vt {
   // (回字糊成一团) → 强制 w400 匹配 google_fonts/ZCOOLXiaoWei-Regular.ttf 唯一权重
   // ZCOOL XiaoWei Regular 本身就是设计款瘦体显示字 · 不是普通宋体
   // ==========================================================================
-  static TextStyle get cnDisplay => GoogleFonts.zcoolXiaoWei(
+  // v32 根因:GoogleFonts.zcoolXiaoWei() 在 allowRuntimeFetching=false 时
+  // 主 family 注册不可靠 + .copyWith(fontFamilyFallback) 在 Flutter 引擎对
+  // 缺失主 family 的处理跨 Android 版本不一致 → 商品页中文乱码
+  // v32 解法:绕过 google_fonts 包,直接用 pubspec compile-time declare 的
+  // 'ZCOOLXiaoWei' family · 启动即注册 · 100% 稳定 · 不依赖运行时 register
+  static TextStyle get cnDisplay => TextStyle(
+        fontFamily: 'ZCOOLXiaoWei',
+        fontFamilyFallback: _cnFallback,
         fontSize: tlg,                // 21
         fontWeight: FontWeight.w400,
         letterSpacing: 12.0,
@@ -483,7 +511,9 @@ class Vt {
         color: gold,
       );
 
-  static TextStyle get cnHeading => GoogleFonts.zcoolXiaoWei(
+  static TextStyle get cnHeading => TextStyle(
+        fontFamily: 'ZCOOLXiaoWei',
+        fontFamilyFallback: _cnFallback,
         fontSize: tmd,                // 16
         fontWeight: FontWeight.w400,
         letterSpacing: 8.0,
@@ -491,7 +521,9 @@ class Vt {
         color: gold,
       );
 
-  static TextStyle get cnBody => GoogleFonts.zcoolXiaoWei(
+  static TextStyle get cnBody => TextStyle(
+        fontFamily: 'ZCOOLXiaoWei',
+        fontFamilyFallback: _cnFallback,
         fontSize: tsm,                // 14
         fontWeight: FontWeight.w400,
         letterSpacing: 2.0,
@@ -499,7 +531,9 @@ class Vt {
         color: textPrimary,
       );
 
-  static TextStyle get cnLabel => GoogleFonts.zcoolXiaoWei(
+  static TextStyle get cnLabel => TextStyle(
+        fontFamily: 'ZCOOLXiaoWei',
+        fontFamilyFallback: _cnFallback,
         fontSize: txs,                // 12
         fontWeight: FontWeight.w400,
         letterSpacing: 7.0,
@@ -507,7 +541,9 @@ class Vt {
         color: gold,
       );
 
-  static TextStyle get cnButton => GoogleFonts.zcoolXiaoWei(
+  static TextStyle get cnButton => TextStyle(
+        fontFamily: 'ZCOOLXiaoWei',
+        fontFamilyFallback: _cnFallback,
         fontSize: tmd,                // 16
         fontWeight: FontWeight.w400,
         letterSpacing: 12.0,
@@ -515,7 +551,9 @@ class Vt {
         color: gold,
       );
 
-  static TextStyle get cnCaption => GoogleFonts.zcoolXiaoWei(
+  static TextStyle get cnCaption => TextStyle(
+        fontFamily: 'ZCOOLXiaoWei',
+        fontFamilyFallback: _cnFallback,
         fontSize: txs,                // 12
         fontWeight: FontWeight.w400,
         letterSpacing: 4.0,

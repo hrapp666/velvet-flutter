@@ -206,19 +206,28 @@ class _EditorialHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // VELVET mark (Cormorant w500, ivory→gold shader 替代为单色)
-                  Text(
-                    'VELVET',
-                    style: Vt.headingLg.copyWith(
-                      fontWeight: FontWeight.w500,
-                      fontSize: Vt.txl,
-                      letterSpacing: 8,
-                      color: Vt.goldLight,
-                      shadows: [
-                        Shadow(
-                          color: Vt.gold.withValues(alpha: 0.55),
-                          blurRadius: 28,
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'VELVET',
+                        maxLines: 1,
+                        softWrap: false,
+                        style: Vt.headingLg.copyWith(
+                          fontWeight: FontWeight.w500,
+                          fontSize: Vt.txl,
+                          fontStyle: FontStyle.normal,
+                          letterSpacing: 4.5,
+                          color: Vt.goldLight,
+                          shadows: [
+                            Shadow(
+                              color: Vt.gold.withValues(alpha: 0.22),
+                              blurRadius: 12,
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                   // 竖线分隔
@@ -238,6 +247,16 @@ class _EditorialHeader extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
+                  // 右上角 editorial 编号 — 时尚刊感 · 不抢戏
+                  Text(
+                    'No.MMXXVI',
+                    style: Vt.label.copyWith(
+                      color: Vt.gold.withValues(alpha: 0.55),
+                      fontStyle: FontStyle.italic,
+                      letterSpacing: 1.6,
+                      fontSize: Vt.t2xs,
+                    ),
+                  ),
                 ],
               ),
               // header-line — 底部 24px inset gold-30 渐变
