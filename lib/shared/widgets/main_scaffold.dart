@@ -54,28 +54,44 @@ class MainScaffold extends ConsumerWidget {
       ),
     );
 
+    // iPad 适配：屏宽 >720 时把内容居中 + 限宽，两侧用 bgVoid 留白
+    // 不在小屏（iPhone）施加任何约束，保持原行为
+    const maxContentWidth = 720.0;
+
     return Scaffold(
       // 切 tab 闪屏修复：dark theme 默认 scaffoldBackgroundColor=bgPrimary(#0C0A06)
       // 而所有 tab 子 screen 都用 bgVoid(#050402) → 切 tab 一瞬间父 scaffold
       // 露出 bgPrimary 比 child 亮一档，肉眼可见闪烁。统一为 bgVoid。
       backgroundColor: Vt.bgVoid,
       extendBody: true,
-      body: navigationShell,
-      bottomNavigationBar: _VelvetTabbar(
-        tabs: tabs,
-        selectedIndex: selectedIndex,
-        onTap: (i) {
-          final tab = tabs[i];
-          unawaited(tab.isCenter
-              ? HapticService.instance.heavy()
-              : HapticService.instance.light());
-          // initialLocation:true 仅在重复点击当前 tab 时回根，
-          // 切换其他 tab 时保留该 branch 的内部导航栈
-          navigationShell.goBranch(
-            i,
-            initialLocation: i == selectedIndex,
-          );
-        },
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: maxContentWidth),
+          child: navigationShell,
+        ),
+      ),
+      bottomNavigationBar: Align(
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: maxContentWidth),
+          child: _VelvetTabbar(
+            tabs: tabs,
+            selectedIndex: selectedIndex,
+            onTap: (i) {
+              final tab = tabs[i];
+              unawaited(tab.isCenter
+                  ? HapticService.instance.heavy()
+                  : HapticService.instance.light());
+              // initialLocation:true 仅在重复点击当前 tab 时回根，
+              // 切换其他 tab 时保留该 branch 的内部导航栈
+              navigationShell.goBranch(
+                i,
+                initialLocation: i == selectedIndex,
+              );
+            },
+          ),
+        ),
       ),
     );
   }

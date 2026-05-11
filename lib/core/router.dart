@@ -22,6 +22,7 @@ import '../features/moment/presentation/screens/search_screen.dart';
 import '../features/notification/presentation/screens/notification_screen.dart';
 import '../features/admin/presentation/screens/admin_screen.dart';
 import '../features/profile/presentation/screens/about_screen.dart';
+import '../features/profile/presentation/screens/legal_screen.dart';
 import '../features/profile/presentation/screens/profile_edit_screen.dart';
 import '../features/profile/presentation/screens/profile_screen.dart';
 import '../features/profile/presentation/screens/user_public_screen.dart';
@@ -183,6 +184,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/admin',
         pageBuilder: (_, state) => CinematicPage(key: state.pageKey, child: const AdminScreen()),
+      ),
+      GoRoute(
+        path: '/legal/terms',
+        pageBuilder: (_, state) => CinematicPage(
+          key: state.pageKey,
+          child: const LegalScreen(doc: LegalDoc.terms),
+        ),
+      ),
+      GoRoute(
+        path: '/legal/privacy',
+        pageBuilder: (_, state) => CinematicPage(
+          key: state.pageKey,
+          child: const LegalScreen(doc: LegalDoc.privacy),
+        ),
       ),
     ],
     errorBuilder: (_, state) => Scaffold(
