@@ -17,14 +17,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/api/api_client.dart';
-import '../../../../l10n/app_localizations.dart';
 import '../../../../shared/services/haptic_service.dart';
 import '../../../../shared/theme/design_tokens.dart';
-import '../../../../shared/theme/locale_provider.dart';
+import '../../../../shared/widgets/feedback/velvet_toast.dart';
 import '../../../auth/data/repositories/auth_repository.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../safety/safety_dialogs.dart';
@@ -153,27 +153,6 @@ class _ProfileHeader extends StatelessWidget {
                 fontStyle: FontStyle.italic,
                 letterSpacing: 1.6,
                 fontSize: Vt.t2xs,
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              if (context.canPop()) {
-                context.pop();
-              } else {
-                context.go('/feed');
-              }
-            },
-            behavior: HitTestBehavior.opaque,
-            child: const SizedBox(
-              width: 44,
-              height: 44,
-              child: Center(
-                child: Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  color: Vt.gold,
-                  size: 16,
-                ),
               ),
             ),
           ),
@@ -395,6 +374,24 @@ class _ProfileBody extends ConsumerWidget {
             onTap: () => context.push('/about'),
           ),
           _EditorialMenuItem(
+            label: '用 户 协 议',
+            onTap: () => context.push('/legal/terms'),
+          ),
+          _EditorialMenuItem(
+            label: '隐 私 协 议',
+            onTap: () => context.push('/legal/privacy'),
+          ),
+          _EditorialMenuItem(
+            label: '联 系 我 们',
+            onTap: () async {
+              await Clipboard.setData(
+                const ClipboardData(text: 'support@velvet.app'),
+              );
+              if (!context.mounted) return;
+              VelvetToast.show(context, '已复制 support@velvet.app');
+            },
+          ),
+          _EditorialMenuItem(
             label: '注 销 账 号',
             onTap: () async {
               final ok = await showDeleteAccountDialog(context, ref);
@@ -411,13 +408,8 @@ class _ProfileBody extends ConsumerWidget {
 
           const SizedBox(height: Vt.s32),
 
-          // v25: Velvet 视觉系统专为黑色 void 设计 · 明亮版未完整适配 → 暂时下掉
-          // 外观切换 UI（保留 themeProvider 以便未来恢复）
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Vt.s24),
-            child: const _LanguageSection(),
-          ),
-          const SizedBox(height: Vt.s40),
+          // v33: 多语言切换暂时下掉 — 中文字符串尚未全量翻译到 EN
+          // (locale_provider / AppLocalizations / arb 全保留 · 翻译补齐后恢复 UI)
 
           // 退 出 · 居中 ash 字 + 上 hairline
           Container(
@@ -1005,128 +997,5 @@ class _ProfileError extends ConsumerWidget {
   }
 }
 
-// ============================================================================
-// 语言切换 (v25 · C2 · I1)
-// 外观切换已下掉 — Velvet 视觉系统只适配黑色 void · 明亮版回归后再恢复
-// ============================================================================
-
-class _LanguageSection extends ConsumerWidget {
-  const _LanguageSection();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final current = ref.watch(localeProvider);
-    final l10n = AppLocalizations.of(context);
-    final options = <({Locale? locale, String label})>[
-      (locale: null, label: l10n?.languageSystem ?? '跟 随'),
-      (locale: const Locale('en'), label: l10n?.languageEnglish ?? 'ENGLISH'),
-      (locale: const Locale('zh'), label: l10n?.languageChinese ?? '中 文'),
-    ];
-    final title = l10n?.languageSectionTitle ?? 'L A N G U A G E';
-
-    return _SettingSection(
-      title: title,
-      child: Row(
-        children: options.map((opt) {
-          final selected =
-              current?.languageCode == opt.locale?.languageCode;
-          return Expanded(
-            child: _SettingChip(
-              label: opt.label,
-              selected: selected,
-              onTap: () {
-                unawaited(HapticService.instance.medium());
-                ref.read(localeProvider.notifier).setLocale(opt.locale);
-              },
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-class _SettingSection extends StatelessWidget {
-  final String title;
-  final Widget child;
-  const _SettingSection({required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          height: 1,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.transparent,
-                Vt.gold.withValues(alpha: 0.30),
-                Colors.transparent,
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: Vt.s20),
-        Center(
-          child: Text(
-            title,
-            style: Vt.label.copyWith(
-              color: Vt.gold,
-              letterSpacing: 2,
-              fontSize: Vt.txs,
-            ),
-          ),
-        ),
-        const SizedBox(height: Vt.s16),
-        child,
-      ],
-    );
-  }
-}
-
-class _SettingChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _SettingChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: Vt.fast,
-        curve: Vt.curveDefault,
-        height: 44,
-        margin: const EdgeInsets.symmetric(horizontal: Vt.s4),
-        decoration: BoxDecoration(
-          color: selected
-              ? Vt.gold.withValues(alpha: 0.10)
-              : Colors.transparent,
-          border: Border.all(
-            color:
-                selected ? Vt.gold : Vt.gold.withValues(alpha: 0.22),
-          ),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: Vt.label.copyWith(
-              color: selected ? Vt.gold : Vt.textTertiary,
-              fontSize: Vt.tsm,
-              letterSpacing: 0.5,
-              fontStyle: FontStyle.normal,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+// 语言切换 UI 已在 v33 下掉 · locale_provider / AppLocalizations / arb 全保留 ·
+// 翻译补齐后恢复 _LanguageSection / _SettingSection / _SettingChip 即可
