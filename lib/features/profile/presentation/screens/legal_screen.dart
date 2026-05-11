@@ -46,6 +46,13 @@ class _LegalScreenState extends State<LegalScreen> {
           onPageFinished: (_) {
             if (mounted) setState(() => _loading = false);
           },
+          // 法律文档是本地 HTML · 不允许跳到任何 http/https 远端（防本地 <a> 误跳）
+          onNavigationRequest: (request) {
+            if (request.url.startsWith('about:')) {
+              return NavigationDecision.navigate;
+            }
+            return NavigationDecision.prevent;
+          },
         ),
       );
     _loadAsset();
