@@ -153,27 +153,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
               child: Row(
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      if (context.canPop()) {
-                        context.pop();
-                      } else {
-                        context.go('/feed');
-                      }
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: const SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: Center(
-                        child: Icon(
-                          Icons.arrow_back_ios_new_rounded,
-                          color: Vt.gold,
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                  ),
                   Expanded(
                     child: Container(
                       height: 44,
