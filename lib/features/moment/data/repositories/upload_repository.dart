@@ -74,18 +74,14 @@ class UploadRepository {
     return finalUrl;
   }
 
-  /// 并发上传多个文件
-  Future<List<String>> uploadMultiple(List<File> files) async {
-    final futures = files.map((f) => uploadFile(f)).toList();
-    return Future.wait(futures);
-  }
-
   String _guessMime(String path) {
     final lower = path.toLowerCase();
     if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
     if (lower.endsWith('.png')) return 'image/png';
     if (lower.endsWith('.webp')) return 'image/webp';
     if (lower.endsWith('.gif')) return 'image/gif';
+    if (lower.endsWith('.heic')) return 'image/heic';
+    if (lower.endsWith('.heif')) return 'image/heif';
     if (lower.endsWith('.mp4')) return 'video/mp4';
     if (lower.endsWith('.mov')) return 'video/quicktime';
     return 'image/jpeg';

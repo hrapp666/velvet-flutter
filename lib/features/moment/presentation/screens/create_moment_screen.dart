@@ -124,8 +124,8 @@ class _CreateMomentScreenState extends ConsumerState<CreateMomentScreen> {
 
       if (!mounted) return;
       unawaited(HapticService.instance.success());
-      // v26 苹果合规：先审后发，明确告知用户审核中
-      VelvetToast.show(context, '已提交，审核通过后展示 ✦');
+      // v26 苹果合规：先审后发，明确告知用户审核中（24h 内审核）
+      VelvetToast.show(context, '已提交 · 通常 24 小时内审核完成 ✦');
       context.go('/profile');
     } on AppException catch (e) {
       if (!mounted) return;
