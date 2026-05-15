@@ -84,7 +84,7 @@ class AuthNotifier extends AsyncNotifier<UserProfile?> {
     String username,
     String password,
     String nickname, {
-    required DateTime birthday,
+    DateTime? birthday,
     required bool agreedTerms,
   }) async {
     ChatSocket.instance.disconnect();

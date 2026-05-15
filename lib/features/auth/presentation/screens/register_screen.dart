@@ -44,7 +44,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _loading = false;
   String? _errorText;
 
-  /// 18+ 合规 · 生日必选
+  /// Apple 5.1.1(v) 合规 · 生日可选 · 若用户填了才做 18+ 校验
   DateTime? _birthday;
 
   /// 用户协议勾选
@@ -198,22 +198,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       setState(() => _errorText = '密码需包含字母和数字');
       return;
     }
+    // Apple 5.1.1(v) 合规：birthday 可选 · 用户可以不填
+    // 若用户填了才做 18+ 客户端预检（后端 final gate）
     final birthday = _birthday;
-    if (birthday == null) {
-      setState(() => _errorText = '请选择出生日期');
-      return;
-    }
-    // 18+ 客户端预检（后端 final gate）
-    final now = DateTime.now();
-    final age = now.year -
-        birthday.year -
-        ((now.month < birthday.month ||
-                (now.month == birthday.month && now.day < birthday.day))
-            ? 1
-            : 0);
-    if (age < 18) {
-      setState(() => _errorText = '抱歉 · 需年满 18 周岁');
-      return;
+    if (birthday != null) {
+      final now = DateTime.now();
+      final age = now.year -
+          birthday.year -
+          ((now.month < birthday.month ||
+                  (now.month == birthday.month && now.day < birthday.day))
+              ? 1
+              : 0);
+      if (age < 18) {
+        setState(() => _errorText = '抱歉 · 需年满 18 周岁');
+        return;
+      }
     }
     if (!_agreedTerms) {
       setState(() => _errorText = '请同意用户协议和隐私政策');
@@ -591,7 +590,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    // 生日 · 18+ 合规
+                    // 生日 · 可选字段 · Apple 5.1.1(v) 合规
                     _BirthdayField(
                       birthday: _birthday,
                       formattedLabel: _birthday == null
@@ -909,7 +908,7 @@ class _Diamond extends StatelessWidget {
   }
 }
 
-/// 生日字段 · 点击弹出 date picker · 18+ 合规
+/// 生日字段 · 点击弹出 date picker · 可选 · Apple 5.1.1(v) 合规
 class _BirthdayField extends StatelessWidget {
   final DateTime? birthday;
   final String? formattedLabel;
@@ -943,7 +942,7 @@ class _BirthdayField extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 1),
                 child: Text(
-                  'BIRTHDAY',
+                  'BIRTHDAY · OPTIONAL',
                   style: Vt.label.copyWith(
                     fontSize: Vt.txs,
                     letterSpacing: 1.5,
@@ -972,7 +971,7 @@ class _BirthdayField extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    formattedLabel ?? '年 满 十 八  ·  点 击 选 择',
+                    formattedLabel ?? '可 选  ·  点 击 选 择',
                     style: filled
                         ? Vt.input.copyWith(letterSpacing: 0.5)
                         : Vt.inputPlaceholder,

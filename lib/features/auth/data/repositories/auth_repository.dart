@@ -15,7 +15,7 @@ abstract class AuthRepository {
     required String username,
     required String password,
     required String nickname,
-    required DateTime birthday,
+    DateTime? birthday,
     required bool agreedTerms,
   });
 
@@ -46,21 +46,24 @@ class AuthRepositoryImpl implements AuthRepository {
     required String username,
     required String password,
     required String nickname,
-    required DateTime birthday,
+    DateTime? birthday,
     required bool agreedTerms,
   }) async {
     try {
-      final birthdayStr =
-          '${birthday.year.toString().padLeft(4, '0')}-'
-          '${birthday.month.toString().padLeft(2, '0')}-'
-          '${birthday.day.toString().padLeft(2, '0')}';
-      final res = await _api.dio.post('/api/v1/auth/register', data: {
+      // Apple 5.1.1(v) 合规：birthday 可选 · 仅在用户填了时随请求发送
+      final payload = <String, dynamic>{
         'username': username,
         'password': password,
         'nickname': nickname,
-        'birthday': birthdayStr,
         'agreedTerms': agreedTerms,
-      });
+      };
+      if (birthday != null) {
+        payload['birthday'] =
+            '${birthday.year.toString().padLeft(4, '0')}-'
+            '${birthday.month.toString().padLeft(2, '0')}-'
+            '${birthday.day.toString().padLeft(2, '0')}';
+      }
+      final res = await _api.dio.post('/api/v1/auth/register', data: payload);
       return _parseAuthResponse(res.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw e.error is AppException ? e.error as AppException : const AppException(
